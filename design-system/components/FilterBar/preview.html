@@ -1,0 +1,23 @@
+<!-- @dsCard group="Inputs & navigation" height=300 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>FilterBar</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var v=useState({kind:'all',status:'critical'}), q=useState('');
+  return h(F,null, cell('With active filters, counts and clear', h('div',{style:{width:'100%'}},h(C.FilterBar,{filters:[{key:'kind',label:'Kind',options:['Deployment','StatefulSet','Job','CronJob']},{key:'status',label:'Status',options:[{value:'critical',label:'Failing'},{value:'warning',label:'Degraded'},{value:'healthy',label:'Healthy'}]},{key:'team',label:'Team',options:['example-team','data-science','data-eng']}],values:v[0],onChange:v[1],query:q[0],onQuery:q[1],queryPlaceholder:'Filter workloads or label selector',count:'7 of 212 workloads',onClear:function(){v[1]({});q[1]('');}}))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

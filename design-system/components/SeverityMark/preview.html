@@ -1,0 +1,24 @@
+<!-- @dsCard group="Status" height=120 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SeverityMark</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h(F,null,
+  row(cell('SEV1',h(C.SeverityMark,{level:1})),cell('SEV2',h(C.SeverityMark,{level:2})),cell('SEV3',h(C.SeverityMark,{level:3})),cell('SEV4',h(C.SeverityMark,{level:4}))),
+  row(cell('aggregate: most severe first, with counts',h('span',{style:{display:'flex',gap:16}},h(C.SeverityMark,{level:1,count:1}),h(C.SeverityMark,{level:2,count:2}),h(C.SeverityMark,{level:3,count:5}),h(C.SeverityMark,{level:4,count:3}))))
+);}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

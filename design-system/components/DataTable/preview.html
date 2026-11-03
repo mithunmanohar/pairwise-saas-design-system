@@ -1,0 +1,29 @@
+<!-- @dsCard group="Data display" height=470 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>DataTable</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+var rows=[{id:'sample-api',kind:'Deployment',ns:'example-team',status:'critical',label:'CrashLoopBackOff',ready:'4/6',restarts:37,cpu:1.84,age:'41d'},{id:'feature-store-api',kind:'Deployment',ns:'feature-store',status:'healthy',ready:'8/8',restarts:0,cpu:3.12,age:'93d'},{id:'search-index-svc',kind:'Deployment',ns:'search-ml',status:'warning',label:'Degraded',ready:'5/6',restarts:3,cpu:6.07,age:'12d'},{id:'eval-runner-2817',kind:'Job',ns:'data-science',status:'info',label:'Running',ready:'1/1',restarts:0,cpu:15.6,age:'2h'},{id:'inference-gateway',kind:'Deployment',ns:'serving',status:'healthy',ready:'12/12',restarts:1,cpu:2.48,age:'64d'}];
+var cols=[{key:'id',header:'Workload',sortable:true,mono:true},{key:'kind',header:'Kind'},{key:'ns',header:'Namespace',mono:true},{key:'status',header:'Status',sortable:true,sortValue:function(r){return {critical:0,warning:1,unknown:2,info:3,healthy:4}[r.status];},defaultDir:'asc',render:function(r){return h(C.StatusBadge,{status:r.status,label:r.label,size:'sm'});}},{key:'ready',header:'Ready',align:'right',mono:true},{key:'restarts',header:'Restarts 1 h',align:'right',sortable:true,mono:true},{key:'cpu',header:'CPU (cores)',align:'right',sortable:true,mono:true,render:function(r){return r.cpu.toFixed(2);}},{key:'age',header:'Age',align:'right',mono:true}];
+function Demo(){ return h(F,null,
+  cell('Default: worst status first, row expand, critical row tint, sortable', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols,rows:rows,defaultSort:{key:'status',dir:'asc'},rowTone:function(r){return r.status==='critical'?'critical':null;},onRowClick:function(){},pageSize:4,renderExpanded:function(r){return h('div',{className:'pw-mono'},r.id+'-6f8b9d7c4-k2x9q ,  Back-off restarting failed container (exit 137, OOMKilled)');}}))),
+  h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}},
+    cell('Loading', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'loading'}))),
+    cell('Empty (filters active)', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],emptyTitle:'No failing workloads in example-team',emptyBody:'Filters: Status = Failing, Namespace = example-team.'}))),
+    cell('Error', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'error',errorDetail:'GET /api/clusters/workloads 504, kube-apiserver cluster-prod-1',onRetry:function(){}})))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

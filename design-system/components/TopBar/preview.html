@@ -1,0 +1,25 @@
+<!-- @dsCard group="Shell" height=130 width=1440 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TopBar</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+var scopeOpts={env:['prod','staging','dev'],cloud:['cloud-a','cloud-b (planned)','cloud-c (planned)'],cluster:['cluster-prod-1','cluster-prod-2','cluster-stg-1','All clusters']};
+var badges={incidents:{count:2,tone:'critical'},pipelines:{count:1,tone:'critical'},changes:{count:14}};
+function shell(width,density,content){ return h('div',{className:'pv-frame',style:{height:340,width:width}}, h(C.AppShell,{forceWidth:width,density:density,nav:h(C.SideNav,{active:'clusters',badges:badges,onNavigate:function(){}}),top:h(C.TopBar,{scope:{env:'prod',cloud:'cloud-a',cluster:'cluster-prod-1'},scopeOptions:scopeOpts,time:'1h',refresh:'30s',alerts:2,searchItems:[]})}, content||h('div',{className:'pw-page'},h('div',{className:'pw-muted'},width+' px, '+(width>=1360?'rail expanded':width>=1024?'rail collapsed to icons with tooltips':'rail behind the menu button')))));}
+
+function Demo(){ return h('div',{className:'pv-frame'},h(C.TopBar,{scope:{env:'prod',cloud:'cloud-a',cluster:'cluster-prod-1'},scopeOptions:scopeOpts,time:'1h',refresh:'30s',alerts:2,searchItems:[{label:'sample-api',kind:'Service',status:'critical'}]}));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

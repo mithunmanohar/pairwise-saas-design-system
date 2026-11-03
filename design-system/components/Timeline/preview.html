@@ -1,0 +1,27 @@
+<!-- @dsCard group="Data display" height=330 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Timeline</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h('div',{style:{maxWidth:640}}, h(C.Timeline,{onEvent:function(){},events:[
+ {time:'14:31:07',kind:'alert',title:'p95 latency > 300 ms for 5 min',body:'sample-api, SLO burn rate 14.2×',actor:'Metrics store, alert latency-slo-burn',tag:'alert_q3x7n',link:true,highlight:true},
+ {time:'14:31:40',kind:'page',title:'Paged on-call: Dev A',actor:'Paging tool, platform-primary'},
+ {time:'14:26:12',kind:'deploy',title:'Deployed sample-api v2.14.1',body:'Image tag 2.14.1, 3 commits, memory limit 2Gi → 1Gi',actor:'Deploy tool, sync by ci-bot (PR #1482)',tag:'v2.14.1',link:true},
+ {time:'14:33:55',kind:'ack',title:'Acknowledged',actor:'Dev A'},
+ {time:'14:35:02',kind:'ticket',title:'Case case_49213 created',actor:'Auto-created from the paging tool, Priority 2'},
+ {time:'14:52:30',kind:'resolve',title:'Rolled back to v2.14.0; latency back under SLO',actor:'Rollback by Dev A'}]}));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

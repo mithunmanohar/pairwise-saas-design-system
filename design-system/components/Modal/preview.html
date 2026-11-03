@@ -1,0 +1,23 @@
+<!-- @dsCard group="Overlays" height=330 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Modal</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h('div',{className:'pv-frame',style:{height:300}}, h(C.Modal,{open:true,contained:true,tone:'critical',title:'Roll back sample-api?',onClose:function(){},actions:h(F,null,h(C.Button,{variant:'secondary'},'Cancel'),h(C.Button,{variant:'danger'},'Roll back to v2.14.0'))},
+  h('div',null,'The deploy tool will sync ',h('b',{className:'pw-mono'},'example-team/sample-api'),' to ',h('b',{className:'pw-mono'},'v2.14.0'),' in ',h('b',{className:'pw-mono'},'cluster-prod-1'),'. 6 pods restart with a rolling update (max unavailable 1).'),
+  h('div',{className:'pw-muted pw-caption'},'Logged to the case tracker case_49213 and the incident timeline.')));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

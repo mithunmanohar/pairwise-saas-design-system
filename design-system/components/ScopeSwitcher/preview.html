@@ -1,0 +1,24 @@
+<!-- @dsCard group="Inputs & navigation" height=110 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ScopeSwitcher</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var s=useState({env:'prod',cloud:'cloud-a',cluster:'cluster-prod-1'});
+  var o={env:['prod','staging','dev'],cloud:['cloud-a','cloud-b (planned)','cloud-c (planned)'],cluster:['cluster-prod-1','cluster-prod-2','cluster-stg-1','All clusters']};
+  return h(F,null,row(cell('Full (1440 px)',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1]})),cell('Compact (1280 px and tablet): cluster moves into page filters',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1],compact:true}))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

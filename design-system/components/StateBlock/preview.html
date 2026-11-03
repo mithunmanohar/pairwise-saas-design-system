@@ -1,0 +1,26 @@
+<!-- @dsCard group="Feedback" height=420 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>StateBlock</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:'var(--border)',border:'1px solid var(--border)'}},
+  h('div',{style:{background:'var(--surface-raised)'}},h(C.StateBlock,{kind:'loading',rows:3})),
+  h('div',{style:{background:'var(--surface-raised)'}},h(C.StateBlock,{kind:'empty',inline:true,title:'No DAG runs in the last 24 h',body:'daily_ingest is paused since 27 Oct 09:12 by Dev D.',action:'Open in scheduler'})),
+  h('div',{style:{background:'var(--surface-raised)'}},h(C.StateBlock,{kind:'error',inline:true,body:'The metrics store (metrics-prod-1) returned 503 for 3 queries. Other panels still load.',detail:'query_range timeout after 30 s, req 7f2c91ab',action:'Retry',secondary:'Status of data sources'})),
+  h('div',{style:{background:'var(--surface-raised)'}},h(C.StateBlock,{kind:'no-access',inline:true,body:'Cost data for example-team is limited to its owners and FinOps.',action:'Request access',secondary:'Who owns this?'})),
+  h('div',{style:{background:'var(--surface-raised)',gridColumn:'1 / -1'}},h(C.StateBlock,{kind:'degraded',inline:true,body:'Node metrics for cluster-prod-2 are 6 min behind (scrape target down). Values shown are the last known.',action:'View scrape targets'})));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

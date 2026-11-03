@@ -1,0 +1,30 @@
+<!-- @dsCard group="Data display" height=330 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Metric</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var sp=[118,121,116,124,119,122,117,125,240,388,401,412];
+  return h(F,null, h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3, 260px)',gap:1,background:'var(--border)',border:'1px solid var(--border)',width:'max-content'}},
+    h(C.Metric,{label:'p95 latency',scope:'sample-api',value:'412',unit:'ms',status:'critical',delta:{value:38,polarity:'up-bad',window:'prev 1 h'},target:'SLO ≤ 300 ms',spark:{points:sp,threshold:300},freshness:'updated 18 s ago',action:'Investigate'}),
+    h(C.Metric,{label:'Error budget left',scope:'checkout-feature-api, 30 d',value:'61.4',unit:'%',delta:{value:-7.9,polarity:'up-good',window:'last week'},target:'Burn rate 1.3× (alert at 2×)',freshness:'updated 1 min ago'}),
+    h(C.Metric,{label:'GPU hours',scope:'data-science, MTD',value:'1,284.6',unit:'h',delta:{value:12.3,polarity:'up-bad',window:'same period Sep'},target:'Budget 1,800 h',freshness:'billing data to 28 Oct',action:'Breakdown'})),
+  h('div',{style:{display:'grid',gridTemplateColumns:'repeat(3, 260px)',gap:1,background:'var(--border)',border:'1px solid var(--border)',width:'max-content'}},
+    h(C.Metric,{state:'loading'}),
+    h(C.Metric,{state:'degraded',label:'Pods not ready',scope:'cluster-prod-1',value:'7',freshness:'Stale: last sample 6 min ago'}),
+    h(C.Metric,{state:'error',label:'Request rate',scope:'inference-gateway',freshness:'retrying in 30 s'})));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,26 @@
+<!-- @dsCard group="Charts" height=560 width=1000 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TimeSeriesChart</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var lat=[118,121,116,124,119,122,117,125,121,119,123,120,118,122,126,121,119,124,240,331,388,401,397,412,405,409,398,402,411,407];var prev=[116,119,118,121,117,120,119,122,120,118,121,119,117,121,124,120,118,122,121,119,120,123,118,121,122,119,120,118,121,119];var labs=lat.map(function(_,i){var m=(4+i*2);return (13+Math.floor((58+i*2)/60))+':'+String((58+i*2)%60).padStart(2,'0');});
+function Demo(){ return h(F,null,
+  cell('Default: threshold, deployment marker, previous-period ghost, hover crosshair, brush to zoom', h('div',{style:{width:'100%'}},h(C.TimeSeriesChart,{series:[{name:'p95 latency',points:lat},{name:'Same window yesterday',points:prev,color:'chart-other',dashed:true}],labels:labs,unit:'ms',threshold:{value:300,label:'SLO 300 ms'},markers:[{index:18,label:'deploy v2.14.1'}],onBrush:function(){},height:200,ariaLabel:'p95 latency in ms, last hour. Steady near 120 ms until deploy v2.14.1 at 14:34, then rises above the 300 ms SLO to about 410 ms.'}))),
+  h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}},
+    cell('Categorical series (chart-1 to chart-3), direct end labels plus legend', h('div',{style:{width:'100%'}},h(C.TimeSeriesChart,{height:150,unit:'req/s',labels:labs,series:[{name:'zone-a',points:lat.map(function(v,i){return 820+Math.sin(i/3)*60;}),color:'chart-1'},{name:'region-a-zone-b',points:lat.map(function(v,i){return 640+Math.cos(i/4)*50;}),color:'chart-2'},{name:'zone-c',points:lat.map(function(v,i){return 410+Math.sin(i/2)*30;}),color:'chart-3'}]}))),
+    h('div',{style:{display:'grid',gap:8}}, cell('Loading', h('div',{style:{width:'100%'}},h(C.TimeSeriesChart,{state:'loading',height:60}))), cell('Error', h('div',{style:{width:'100%'}},h(C.TimeSeriesChart,{state:'error',height:60}))))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

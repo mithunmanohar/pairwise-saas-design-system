@@ -1,0 +1,24 @@
+<!-- @dsCard group="Overlays" height=420 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Drawer</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h('div',{className:'pv-frame',style:{height:390}}, h('div',{style:{padding:16}},'Page content stays visible on the left so context is kept.'),
+  h(C.Drawer,{open:true,contained:true,title:'sample-api-6f8b9d7c4-k2x9q',subtitle:'Pod, example-team, cluster-prod-1',onClose:function(){},footer:h(F,null,h(C.Button,{variant:'secondary',icon:'terminal'},'Logs'),h(C.Button,{variant:'primary'},'Open workload')) },
+    h('div',{style:{display:'flex',gap:8}},h(C.StatusBadge,{status:'critical',label:'CrashLoopBackOff'}),h('span',{className:'pw-muted'},'37 restarts in 1 h')),
+    h('div',{className:'pw-mono',style:{background:'var(--surface-sunken)',padding:8,fontSize:11.5,whiteSpace:'pre-wrap'}},'Last state: Terminated  Reason: OOMKilled  Exit code: 137\nLimits: memory 1Gi (was 2Gi before v2.14.1)')));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

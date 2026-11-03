@@ -1,0 +1,26 @@
+<!-- @dsCard group="Actions" height=250 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Button</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){
+  var states=[['Default',{}],['Hover',{forceState:'hover'}],['Focus',{className:'is-focus'}],['Active',{forceState:'active'}],['Disabled',{disabled:true}],['Loading',{loading:true}]];
+  function line(v,label,icon){ return row.apply(null, states.map(function(s){ return cell(s[0]+', '+v, h(C.Button, Object.assign({variant:v,icon:icon},s[1]), label)); })); }
+  return h(F,null, line('primary','Acknowledge'), line('secondary','Open runbook','book'), line('ghost','Copy link','link'), line('danger','Roll back v2.14.1'),
+    row(cell('icon only (needs aria-label)', h(C.Button,{variant:'ghost',icon:'refresh','aria-label':'Refresh'})), cell('small', h(C.Button,{size:'sm'},'Apply')), cell('link button', h('button',{className:'pw-linkbtn'},'View all 14 changes'))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,21 @@
+<!-- @dsCard group="Inputs & navigation" height=130 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tabs</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var t=useState('overview'); return h(F,null, cell('Workload detail tabs (shared contract). Counts flag problems.', h('div',{style:{width:700}},h(C.Tabs,{value:t[0],onChange:t[1],tabs:[{value:'overview',label:'Overview'},{value:'pods',label:'Pods',count:'2 failing',tone:'critical'},{value:'metrics',label:'Metrics'},{value:'events',label:'Events',count:14},{value:'logs',label:'Logs'},{value:'changes',label:'Changes',count:3},{value:'cost',label:'Cost'},{value:'yaml',label:'YAML',disabled:true}]}))));}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

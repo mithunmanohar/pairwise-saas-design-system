@@ -1,0 +1,26 @@
+<!-- @dsCard group="Status" height=230 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>StatusBadge</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ return h(F,null,
+  row(cell('critical (filled)',h(C.StatusBadge,{status:'critical'})),cell('warning (filled)',h(C.StatusBadge,{status:'warning',label:'Degraded'})),cell('healthy (quiet outline)',h(C.StatusBadge,{status:'healthy'})),cell('unknown (dashed)',h(C.StatusBadge,{status:'unknown'})),cell('info / in progress',h(C.StatusBadge,{status:'info'}))),
+  row(cell('domain labels',h('span',{style:{display:'flex',gap:6,flexWrap:'wrap'}},h(C.StatusBadge,{status:'critical',label:'CrashLoopBackOff'}),h(C.StatusBadge,{status:'critical',label:'Failed'}),h(C.StatusBadge,{status:'warning',label:'Retry 2 / 3'}),h(C.StatusBadge,{status:'healthy',label:'Succeeded'}),h(C.StatusBadge,{status:'info',label:'Queued'}),h(C.StatusBadge,{status:'unknown',label:'Stale 14 min'})))),
+  row(cell('small (dense tables)',h('span',{style:{display:'flex',gap:6}},h(C.StatusBadge,{status:'critical',size:'sm'}),h(C.StatusBadge,{status:'healthy',size:'sm'}))),cell('dot (icon only, label in tooltip and for screen readers)',h('span',{style:{display:'flex',gap:8}},['critical','warning','healthy','unknown','info'].map(function(s){return h(C.StatusDot,{key:s,status:s});})))),
+  row(cell('trend: arrow = direction, colour = goodness from polarity',h('span',{style:{display:'flex',gap:16,flexWrap:'wrap'}},h(C.Trend,{value:38,polarity:'up-bad',window:'prev 1 h',breach:true}),h(C.Trend,{value:6.2,polarity:'up-bad',window:'prev 1 h'}),h(C.Trend,{value:-12,polarity:'up-bad',window:'last week'}),h(C.Trend,{value:4.1,polarity:'up-good',window:'last month'}),h(C.Trend,{value:-0.8,polarity:'up-good',window:'last month'}))))
+);}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

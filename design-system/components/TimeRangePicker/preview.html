@@ -1,0 +1,24 @@
+<!-- @dsCard group="Inputs & navigation" height=380 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TimeRangePicker</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var v=useState('1h'), r=useState('30s');
+  return h(F,null,row(cell('Default (live, refreshing every 30 s)',h(C.TimeRangePicker,{value:v[0],onChange:v[1],refresh:r[0],onRefreshChange:r[1]})),cell('Refresh off',h(C.TimeRangePicker,{value:'7d',refresh:'off'})),cell('Disabled (page locked to a range)',h(C.TimeRangePicker,{value:'mtd',refresh:'off',disabled:true}))),
+    h('div',{style:{height:280,display:'flex',justifyContent:'flex-end',paddingRight:8}},cell('Open',h(C.TimeRangePicker,{value:'1h',refresh:'30s',forceOpen:true}))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

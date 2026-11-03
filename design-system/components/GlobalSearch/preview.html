@@ -1,0 +1,23 @@
+<!-- @dsCard group="Inputs & navigation" height=300 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GlobalSearch</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+function Demo(){ var items=[{label:'sample-api',kind:'Service',status:'critical'},{label:'sample-api-6f8b9d7c4-k2x9q',kind:'Pod',status:'critical'},{label:'daily_ingest',kind:'DAG',status:'critical'},{label:'model_training_weekly',kind:'DAG',status:'info'},{label:'alert_q3x7n',kind:'Incident',status:'critical'},{label:'feature-store-api',kind:'Service',status:'healthy'}];
+  return h(F,null,row(cell('Default',h('div',{style:{width:380}},h(C.GlobalSearch,{items:items})))),row(cell('Typing “sample” (results with status)',h('div',{style:{width:380,height:180}},h(C.GlobalSearch,{items:items,forceQuery:'sample'})))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>
