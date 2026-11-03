@@ -10,6 +10,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "ci": "pnpm build && pnpm typecheck && pnpm lint && pnpm test"
+    "ci": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
+    "check:generated": "git diff --exit-code --stat -- design-system pairwise-prototype.html packages/ui/src/tokens.ts",
+    "capture": "node scripts/capture-previews.mjs"
   }
 }

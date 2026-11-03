@@ -1,4 +1,4 @@
-/* Pairwise — generated from tokens.json */
+/* Pairwise tokens. Generated from design-system/tokens.json. Do not edit. */
 :root, [data-theme="light"] {
   --surface: #f4f5f7;
   --surface-raised: #ffffff;
@@ -32,6 +32,7 @@
   --chart-other: #9aa1aa;
   --chart-grid: #e6e8eb;
   --shadow-overlay: 0 8px 24px rgba(17, 19, 22, 0.16), 0 1px 3px rgba(17, 19, 22, 0.12);
+  color-scheme: light;
 }
 [data-theme="dark"] {
   --surface: #141619;
@@ -66,6 +67,7 @@
   --chart-other: #6b727c;
   --chart-grid: #23272b;
   --shadow-overlay: 0 10px 28px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 :root {
   --space-1: 4px;
@@ -90,11 +92,13 @@
   --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
-.title { font-family: var(--font-sans); font-size: 24px; line-height: 32px; font-weight: 600; }
-.heading { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; }
-.subheading { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; }
-.body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
-.body-strong { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
-.caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
-.figure { font-family: var(--font-sans); font-size: 29px; line-height: 36px; font-weight: 600; }
-.data { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }
+:root { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }
+[data-density="comfortable"] { --pw-row: var(--row-comfortable); --pw-ctl: var(--control-comfortable); --pw-cell-x: var(--space-4); }
+.pw-title { font-family: var(--font-sans); font-size: 24px; line-height: 32px; font-weight: 600; }
+.pw-heading { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; }
+.pw-subheading { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; }
+.pw-body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.pw-body-strong { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
+.pw-caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.pw-figure { font-family: var(--font-sans); font-size: 29px; line-height: 36px; font-weight: 600; }
+.pw-data { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }

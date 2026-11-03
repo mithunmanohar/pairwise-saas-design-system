@@ -32,7 +32,9 @@ export function buildCss(t) {
   root.push(...Object.entries(t.type.families).map(([k, v]) => `  --font-${k}: ${v};`));
   out.push(`:root {\n${root.join("\n")}\n}`);
   // Densities: compact is the default; comfortable swaps only the spacing set used by components.
-  out.push(`:root, [data-density="compact"] { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }`);
+  // Compact is the :root default only. There is deliberately no [data-density="compact"] selector yet: AppShell stamps
+  // data-density="compact" by default, and matching it would override a comfortable page (a visible change pending approval).
+  out.push(`:root { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }`);
   out.push(`[data-density="comfortable"] { --pw-row: var(--row-comfortable); --pw-ctl: var(--control-comfortable); --pw-cell-x: var(--space-4); }`);
   for (const g of t.type.groups) for (const s of g.styles) {
     const fam = s.family ?? g.family;
