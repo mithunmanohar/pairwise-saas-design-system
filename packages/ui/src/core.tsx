@@ -1,4 +1,4 @@
-import type { ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, Status } from "./types";
+import type { ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
 import { createFormatter } from "./format";
 const timeZoneLabel = () => createFormatter({ locale: navigator.language, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, currency: "USD" }).timeZoneLabel();
 import { Icon } from "./icons";
@@ -35,7 +35,7 @@ export function StatusBadge({ status = "unknown", label, emphasis, size, classNa
 export function StatusDot({ status = "unknown", label }: StatusDotProps) {
   return <span className={cx("pw-sdot", "pw-badge--" + status)} title={label || STATUS_LABEL[status]}><Icon name={status} size={12} /><span className="pw-sr">{label || STATUS_LABEL[status]}</span></span>;
 }
-const SEV: any = { 1: ["critical", 4], 2: ["critical", 3], 3: ["warning", 2], 4: ["unknown", 1] };
+const SEV: Record<SeverityMarkProps["level"], [Status, number]> = { 1: ["critical", 4], 2: ["critical", 3], 3: ["warning", 2], 4: ["unknown", 1] };
 export function SeverityMark({ level = 3, showLabel = true, count }: SeverityMarkProps) {
   const [tone, n] = SEV[level];
   return (
@@ -79,12 +79,12 @@ export function Tooltip({ content, children, side = "top", forceOpen }: TooltipP
 }
 
 /* ---------- Popover (internal) ---------- */
-export function usePopover() {
+export function usePopover<T extends HTMLElement = HTMLDivElement>() {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<T>(null);
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (ref.current && !(ref.current as HTMLElement).contains(e.target as Node)) setOpen(false); };
+    const onDoc = (e: MouseEvent) => { if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false); };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDoc); document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
@@ -93,11 +93,14 @@ export function usePopover() {
 }
 
 /* ---------- Menu select (used by scope, filters) ---------- */
+// Options may be plain strings; a missing label falls back to the value.
+const toOption = (o: string | Option): Option & { label: string } => (typeof o === "string" ? { value: o, label: o } : { ...o, label: o.label ?? o.value });
 export function MenuSelect({ label, value, options, onChange, icon, disabled, width, prefix, forceOpen, quiet }: MenuSelectProps) {
   const { open, setOpen, ref } = usePopover();
   const isOpen = forceOpen || open;
-  const cur = options.find((o: any) => (o.value ?? o) === value);
-  const curLabel = cur ? (cur.label ?? cur) : value;
+  const opts = options.map(toOption);
+  const cur = opts.find((o) => o.value === value);
+  const curLabel = cur ? cur.label : value;
   return (
     <div className="pw-menusel" ref={ref}>
       <button type="button" className={cx("pw-field", quiet && "pw-field--quiet", isOpen && "is-open")} aria-haspopup="listbox" aria-expanded={isOpen} aria-label={label + ": " + curLabel} disabled={disabled} onClick={() => setOpen(!open)} style={width ? { minWidth: width } : undefined}>
@@ -108,14 +111,14 @@ export function MenuSelect({ label, value, options, onChange, icon, disabled, wi
       </button>
       {isOpen ? (
         <ul role="listbox" aria-label={label} className="pw-pop pw-list">
-          {options.map((o: any) => {
-            const v = o.value ?? o; const sel = v === value;
+          {opts.map((o) => {
+            const v = o.value; const sel = v === value;
             return (
               <li key={v} role="option" aria-selected={sel} tabIndex={0} className={cx("pw-list__item", sel && "is-selected")}
                 onClick={() => { onChange && onChange(v); setOpen(false); }}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange && onChange(v); setOpen(false); } }}>
                 <span className="pw-list__check">{sel ? <Icon name="check" size={14} /> : null}</span>
-                <span>{o.label ?? o}</span>
+                <span>{o.label}</span>
                 {o.meta ? <span className="pw-muted pw-list__meta">{o.meta}</span> : null}
               </li>
             );
@@ -136,7 +139,7 @@ const REFRESH = [{ value: "off", label: "Off" }, { value: "30s", label: "30 s" }
 export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRefreshChange, onCopy, ranges = TIME_RANGES, forceOpen, disabled, absolute }: TimeRangePickerProps) {
   const { open, setOpen, ref } = usePopover();
   const isOpen = forceOpen || open;
-  const cur = ranges.find((r: any) => r.value === value);
+  const cur = ranges.find((r) => r.value === value);
   const [copied, setCopied] = useState(false);
   return (
     <div className="pw-time" ref={ref}>
@@ -152,7 +155,7 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
             <div>
               <div className="pw-caption pw-muted pw-pop__h">Relative</div>
               <ul role="listbox" aria-label="Relative ranges" className="pw-list pw-list--flat">
-                {ranges.map((r: any) => (
+                {ranges.map((r) => (
                   <li key={r.value} role="option" tabIndex={0} aria-selected={r.value === value} className={cx("pw-list__item", r.value === value && "is-selected")}
                     onClick={() => { onChange && onChange(r.value); setOpen(false); }}
                     onKeyDown={(e) => { if (e.key === "Enter") { onChange && onChange(r.value); setOpen(false); } }}>
@@ -184,7 +187,7 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
 /* ---------- Scope switcher ---------- */
 export function ScopeSwitcher({ scope, options, onChange, compact }: ScopeSwitcherProps) {
   // scope: {env, cloud, cluster}; options: {env:[], cloud:[], cluster:[]}
-  const set = (k: string) => (v: any) => onChange && onChange({ ...scope, [k]: v });
+  const set = (k: keyof Scope) => (v: string) => onChange && onChange({ ...scope, [k]: v });
   return (
     <div className={cx("pw-scope", compact && "is-compact")} role="group" aria-label="Scope">
       <MenuSelect quiet label="Environment" value={scope.env} options={options.env} onChange={set("env")} />
@@ -205,8 +208,8 @@ export function GlobalSearch({ items = [], onSelect, placeholder = "Search repos
     const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); inputRef.current?.focus(); } };
     document.addEventListener("keydown", k); return () => document.removeEventListener("keydown", k);
   }, []);
-  const res = q ? items.filter((i: any) => (i.label + " " + (i.kind || "")).toLowerCase().includes(q.toLowerCase())).slice(0, 7) : [];
-  const pick = (i: any) => { onSelect && onSelect(i); setQ(""); setFocus(false); };
+  const res = q ? items.filter((i) => (i.label + " " + (i.kind || "")).toLowerCase().includes(q.toLowerCase())).slice(0, 7) : [];
+  const pick = (i: SearchItem) => { onSelect && onSelect(i); setQ(""); setFocus(false); };
   return (
     <div className="pw-search" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFocus(false); }}>
       <Icon name="search" />
@@ -215,13 +218,13 @@ export function GlobalSearch({ items = [], onSelect, placeholder = "Search repos
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") { e.preventDefault(); setHi(Math.min(hi + 1, res.length - 1)); }
           if (e.key === "ArrowUp") { e.preventDefault(); setHi(Math.max(hi - 1, 0)); }
-          if (e.key === "Enter" && res[hi]) pick(res[hi]);
-          if (e.key === "Escape") { setQ(""); (e.target as HTMLElement).blur(); }
+          const sel = res[hi]; if (e.key === "Enter" && sel) pick(sel);
+          if (e.key === "Escape") { setQ(""); e.currentTarget.blur(); }
         }} />
       <kbd className="pw-kbd">⌘K</kbd>
       {focus && q ? (
         <ul id="pw-search-res" role="listbox" className="pw-pop pw-list pw-search__res">
-          {res.length ? res.map((i: any, n: number) => (
+          {res.length ? res.map((i, n) => (
             <li key={i.label} role="option" aria-selected={n === hi} tabIndex={-1} className={cx("pw-list__item", n === hi && "is-active")} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(i)}>
               {i.status ? <StatusDot status={i.status} /> : <span className="pw-list__check" />}
               <span className="pw-mono">{i.label}</span><span className="pw-muted pw-list__meta">{i.kind}</span>
@@ -239,8 +242,8 @@ export function FilterBar({ filters = [], values = {}, onChange, query, onQuery,
   return (
     <div className="pw-filterbar" role="search">
       <div className="pw-filterbar__q"><Icon name="filter" /><input className="pw-input pw-input--bare" aria-label={queryPlaceholder} placeholder={queryPlaceholder} value={query || ""} onChange={(e) => onQuery && onQuery(e.target.value)} /></div>
-      {filters.map((f: any) => (
-        <MenuSelect key={f.key} label={f.label} prefix={f.label} value={values[f.key] || "all"} options={[{ value: "all", label: "All" }, ...f.options]} onChange={(v: any) => onChange && onChange({ ...values, [f.key]: v })} />
+      {filters.map((f) => (
+        <MenuSelect key={f.key} label={f.label} prefix={f.label} value={values[f.key] || "all"} options={[{ value: "all", label: "All" }, ...f.options]} onChange={(v) => onChange && onChange({ ...values, [f.key]: v })} />
       ))}
       {children}
       <span className="pw-filterbar__end">
@@ -256,7 +259,7 @@ export function Breadcrumbs({ items = [], onNavigate }: BreadcrumbsProps) {
   return (
     <nav aria-label="Breadcrumb" className="pw-crumbs">
       <ol>
-        {items.map((it: any, i: number) => {
+        {items.map((it, i) => {
           const last = i === items.length - 1;
           return (
             <li key={i}>
@@ -276,14 +279,14 @@ export function Tabs({ tabs = [], value, onChange, size }: TabsProps) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   return (
     <div role="tablist" className={cx("pw-tabs", size === "sm" && "pw-tabs--sm")}>
-      {tabs.map((t: any, i: number) => {
+      {tabs.map((t, i) => {
         const on = t.value === value;
         return (
           <button key={t.value} ref={(el: HTMLButtonElement | null) => (refs.current[i] = el)} role="tab" type="button" aria-selected={on} tabIndex={on ? 0 : -1} disabled={t.disabled}
             className={cx("pw-tab", on && "is-on")} onClick={() => onChange && onChange(t.value)}
             onKeyDown={(e) => {
               const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (!d) return;
-              const n = (i + d + tabs.length) % tabs.length; refs.current[n]?.focus(); onChange && onChange(tabs[n].value);
+              const n = (i + d + tabs.length) % tabs.length; refs.current[n]?.focus(); const next = tabs[n]; if (onChange && next) onChange(next.value);
             }}>
             {t.label}{t.count != null ? <span className={cx("pw-tab__count", t.tone && "pw-tone--" + t.tone)}>{t.count}</span> : null}
           </button>
@@ -294,7 +297,7 @@ export function Tabs({ tabs = [], value, onChange, size }: TabsProps) {
 }
 
 /* ---------- Panel (data surface) ---------- */
-export function Panel({ title, meta, actions, children, flush, className, footer, id, state }: PanelProps) {
+export function Panel({ title, meta, actions, children, flush, className, footer, id }: PanelProps) {
   return (
     <section className={cx("pw-panel", flush && "pw-panel--flush", className)} aria-labelledby={title && id ? id : undefined}>
       {title || actions ? (
@@ -344,9 +347,9 @@ export function Metric({ label, scope, value, unit, delta, target, status, statu
 }
 
 /* ---------- Skeleton & state templates ---------- */
-export function Skeleton({ w = "100%", h: ht = 12, style }: any) { return <span className="pw-skel" style={{ width: w, height: ht, ...style }} aria-hidden="true" />; }
+export function Skeleton({ w = "100%", h: ht = 12, style }: SkeletonProps) { return <span className="pw-skel" style={{ width: w, height: ht, ...style }} aria-hidden="true" />; }
 
-const STATE_DEF: any = {
+const STATE_DEF: Record<Exclude<StateBlockProps["kind"], "loading">, { icon: string; title: string }> = {
   empty: { icon: "unknown", title: "Nothing here yet" },
   error: { icon: "critical", title: "Couldn’t load this view" },
   "no-access": { icon: "lock", title: "You don’t have access" },
@@ -397,31 +400,33 @@ export function Toast({ tone = "info", title, body, action, onAction, onClose }:
     </div>
   );
 }
-export function ToastRegion({ children }: any) { return <div className="pw-toasts" aria-live="polite">{children}</div>; }
+export function ToastRegion({ children }: ToastRegionProps) { return <div className="pw-toasts" aria-live="polite">{children}</div>; }
 
 /* ---------- Drawer & modal ---------- */
-function useFocusTrap(open: boolean, onClose: any) {
-  const ref = useRef(null);
+function useFocusTrap<T extends HTMLElement>(open: boolean, onClose?: () => void) {
+  const ref = useRef<T>(null);
   useEffect(() => {
-    if (!open || !ref.current) return;
-    const el: any = ref.current; const prev: any = document.activeElement;
-    const f = el.querySelector("button, [href], input, [tabindex='0']"); f && f.focus();
+    const el = ref.current;
+    if (!open || !el) return;
+    const prev = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const f = el.querySelector<HTMLElement>("button, [href], input, [tabindex='0']"); f && f.focus();
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose && onClose();
       if (e.key === "Tab") {
-        const all = el.querySelectorAll("button:not([disabled]), [href], input, [tabindex='0']"); if (!all.length) return;
+        const all = el.querySelectorAll<HTMLElement>("button:not([disabled]), [href], input, [tabindex='0']");
         const first = all[0], last = all[all.length - 1];
+        if (!first || !last) return;
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     };
     el.addEventListener("keydown", key);
-    return () => { el.removeEventListener("keydown", key); prev && prev.focus && prev.focus(); };
+    return () => { el.removeEventListener("keydown", key); prev && prev.focus(); };
   }, [open]);
   return ref;
 }
 export function Drawer({ open, title, subtitle, onClose, children, footer, width, contained }: DrawerProps) {
-  const ref = useFocusTrap(open, onClose);
+  const ref = useFocusTrap<HTMLElement>(open, onClose);
   if (!open) return null;
   return (
     <div className={cx("pw-layer", contained && "is-contained")}>
@@ -435,7 +440,7 @@ export function Drawer({ open, title, subtitle, onClose, children, footer, width
   );
 }
 export function Modal({ open, title, onClose, children, actions, contained, tone }: ModalProps) {
-  const ref = useFocusTrap(open, onClose);
+  const ref = useFocusTrap<HTMLDivElement>(open, onClose);
   if (!open) return null;
   return (
     <div className={cx("pw-layer", "pw-layer--center", contained && "is-contained")}>
@@ -455,8 +460,8 @@ export function Sparkline({ points = [], width = 120, height = 28, threshold, to
   const max = Math.max(...points, threshold || 0) * 1.08, min = Math.min(...points, 0);
   const sx = (i: number) => 1 + (i * (width - 2)) / (points.length - 1);
   const sy = (v: number) => height - 2 - ((v - min) / (max - min || 1)) * (height - 4);
-  const d = points.map((v: number, i: number) => (i ? "L" : "M") + sx(i).toFixed(1) + "," + sy(v).toFixed(1)).join("");
-  const last = points[points.length - 1];
+  const d = points.map((v, i) => (i ? "L" : "M") + sx(i).toFixed(1) + "," + sy(v).toFixed(1)).join("");
+  const last = points[points.length - 1] ?? 0;
   return (
     <svg className="pw-spark" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label || `Trend, latest ${last}`}>
       {threshold != null ? <line x1="0" x2={width} y1={sy(threshold)} y2={sy(threshold)} className="pw-spark__thr" /> : null}

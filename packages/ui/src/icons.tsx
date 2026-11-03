@@ -1,8 +1,8 @@
-import * as React from "react";
-import { Fragment } from "react";
+import type * as React from "react";
+import type { IconProps } from "./types";
 
 // One icon set: 16px grid, 1.5 stroke, square-ish terminals. Drawn for this system.
-const P: Record<string, any> = {
+const P: Record<string, React.ReactElement> = {
   search: <g><circle cx="7" cy="7" r="4.25"/><path d="m10.2 10.2 3.3 3.3"/></g>,
   "chevron-down": <path d="m4.5 6.25 3.5 3.5 3.5-3.5"/>,
   "chevron-right": <path d="m6.25 4.5 3.5 3.5-3.5 3.5"/>,
@@ -50,7 +50,7 @@ const P: Record<string, any> = {
 };
 
 // Status glyphs: filled shapes so they read without colour.
-const S: Record<string, any> = {
+const S: Record<string, React.ReactElement> = {
   critical: <g><path d="M5.1 1.5h5.8l3.6 3.6v5.8l-3.6 3.6H5.1l-3.6-3.6V5.1z" fill="currentColor" stroke="none"/><path d="M8 4.5v4.25" stroke="var(--surface-raised)" strokeWidth="1.8"/><circle cx="8" cy="11.1" r="1" fill="var(--surface-raised)" stroke="none"/></g>,
   warning: <g><path d="M8 1.4 15 13.9H1z" fill="currentColor" stroke="none"/><path d="M8 5.75v3.75" stroke="var(--surface-raised)" strokeWidth="1.7"/><circle cx="8" cy="11.6" r=".95" fill="var(--surface-raised)" stroke="none"/></g>,
   healthy: <g><circle cx="8" cy="8" r="6.25"/><path d="m5.1 8.1 2 2 3.8-4"/></g>,
@@ -58,7 +58,7 @@ const S: Record<string, any> = {
   info: <g><circle cx="8" cy="8" r="6.25" strokeDasharray="28 11.3"/><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g>,
 };
 
-export function Icon({ name, size = 16, title, className }: { name: string; size?: number; title?: string; className?: string }) {
+export function Icon({ name, size = 16, title, className }: IconProps) {
   const glyph = S[name] || P[name];
   return (
     <svg className={"pw-icon" + (className ? " " + className : "")} width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor"

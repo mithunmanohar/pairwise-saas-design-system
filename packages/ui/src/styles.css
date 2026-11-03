@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500&family=Atkinson+Hyperlegible+Next:wght@400;600&display=swap");
 /* Pairwise components. Every colour, space, radius and size comes from tokens.css. */
 
 :root { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }

@@ -33,8 +33,8 @@
     "build:tokens": "node scripts/build-tokens.mjs",
     "build:js": "tsc -p tsconfig.build.json",
     "build": "node scripts/build-tokens.mjs && tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test test/",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json",
+    "test": "node --test test/*.test.mjs",
     "lint": "node scripts/lint-tokens-only.mjs"
   },
   "peerDependencies": {
