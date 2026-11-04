@@ -3,22 +3,24 @@ import { createFormatter } from "./format";
 const timeZoneLabel = () => createFormatter({ locale: navigator.language, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, currency: "USD" }).timeZoneLabel();
 import { Icon } from "./icons";
 import * as React from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Fragment } from "react";
 const { useState, useRef, useEffect, useId, useCallback, useMemo } = React;
 
 export const cx = (...a: Array<string | false | null | undefined | 0>) => a.filter(Boolean).join(" ");
 
 /* ---------- Button ---------- */
-export function Button({ variant = "secondary", size, icon, iconRight, loading, disabled, className, children, forceState, ...rest }: ButtonProps) {
+// Forwards its ref so it can be the trigger of a menu or popover.
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button({ variant = "secondary", size, icon, iconRight, loading, disabled, className, children, forceState, ...rest }, ref) {
   return (
-    <button {...rest} type={rest.type || "button"} disabled={disabled || loading} aria-busy={loading || undefined}
+    <button ref={ref} {...rest} type={rest.type || "button"} disabled={disabled || loading} aria-busy={loading || undefined}
       className={cx("pw-btn", "pw-btn--" + variant, size === "sm" && "pw-btn--sm", !children && "pw-btn--icon", forceState && "is-" + forceState, className)}>
       {loading ? <span className="pw-spin" aria-hidden="true" /> : icon ? <Icon name={icon} /> : null}
       {children ? <span>{children}</span> : null}
       {iconRight ? <Icon name={iconRight} /> : null}
     </button>
   );
-}
+});
 
 /* ---------- Status ---------- */
 const STATUS_LABEL: Record<Status, string> = { critical: "Critical", warning: "Warning", healthy: "Healthy", unknown: "No data", info: "Running" };
@@ -136,11 +138,26 @@ export const TIME_RANGES = [
   { value: "mtd", label: "Month to date" }, { value: "6mo", label: "Last 6 months" },
 ];
 const REFRESH = [{ value: "off", label: "Off" }, { value: "30s", label: "30 s" }, { value: "1m", label: "1 min" }, { value: "5m", label: "5 min" }];
-export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRefreshChange, onCopy, ranges = TIME_RANGES, forceOpen, disabled, absolute }: TimeRangePickerProps) {
+// Absolute ranges are typed as "YYYY-MM-DD HH:mm" in the browser's time zone (shown in the heading).
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const localStamp = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+const STAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRefreshChange, onCopy, ranges = TIME_RANGES, forceOpen, disabled, absolute, defaultAbsolute, onAbsoluteChange }: TimeRangePickerProps) {
   const { open, setOpen, ref } = usePopover();
   const isOpen = forceOpen || open;
   const cur = ranges.find((r) => r.value === value);
   const [copied, setCopied] = useState(false);
+  const [from, setFrom] = useState(() => defaultAbsolute?.from ?? localStamp(new Date(Date.now() - 3600e3)));
+  const [to, setTo] = useState(() => defaultAbsolute?.to ?? localStamp(new Date()));
+  const [absErr, setAbsErr] = useState<string | null>(null);
+  const errId = useId();
+  const apply = () => {
+    const f = from.trim(), t = to.trim();
+    if (!STAMP.test(f) || !STAMP.test(t)) return setAbsErr("Use the format YYYY-MM-DD HH:mm.");
+    if (f >= t) return setAbsErr("“From” must be before “To”.");
+    setAbsErr(null); onAbsoluteChange && onAbsoluteChange({ from: f, to: t }); setOpen(false);
+  };
+  const absProps = { "aria-invalid": absErr ? true : undefined, "aria-describedby": absErr ? errId : undefined } as const;
   return (
     <div className="pw-time" ref={ref}>
       <button type="button" className={cx("pw-field", isOpen && "is-open")} aria-haspopup="dialog" aria-expanded={isOpen} onClick={() => setOpen(!open)} disabled={disabled}>
@@ -166,9 +183,10 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
             </div>
             <div className="pw-time__abs">
               <div className="pw-caption pw-muted pw-pop__h">Absolute ({timeZoneLabel()})</div>
-              <label className="pw-lab">From<input className="pw-input pw-num" defaultValue="2026-10-29 13:58" /></label>
-              <label className="pw-lab">To<input className="pw-input pw-num" defaultValue="2026-10-29 14:58" /></label>
-              <Button size="sm" onClick={() => setOpen(false)}>Apply</Button>
+              <label className="pw-lab">From<input className="pw-input pw-num" value={from} onChange={(e) => setFrom(e.target.value)} onKeyDown={(e) => e.key === "Enter" && apply()} {...absProps} /></label>
+              <label className="pw-lab">To<input className="pw-input pw-num" value={to} onChange={(e) => setTo(e.target.value)} onKeyDown={(e) => e.key === "Enter" && apply()} {...absProps} /></label>
+              {absErr ? <div id={errId} className="pw-formfield__error pw-time__err" role="alert"><Icon name="critical" size={12} /><span>{absErr}</span></div> : null}
+              <Button size="sm" onClick={apply}>Apply</Button>
               <div className="pw-caption pw-muted pw-pop__h" style={{ marginTop: 12 }}>Auto-refresh</div>
               <div className="pw-seg" role="radiogroup" aria-label="Auto-refresh">
                 {REFRESH.map((r) => <button key={r.value} type="button" role="radio" aria-checked={r.value === refresh} className={cx("pw-seg__b", r.value === refresh && "is-on")} onClick={() => onRefreshChange && onRefreshChange(r.value)}>{r.label}</button>)}
@@ -199,7 +217,7 @@ export function ScopeSwitcher({ scope, options, onChange, compact }: ScopeSwitch
 }
 
 /* ---------- Global search ---------- */
-export function GlobalSearch({ items = [], onSelect, placeholder = "Search repositories, runs, files", forceQuery }: GlobalSearchProps) {
+export function GlobalSearch({ items = [], onSelect, placeholder = "Search repositories, runs, files", forceQuery, emptyHint }: GlobalSearchProps) {
   const [q, setQ] = useState(forceQuery || "");
   const [focus, setFocus] = useState(!!forceQuery);
   const [hi, setHi] = useState(0);
@@ -229,7 +247,7 @@ export function GlobalSearch({ items = [], onSelect, placeholder = "Search repos
               {i.status ? <StatusDot status={i.status} /> : <span className="pw-list__check" />}
               <span className="pw-mono">{i.label}</span><span className="pw-muted pw-list__meta">{i.kind}</span>
             </li>
-          )) : <li className="pw-list__empty pw-muted">No match for “{q}”. Try a pod hash, DAG id or incident number.</li>}
+          )) : <li className="pw-list__empty pw-muted">No match for “{q}”.{emptyHint ? " " + emptyHint : ""}</li>}
         </ul>
       ) : null}
     </div>
@@ -402,55 +420,53 @@ export function Toast({ tone = "info", title, body, action, onAction, onClose }:
 }
 export function ToastRegion({ children }: ToastRegionProps) { return <div className="pw-toasts" aria-live="polite">{children}</div>; }
 
-/* ---------- Drawer & modal ---------- */
-function useFocusTrap<T extends HTMLElement>(open: boolean, onClose?: () => void) {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!open || !el) return;
-    const prev = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const f = el.querySelector<HTMLElement>("button, [href], input, [tabindex='0']"); f && f.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose && onClose();
-      if (e.key === "Tab") {
-        const all = el.querySelectorAll<HTMLElement>("button:not([disabled]), [href], input, [tabindex='0']");
-        const first = all[0], last = all[all.length - 1];
-        if (!first || !last) return;
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    };
-    el.addEventListener("keydown", key);
-    return () => { el.removeEventListener("keydown", key); prev && prev.focus(); };
-  }, [open]);
-  return ref;
+/* ---------- Drawer & modal (Radix Dialog) ---------- */
+// Radix handles the focus trap, Escape, outside click and aria-modal. `contained` renders a non-modal dialog inside the
+// nearest positioned ancestor (used by the preview cards and embedded demos): no focus trap, no scroll lock.
+// Focus returns to whatever was focused when the dialog opened (there is no Dialog.Trigger to return to).
+function useReturnFocus(open: boolean) {
+  const prev = useRef<HTMLElement | null>(null);
+  if (open && !prev.current && typeof document !== "undefined") prev.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  return (e: Event) => { e.preventDefault(); prev.current?.focus(); prev.current = null; };
+}
+function Scrim({ contained, light }: { contained?: boolean; light?: boolean }) {
+  const cls = cx("pw-scrim", light && "pw-scrim--light");
+  return contained ? <div className={cls} /> : <Dialog.Overlay className={cls} />;
 }
 export function Drawer({ open, title, subtitle, onClose, children, footer, width, contained }: DrawerProps) {
-  const ref = useFocusTrap<HTMLElement>(open, onClose);
-  if (!open) return null;
+  const onCloseAutoFocus = useReturnFocus(open);
   return (
-    <div className={cx("pw-layer", contained && "is-contained")}>
-      <div className="pw-scrim pw-scrim--light" onClick={onClose} />
-      <aside ref={ref} className="pw-drawer" role="dialog" aria-modal="true" aria-label={title} style={width ? { width } : undefined}>
-        <header className="pw-drawer__h"><div><div className="pw-heading">{title}</div>{subtitle ? <div className="pw-caption pw-muted">{subtitle}</div> : null}</div><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
-        <div className="pw-drawer__b">{children}</div>
-        {footer ? <footer className="pw-drawer__f">{footer}</footer> : null}
-      </aside>
-    </div>
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={!contained}>
+      {open ? (
+        <div className={cx("pw-layer", contained && "is-contained")}>
+          <Scrim contained={contained} light />
+          <Dialog.Content asChild aria-describedby={undefined} onCloseAutoFocus={onCloseAutoFocus}>
+            <aside className="pw-drawer" style={width ? { width } : undefined}>
+              <header className="pw-drawer__h"><div><Dialog.Title asChild><div className="pw-heading">{title}</div></Dialog.Title>{subtitle ? <div className="pw-caption pw-muted">{subtitle}</div> : null}</div><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
+              <div className="pw-drawer__b">{children}</div>
+              {footer ? <footer className="pw-drawer__f">{footer}</footer> : null}
+            </aside>
+          </Dialog.Content>
+        </div>
+      ) : null}
+    </Dialog.Root>
   );
 }
 export function Modal({ open, title, onClose, children, actions, contained, tone }: ModalProps) {
-  const ref = useFocusTrap<HTMLDivElement>(open, onClose);
-  if (!open) return null;
+  const onCloseAutoFocus = useReturnFocus(open);
   return (
-    <div className={cx("pw-layer", "pw-layer--center", contained && "is-contained")}>
-      <div className="pw-scrim" onClick={onClose} />
-      <div ref={ref} className="pw-modal" role={tone === "critical" ? "alertdialog" : "dialog"} aria-modal="true" aria-label={title}>
-        <header className="pw-modal__h"><div className="pw-heading">{title}</div><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
-        <div className="pw-modal__b">{children}</div>
-        {actions ? <footer className="pw-modal__f">{actions}</footer> : null}
-      </div>
-    </div>
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={!contained}>
+      {open ? (
+        <div className={cx("pw-layer", "pw-layer--center", contained && "is-contained")}>
+          <Scrim contained={contained} />
+          <Dialog.Content className="pw-modal" role={tone === "critical" ? "alertdialog" : "dialog"} aria-describedby={undefined} onCloseAutoFocus={onCloseAutoFocus}>
+            <header className="pw-modal__h"><Dialog.Title asChild><div className="pw-heading">{title}</div></Dialog.Title><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
+            <div className="pw-modal__b">{children}</div>
+            {actions ? <footer className="pw-modal__f">{actions}</footer> : null}
+          </Dialog.Content>
+        </div>
+      ) : null}
+    </Dialog.Root>
   );
 }
 

@@ -1,0 +1,24 @@
+<!-- @dsCard group="Forms" height=200 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Checkbox</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:220px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){ var s=useState(true);
+  return h(F,null,
+    row(cell('Unchecked / checked', h(F,null, h(C.Checkbox,{label:'Run tests before merge'}), h(C.Checkbox,{label:'Require approval',checked:s[0],onChange:s[1]}))),
+        cell('Hint', h(C.Checkbox,{label:'Delete branch after merge',defaultChecked:true,hint:'You can restore it from GitHub for 30 days.'})),
+        cell('Error', h(C.Checkbox,{label:'I understand this stops the run',error:'Confirm before stopping the run.'}))),
+    row(cell('Disabled', h(F,null, h(C.Checkbox,{label:'Sign commits',disabled:true}), h(C.Checkbox,{label:'Protected branch',defaultChecked:true,disabled:true})))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Visual baseline for the component preview cards (design-system/components/<Card>/preview.html).
+// Optional before/after screenshots of the component preview cards (design-system/components/<Card>/preview.html).
+// Typical use: capture on main, capture on your branch, diff, and attach the changed PNGs to the PR.
 //
 //   node scripts/capture-previews.mjs capture <outDir> [--only Card,Card] [--themes light,dark] [--densities compact,comfortable]
 //   node scripts/capture-previews.mjs diff <beforeDir> <afterDir> <diffDir> [--tolerance 2]
@@ -12,8 +13,7 @@
 // PNG for every card that differs, plus report.json. A pixel differs when any channel moves by more than --tolerance
 // (default 2/255): back-to-back captures of the same kit differ by at most 2 on a few anti-aliased panel corners.
 //
-// Needs Playwright. It isn't a repo dependency yet (Phase 5 adds @playwright/test); the script resolves a globally
-// installed `playwright` through NODE_PATH or the usual global locations.
+// Needs Playwright, which is not a repo dependency: the script resolves a globally installed `playwright`.
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";

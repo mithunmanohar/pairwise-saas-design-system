@@ -1,0 +1,41 @@
+name: Release
+
+# Push a tag like v1.2.0 (matching packages/ui/package.json) to release. The built package is pushed to the
+# tag ui-v1.2.0, which projects install with:  pnpm add github:<owner>/<repo>#ui-v1.2.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run ci
+      - name: Tag must match the package version
+        run: test "v$(node -p "require('./packages/ui/package.json').version")" = "$GITHUB_REF_NAME"
+      - run: node scripts/pack-release.mjs "$RUNNER_TEMP/pkg"
+      - name: Push the built package to ui-${{ github.ref_name }}
+        working-directory: ${{ runner.temp }}/pkg
+        run: |
+          git init -q -b release
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "@pairwise/ui ${GITHUB_REF_NAME#v}"
+          git tag "ui-$GITHUB_REF_NAME"
+          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ui-$GITHUB_REF_NAME"
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "@pairwise/ui ${GITHUB_REF_NAME#v}" \
+            --notes "Install or update: \`pnpm add github:${{ github.repository }}#ui-$GITHUB_REF_NAME\`. What changed: packages/ui/CHANGELOG.md."

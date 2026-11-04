@@ -49,7 +49,7 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", accountLabel, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
@@ -60,7 +60,7 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
           <Icon name="bell" />{alerts ? <span className="pw-iconbtn__n">{alerts}</span> : null}
         </button>
-        <button type="button" className="pw-avatar" aria-label="Account: M, Platform Admin">{user}</button>
+        <button type="button" className="pw-avatar" aria-label={accountLabel || "Account"}>{user}</button>
       </div>
     </header>
   );

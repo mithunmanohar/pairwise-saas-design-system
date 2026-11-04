@@ -1,6 +1,7 @@
 {
   "name": "pairwise",
   "private": true,
+  "description": "Pairwise: a production-grade React design system for AI applications and multi-tenant SaaS.",
   "packageManager": "pnpm@9.12.0",
   "engines": {
     "node": ">=20"
@@ -11,7 +12,7 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "ci": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
-    "check:generated": "git diff --exit-code --stat -- design-system pairwise-prototype.html packages/ui/src/tokens.ts",
+    "check:generated": "git diff --exit-code --stat -- design-system packages/ui/src/tokens.ts",
     "capture": "node scripts/capture-previews.mjs"
   }
 }

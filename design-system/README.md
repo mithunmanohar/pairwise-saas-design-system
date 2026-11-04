@@ -62,6 +62,6 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 
 ## Using the components
 
-`components/bundle.js` defines `window.Pairwise` (React 18). Load `tokens.css`, then `components/bundle.css`, then React, then the bundle. Phase 2 replaces this with the `@pairwise/ui` package (ESM + types).
+Apps install `@pairwise/ui` (ESM + types); see `packages/ui/README.md`. The preview cards here load the same code as a generated `components/bundle.js` (`window.Pairwise`).
 
-Behaviour comes from Radix primitives styled with the `pw-` classes and tokens. Charts use Apache ECharts behind `ChartCard`, and tables use TanStack Table + Virtual. All dependencies are MIT, Apache-2.0 or OFL.
+Charts are lightweight SVG and the table is our own; both are enough for operational dashboards. Overlays and form controls use Radix primitives where focus handling matters, styled with the `pw-` classes and tokens. All dependencies are MIT, Apache-2.0 or OFL.
