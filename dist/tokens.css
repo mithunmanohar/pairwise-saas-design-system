@@ -1,0 +1,104 @@
+/* Pairwise tokens. Generated from design-system/tokens.json. Do not edit. */
+:root, [data-theme="light"] {
+  --surface: #f4f5f7;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f2;
+  --surface-hover: #eceef1;
+  --surface-selected: #e3e6ea;
+  --surface-overlay: #ffffff;
+  --border: #e1e4e8;
+  --border-strong: #828a94;
+  --ink: #15171a;
+  --ink-muted: #5a616b;
+  --ink-disabled: #9aa1aa;
+  --ink-inverse: #ffffff;
+  --focus-ring: #15171a;
+  --scrim: rgba(14, 16, 18, 0.44);
+  --status-critical: #b42318;
+  --status-critical-surface: #fdecea;
+  --status-warning: #8a5300;
+  --status-warning-surface: #fdf3e1;
+  --status-healthy: #0b6e69;
+  --status-healthy-surface: #e3f4f2;
+  --status-unknown: #5b6470;
+  --status-unknown-surface: #eef0f3;
+  --status-info: #3c4654;
+  --status-info-surface: #eceef1;
+  --chart-1: #2a62c9;
+  --chart-2: #b23a78;
+  --chart-3: #6b7a12;
+  --chart-4: #5d1b6a;
+  --chart-5: #225924;
+  --chart-other: #9aa1aa;
+  --chart-grid: #e6e8eb;
+  --shadow-overlay: 0 8px 24px rgba(17, 19, 22, 0.16), 0 1px 3px rgba(17, 19, 22, 0.12);
+  color-scheme: light;
+}
+[data-theme="dark"] {
+  --surface: #141619;
+  --surface-raised: #1b1e22;
+  --surface-sunken: #17191d;
+  --surface-hover: #23272c;
+  --surface-selected: #2c3137;
+  --surface-overlay: #22262b;
+  --border: #2e333a;
+  --border-strong: #6f7782;
+  --ink: #eceef0;
+  --ink-muted: #a0a7b1;
+  --ink-disabled: #5b626b;
+  --ink-inverse: #141619;
+  --focus-ring: #eceef0;
+  --scrim: rgba(0, 0, 0, 0.62);
+  --status-critical: #ff7a6b;
+  --status-critical-surface: #3a1d1a;
+  --status-warning: #f7b955;
+  --status-warning-surface: #33270f;
+  --status-healthy: #4fd1c1;
+  --status-healthy-surface: #0f2e2b;
+  --status-unknown: #a3acb8;
+  --status-unknown-surface: #222831;
+  --status-info: #c3cad3;
+  --status-info-surface: #20252b;
+  --chart-1: #4d8ae6;
+  --chart-2: #c95791;
+  --chart-3: #8a9a20;
+  --chart-4: #cea2d7;
+  --chart-5: #57db5d;
+  --chart-other: #6b727c;
+  --chart-grid: #23272b;
+  --shadow-overlay: 0 10px 28px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-5: 20px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-0: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --row-compact: 32px;
+  --row-comfortable: 40px;
+  --control-compact: 32px;
+  --control-comfortable: 36px;
+  --topbar-height: 52px;
+  --rail-expanded: 232px;
+  --rail-collapsed: 56px;
+  --drawer-width: 520px;
+  --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+:root { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }
+[data-density="comfortable"] { --pw-row: var(--row-comfortable); --pw-ctl: var(--control-comfortable); --pw-cell-x: var(--space-4); }
+.pw-title { font-family: var(--font-sans); font-size: 24px; line-height: 32px; font-weight: 600; }
+.pw-heading { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; }
+.pw-subheading { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; }
+.pw-body { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.pw-body-strong { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
+.pw-caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.pw-figure { font-family: var(--font-sans); font-size: 29px; line-height: 36px; font-weight: 600; }
+.pw-data { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }
