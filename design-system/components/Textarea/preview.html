@@ -1,0 +1,23 @@
+<!-- @dsCard group="Forms" height=250 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Textarea</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:320px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){
+  return h(F,null,
+    row(cell('Default + hint', h(C.Textarea,{label:'Review comment',placeholder:'What should change?',hint:'Markdown is supported.'})),
+        cell('Error', h(C.Textarea,{label:'Commit message',defaultValue:'wip',error:'Describe the change in at least 10 characters.'})),
+        cell('Disabled', h(C.Textarea,{label:'Agent notes',defaultValue:'Read-only while the run is in progress.',disabled:true}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,23 @@
+{
+  "name": "@pairwise/examples",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Example screens built only from @pairwise/ui, and the script that screenshots them for the README.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "screenshots": "node scripts/build.mjs && node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "@pairwise/ui": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.6.0"
+  }
+}

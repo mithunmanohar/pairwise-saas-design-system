@@ -1,0 +1,20 @@
+/* Page layout for the example screens. App CSS like this uses the Pairwise variables only, never raw values. */
+html, body, #root { height: 100%; margin: 0; }
+.ex-row { display: grid; gap: var(--space-5); align-items: start; }
+.ex-2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.ex-2-even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ex-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--border); }
+.ex-stack { display: grid; gap: var(--space-5); align-content: start; }
+.ex-narrow { max-width: 880px; }
+.ex-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
+.ex-form .ex-span { grid-column: 1 / -1; }
+.ex-checks { display: grid; gap: var(--space-3); }
+.ex-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.ex-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.ex-danger { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
+.ex-danger p { margin: 0; }
+.ex-runs { display: grid; gap: var(--space-3); }
+.ex-runs > div { display: grid; gap: var(--space-1); }
+/* Demo-only floating display control (theme and density). */
+.ex-display { position: fixed; left: 50%; bottom: var(--space-5); z-index: 80; transform: translateX(-50%); display: flex; gap: var(--space-5); padding: var(--space-2) var(--space-4); background: var(--surface-overlay); color: var(--ink); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); }
+.ex-display .pw-formfield { gap: 0; }

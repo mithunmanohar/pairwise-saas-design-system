@@ -1,0 +1,23 @@
+<!-- @dsCard group="Actions" height=300 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ActionMenu</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var items=[{label:'Re-run',icon:'refresh',shortcut:'R'},{label:'Copy link',icon:'link'},{label:'Open on GitHub',icon:'external'},'separator',{label:'Pause schedule',icon:'pause',disabled:true},{label:'Delete run',tone:'critical'}];
+function Demo(){
+  return row(cell('Default trigger (⋯)', h(C.ActionMenu,{label:'Actions for run_8f3k2',items:items})),
+    cell('Own trigger', h(C.ActionMenu,{items:items,align:'start',trigger:h(C.Button,{iconRight:'chevron-down'},'Actions')})),
+    cell('Open', h('div',{style:{height:230}}, h(C.ActionMenu,{label:'Actions for run_8f3k2',items:items,forceOpen:true,align:'start'}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,25 @@
+<!-- @dsCard group="Forms" height=230 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Select</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:240px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){ var s=useState('sample-repo');
+  var repos=[{value:'sample-repo',label:'sample-repo',meta:'example-org'},{value:'docs-site',label:'docs-site',meta:'example-org'},{value:'infra',label:'infra',meta:'example-org'}];
+  return h(F,null,
+    row(cell('Default', h(C.Select,{label:'Repository',options:repos,value:s[0],onChange:s[1]})),
+        cell('Placeholder + hint', h(C.Select,{label:'Reviewer',options:['Dev A','Dev B','Dev C'],placeholder:'Choose a reviewer',hint:'They get a review request.'})),
+        cell('Error', h(C.Select,{label:'Target branch',options:['main','release/2.4'],error:'Choose a target branch.'}))),
+    row(cell('Disabled', h(C.Select,{label:'Model',options:['default'],defaultValue:'default',disabled:true}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>
