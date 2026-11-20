@@ -19,7 +19,9 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # build → typecheck → lint → tests (contrast, colour-blind separation, generators, prop types)
+      # Chromium for the keyboard, focus and axe tests (packages/ui/test/e2e)
+      - run: pnpm -C packages/ui exec playwright install --with-deps chromium
+      # build → typecheck → lint → tests (contrast, colour-blind separation, generators, prop types) → e2e + axe
       - run: pnpm run ci
       # The build regenerates the preview kit and the catalogue; they must be committed with the source change.
       - run: pnpm check:generated

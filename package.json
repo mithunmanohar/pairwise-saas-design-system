@@ -11,8 +11,9 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "ci": "pnpm build && pnpm typecheck && pnpm lint && pnpm test",
+    "ci": "pnpm build && pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e",
     "check:generated": "git diff --exit-code --stat -- design-system packages/ui/src/tokens.ts",
-    "capture": "node scripts/capture-previews.mjs"
+    "capture": "node scripts/capture-previews.mjs",
+    "test:e2e": "pnpm -C packages/ui test:e2e"
   }
 }

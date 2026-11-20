@@ -54,10 +54,11 @@
     "build:tokens": "node scripts/build-tokens.mjs",
     "build:js": "tsc -p tsconfig.build.json",
     "build": "node scripts/build-tokens.mjs && tsc -p tsconfig.build.json && node scripts/copy-css.mjs && node scripts/build-preview.mjs && node scripts/build-catalogue.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/types/tsconfig.json && tsc -p test/e2e/tsconfig.json",
     "test": "node --test test/*.test.mjs",
     "lint": "node scripts/lint-tokens-only.mjs",
-    "build:preview": "node scripts/build-preview.mjs"
+    "build:preview": "node scripts/build-preview.mjs",
+    "test:e2e": "node test/e2e/build-harness.mjs && playwright test"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0",
@@ -76,8 +77,10 @@
     "@radix-ui/react-switch": "^1.4.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
+    "axe-core": "^4.11.0",
     "esbuild": "^0.28.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -1,0 +1,12 @@
+{
+  "card:BarChart:light": ["svg-img-alt"],
+  "card:BarChart:dark": ["svg-img-alt"],
+  "card:FilterBar:light": ["label-content-name-mismatch"],
+  "card:FilterBar:dark": ["label-content-name-mismatch"],
+  "card:MenuSelect:light": ["label-content-name-mismatch"],
+  "card:MenuSelect:dark": ["label-content-name-mismatch"],
+  "card:StatusGrid:light": ["target-size"],
+  "card:StatusGrid:dark": ["target-size"],
+  "card:TimeSeriesChart:light": ["nested-interactive", "svg-img-alt"],
+  "card:TimeSeriesChart:dark": ["nested-interactive", "svg-img-alt"]
+}

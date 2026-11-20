@@ -17,6 +17,7 @@ now, not what a public design system might need. The current work list is `TASKS
   - `scripts/`: `build-tokens.mjs`, `color.mjs`, `copy-css.mjs`, `lint-tokens-only.mjs`, `build-preview.mjs` (esbuild, dev-only: package → preview kit), `build-catalogue.mjs` (catalogue + `dist/COMPONENTS.md`).
   - `CHANGELOG.md`: one entry per release. Bump `version` in `package.json` with it (fix = patch, new component/prop = minor, breaking = major).
   - `test/tokens.test.mjs`: contrast, colour-blind ΔE and generator tests. `test/types/consumer.tsx`: type tests against `dist/`.
+  - `test/e2e/`: Playwright behaviour, keyboard and axe tests in Chromium (`pnpm test:e2e`). `fixtures.tsx` holds small compositions mounted by `harness.tsx`; `a11y.spec.ts` runs axe on every card and fixture in both themes. `a11y-known.json` is a shrinking ledger of old violations: never add to it.
 - `design-system/`: rules and the component catalogue.
   - `README.md`, `GUIDELINES.md`, `DECISIONS.md`: rules and rationale. Keep them in sync with code.
   - `tokens.json`: **the single source of truth** for every colour, space, radius, size and type style.
@@ -43,9 +44,10 @@ Flat neutral chrome with no accent hue. `status-critical` is the only colour tha
 ## Commands
 ```sh
 pnpm install
-pnpm run ci            # build → typecheck → lint → test (`pnpm ci` is a pnpm built-in; use `run`)
+pnpm run ci            # build → typecheck → lint → test → test:e2e (`pnpm ci` is a pnpm built-in; use `run`)
+pnpm test:e2e          # Playwright + axe only (after a build)
 pnpm check:generated   # fails if a build changed generated files that weren't committed
-pnpm capture capture <dir>; pnpm capture diff <before> <after> <diffDir>   # optional screenshots
+pnpm capture capture <dir> [--widths 1440,1024,390]; pnpm capture diff <before> <after> <diffDir>   # optional screenshots
 ```
 
 ## How to work
