@@ -1,0 +1,27 @@
+<!-- @dsCard group="Feedback" height=230 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ProgressBar</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:300px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){
+  return h(F,null,
+    row(cell('Determinate', h(C.ProgressBar,{label:'Rollout',value:3,max:12,valueText:'3 of 12 replicas',hint:'region-a, one replica at a time'})),
+        cell('Percent', h(C.ProgressBar,{label:'Index build',value:42})),
+        cell('Indeterminate', h(C.ProgressBar,{label:'Preparing runners',value:null}))),
+    row(cell('warning: at risk', h(C.ProgressBar,{label:'Token budget',value:86,tone:'warning',valueText:'86 % of monthly budget'})),
+        cell('critical: failing', h(C.ProgressBar,{label:'Migration',value:71,tone:'critical',valueText:'Stopped at 71 %',hint:'3 tables failed. See the log.'})),
+        cell('Label hidden', h(C.ProgressBar,{label:'Uploading sbom.json',hideLabel:true,value:64}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

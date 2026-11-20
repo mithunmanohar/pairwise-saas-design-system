@@ -1,6 +1,6 @@
 // Type-level tests against the built package (dist/*.d.ts), resolved through package.json "exports".
 // Run by `pnpm typecheck` after `pnpm build`. A line marked @ts-expect-error must stay an error.
-import { Field, Popover, PopoverClose, iconNames, type IconName, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
+import { Field, Popover, PopoverClose, iconNames, type IconName, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup, ProgressBar, parseISODate, toISODate, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
 import { color, fonts, motion, layer, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
@@ -81,3 +81,31 @@ export const badIconName = <Icon name="serach" />;
 export const badField = <Field label="Owner"><input /></Field>;
 export const dur: string = motion["duration-base"];
 export const z: string = layer["z-popover"];
+
+// 2.0 components: generics and unions stay strict.
+export const v2 = [
+  <SegmentedControl label="View" options={["list", { value: "board", label: "Board", disabled: true }]} value="list" onChange={(v) => v.trim()} />,
+  <Pagination page={2} pageSize={25} total={312} onPageChange={(p) => p + 1} pageSizeOptions={[25, 50]} onPageSizeChange={(n) => n * 2} />,
+  <ColumnsMenu columns={columns} hidden={["repo"]} onChange={(h) => h.length} />,
+  <DataTable columns={columns} rows={runs} selection="multiple" selectedKeys={["run_8f3k2"]} onSelectionChange={(k) => k.length}
+    bulkActions={(keys, rs) => <Button>{keys.length + rs[0]!.durationMs}</Button>} rowActions={(r) => [{ label: "Copy " + r.id }]} sort={{ key: "id", dir: "asc" }} onSortChange={(s) => s.dir} manual totalRows={300} page={2} />,
+  <RadioGroup ref={createRef<HTMLDivElement>()} label="Plan" options={["free", { value: "team", description: "10 runners" }]} value="free" onChange={(v) => v.trim()} />,
+  <Combobox label="Reviewer" options={["Dev A"]} value={null} onChange={(v: string | null) => v} />,
+  <Combobox label="Topics" multiple options={[{ value: "ci", keywords: ["build"] }]} value={["ci"]} onChange={(v: string[]) => v.length} creatable onCreate={(l) => l.trim()} />,
+  <DatePicker label="Due" value="2026-11-20" onChange={(v) => v?.slice(0, 4)} min="2026-01-01" isDateDisabled={(d) => d.endsWith("25")} />,
+  <DateRangePicker label="Period" value={{ from: "2026-11-01", to: null }} onChange={(r) => r?.from} maxDays={31} presets={DEFAULT_RANGE_PRESETS} />,
+  <InlineEdit label="Description" value="x" onSave={async (v) => { await Promise.resolve(v); }} validate={(v) => (v ? null : "Required")} />,
+  <FileUpload label="Files" accept=".json" files={[{ id: "1", name: "a.json", size: 1, status: "uploading", progress: 10 }]} onFiles={(fs) => fs.map((f) => f.name)} />,
+  <KeyValueList layout="grid" columns={3} items={[{ label: "Run", value: "run_8f3k2", mono: true, copy: "run_8f3k2" }]} />,
+  <AvatarGroup people={[{ name: "Dev A" }]} max={3} size={32} />,
+  <ProgressBar label="Rollout" value={null} tone="warning" />,
+];
+export const iso: string | null = parseISODate("2026-11-20") ? toISODate(new Date()) : null;
+// @ts-expect-error multiple comboboxes take string arrays
+export const badMulti = <Combobox label="Topics" multiple value="ci" options={[]} />;
+// @ts-expect-error single comboboxes take a string or null
+export const badSingle = <Combobox label="Owner" value={["a"]} options={[]} />;
+// @ts-expect-error upload status is one of four states
+export const badUpload = <FileUpload label="Files" files={[{ id: "1", name: "a", size: 1, status: "failed" }]} />;
+// @ts-expect-error avatar sizes are 20 | 28 | 32 | 36
+export const badAvatar = <Avatar name="Dev A" size={30} />;

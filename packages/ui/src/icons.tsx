@@ -50,6 +50,11 @@ const P = {
   minus: <path d="M4 8h8"/>,
   "chevrons-left": <path d="m8.25 4.5-3.5 3.5 3.5 3.5M12.25 4.5 8.75 8l3.5 3.5"/>,
   "chevrons-right": <path d="m3.75 4.5 3.5 3.5-3.5 3.5M7.75 4.5l3.5 3.5-3.5 3.5"/>,
+  edit: <g><path d="M10.25 3.25 12.75 5.75 6 12.5H3.5V10z"/><path d="m8.75 4.75 2.5 2.5"/></g>,
+  upload: <g><path d="M8 10.5V2.75M4.75 6 8 2.75 11.25 6"/><path d="M2.75 10.5v2.75h10.5V10.5"/></g>,
+  calendar: <g><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.75h11M5.5 2v3M10.5 2v3"/></g>,
+  plus: <path d="M8 3.5v9M3.5 8h9"/>,
+  file: <g><path d="M3.75 1.75h5.5l3 3v9.5h-8.5z"/><path d="M9.25 1.75v3h3"/></g>,
   columns: <g><rect x="2.5" y="2.75" width="11" height="10.5"/><path d="M6.25 2.75v10.5M9.75 2.75v10.5"/></g>,
 } satisfies Record<string, React.ReactElement>;
 

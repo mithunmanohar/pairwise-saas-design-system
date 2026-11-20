@@ -2,6 +2,7 @@ import type { SideNavProps, TopBarProps, AppShellProps, PageHeaderProps, PageHea
 import { Icon } from "./icons";
 import { cx, Button, Tooltip, TooltipProvider, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
 import { ActionMenu } from "./actions";
+import { KeyValueList } from "./display";
 import * as React from "react";
 import { Fragment } from "react";
 const { useState, useRef, useEffect } = React;
@@ -109,7 +110,7 @@ const isFields = (m: PageHeaderProps["meta"]): m is PageHeaderField[] => Array.i
 export function PageHeader({ crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
   // meta: a short sentence, or structured fields [{label, value, mono?}] (preferred over dot-joined strings)
   const metaEl = isFields(meta)
-    ? <dl className="pw-fields">{meta.map((m) => <div key={m.label}><dt>{m.label}</dt><dd className={cx(m.mono && "pw-mono")}>{m.value}</dd></div>)}</dl>
+    ? <KeyValueList layout="inline" items={meta} />
     : meta ? <span className="pw-pagehead__meta">{meta}</span> : null;
   return (
     <div className="pw-pagehead">

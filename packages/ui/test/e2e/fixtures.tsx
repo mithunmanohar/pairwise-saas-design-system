@@ -4,7 +4,8 @@ import * as React from "react";
 import {
   ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
   Switch, Tabs, TabPanel, TextInput, Toaster, toast, Tooltip, TimeRangePicker, SegmentedControl, StatusGrid, BarChart, Heatmap,
-  Pagination, ColumnsMenu, type Column, type DataTableSort,
+  Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup,
+  ProgressBar, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
 } from "../../src/index";
 
 const { useState } = React;
@@ -263,9 +264,61 @@ function TabPanelsFixture() {
   );
 }
 
+function NewFormFixture() {
+  const [plan, setPlan] = useState("team");
+  const [owner, setOwner] = useState<string | null>(null);
+  const [topics, setTopics] = useState<string[]>(["ci"]);
+  const [extra, setExtra] = useState<string[]>([]);
+  const [due, setDue] = useState<string | null>("2026-11-20");
+  const [range, setRange] = useState<DateRangeValue | null>(null);
+  const owners = ["Dev A", "Dev B", "Dev C", "Dev D", "Dev E"].map((n, i) => ({ value: "dev-" + "abcde"[i], label: n, meta: i === 0 ? "Owner" : "Member" }));
+  return (
+    <div style={{ display: "grid", gap: 20, maxWidth: 420 }}>
+      <RadioGroup label="Plan" value={plan} onChange={setPlan} hint="You can change this later." options={[{ value: "free", label: "Free", description: "1 runner" }, { value: "team", label: "Team", description: "10 runners" }, { value: "enterprise", label: "Enterprise", disabled: true }]} />
+      <Combobox label="Reviewer" options={owners} value={owner} onChange={setOwner} required />
+      <Combobox label="Topics" multiple creatable options={[...["ci", "docs", "infra", "release"], ...extra]} value={topics} onChange={setTopics} onCreate={(t) => setExtra((e) => [...e, t])} />
+      <DatePicker label="Due date" value={due} onChange={setDue} min="2026-11-01" max="2026-12-31" isDateDisabled={(d) => d === "2026-11-25"} />
+      <DateRangePicker label="Billing period" value={range} onChange={setRange} maxDays={45} min="2026-01-01" max="2026-12-31" presets={[{ label: "November", range: () => ({ from: "2026-11-01", to: "2026-11-30" }) }]} />
+      <output data-testid="state">{JSON.stringify({ plan, owner, topics, due, range })}</output>
+    </div>
+  );
+}
+
+function DetailsFixture() {
+  const [desc, setDesc] = useState("Retries flaky jobs.");
+  const [name, setName] = useState("sample-repo");
+  return (
+    <div style={{ display: "grid", gap: 20, maxWidth: 520 }}>
+      <KeyValueList label="Run details" items={[
+        { label: "Run", value: "run_8f3k2", mono: true, copy: "run_8f3k2" },
+        { label: "Branch", value: "feature/add-retry", mono: true },
+        { label: "Description", value: <InlineEdit label="Description" value={desc} onSave={setDesc} multiline /> },
+        { label: "Repository", value: <InlineEdit label="Repository name" value={name} mono validate={(v) => (/^[a-z0-9-]+$/.test(v) ? null : "Use lowercase letters, digits and dashes.")}
+            onSave={(v) => new Promise<void>((ok, no) => setTimeout(() => (v === "taken" ? no(new Error("That name is taken.")) : (setName(v), ok())), 50))} /> },
+        { label: "Reviewer", value: null },
+      ]} />
+      <AvatarGroup label="Reviewers" max={3} people={["Dev A", "Dev B", "Dev C", "Dev D", "Dev E"].map((name) => ({ name }))} />
+      <Avatar name="Dev F" status="critical" />
+      <ProgressBar label="Rollout" value={3} max={12} valueText="3 of 12 replicas" />
+      <ProgressBar label="Indexing" value={null} />
+    </div>
+  );
+}
+
+function UploadFixture() {
+  const [files, setFiles] = useState<UploadItem[]>([{ id: "u1", name: "sbom.json", size: 20480, status: "uploading", progress: 40 }, { id: "u2", name: "notes.txt", size: 900, status: "error", error: "Network error." }]);
+  return (
+    <div style={{ maxWidth: 520 }}>
+      <FileUpload label="Attachments" hint="JSON or text, up to 1 MB each." accept=".json,.txt" maxSize={1024 * 1024} files={files}
+        onFiles={(fs) => setFiles((x) => [...x, ...fs.map((f, i) => ({ id: "n" + x.length + i, name: f.name, size: f.size, status: "done" as const }))])}
+        onRemove={(id) => setFiles((x) => x.filter((f) => f.id !== id))} onRetry={(id) => setFiles((x) => x.map((f) => (f.id === id ? { ...f, status: "uploading" as const, progress: 0, error: undefined } : f)))} />
+    </div>
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
   foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
-  "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
+  "new-form": NewFormFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
 };

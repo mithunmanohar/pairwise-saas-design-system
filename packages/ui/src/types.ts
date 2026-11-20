@@ -116,3 +116,40 @@ export interface PopoverProps {
   className?: string;
 }
 export interface ToasterProps { /** most toasts shown at once (default 3) */ max?: number; /** position inside the nearest positioned parent instead of the window (demos) */ contained?: boolean }
+
+/* ---------- Display (2.0) ---------- */
+export interface KeyValueItem { label: string; value?: React.ReactNode; /** identifiers: run ids, SHAs, paths */ mono?: boolean; /** adds a copy button that copies this text */ copy?: string }
+export interface KeyValueListProps { items: KeyValueItem[]; /** "rows" (default): label left, value right; "grid": label above value in columns; "inline": a wrapping line, as in PageHeader */ layout?: 'rows' | 'grid' | 'inline'; /** grid only (default 2); one column on phones */ columns?: 1 | 2 | 3 | 4; /** skeleton values */ loading?: boolean; /** accessible name for the list */ label?: string; className?: string }
+export interface AvatarProps { /** the person or team; used for the initials and the accessible name */ name: string; src?: string; size?: 20 | 28 | 32 | 36; /** a small status mark in the corner */ status?: Status; /** hide from screen readers when the name is written next to it */ decorative?: boolean; /** override the derived initials */ initials?: string }
+export interface AvatarGroupProps { people: { name: string; src?: string }[]; /** avatars before "+N" (default 4) */ max?: number; size?: AvatarProps['size']; /** prefix for the accessible name, e.g. "Reviewers" */ label?: string }
+export interface ProgressBarProps { /** 0..max, or null for indeterminate */ value: number | null; max?: number; label: string; hideLabel?: boolean; /** what is read and shown instead of "42 %", e.g. "3 of 12 replicas" */ valueText?: string; /** ink (default); warning or critical when the progress itself is at risk */ tone?: 'ink' | 'warning' | 'critical'; hint?: string; /** show the value text (default true) */ showValue?: boolean }
+
+/* ---------- Inputs (2.0) ---------- */
+export interface RadioOption { value: string; label?: string; /** a muted line under the label */ description?: string; disabled?: boolean }
+export interface RadioGroupProps extends FieldProps { options: (string | RadioOption)[]; value?: string; defaultValue?: string; onChange?: (v: string) => void; orientation?: 'vertical' | 'horizontal'; disabled?: boolean; name?: string; id?: string }
+export interface ComboboxOption { value: string; label?: string; /** muted text on the right */ meta?: string; /** a muted second line */ description?: string; /** extra words that match */ keywords?: string[]; disabled?: boolean }
+interface ComboboxBase extends FieldProps {
+  options: (string | ComboboxOption)[];
+  /** trigger text when nothing is chosen (default "Select…", or "Add…" for multiple) */ placeholder?: string;
+  /** default "Search…" */ searchPlaceholder?: string;
+  /** default "No matches." */ emptyText?: string;
+  /** shows "Loading…" (while you fetch options for onQueryChange) */ loading?: boolean;
+  onQueryChange?: (q: string) => void;
+  /** filter options locally (default true); false shows options as given */ filter?: boolean;
+  /** single: show a clear button (default true) */ clearable?: boolean;
+  /** offer "Create “x”" for a query that matches nothing */ creatable?: boolean; onCreate?: (label: string) => void;
+  disabled?: boolean; /** submits each value as a hidden input */ name?: string; id?: string; className?: string;
+}
+export interface ComboboxSingleProps extends ComboboxBase { multiple?: false; value?: string | null; defaultValue?: string | null; onChange?: (v: string | null) => void }
+export interface ComboboxMultipleProps extends ComboboxBase { multiple: true; value?: string[]; defaultValue?: string[]; onChange?: (v: string[]) => void }
+export type ComboboxProps = ComboboxSingleProps | ComboboxMultipleProps;
+/** "YYYY-MM-DD" in the user's local calendar. */
+export type ISODate = string;
+export interface DatePickerProps extends FieldProps { value?: ISODate | null; defaultValue?: ISODate | null; onChange?: (v: ISODate | null) => void; /** earliest allowed */ min?: ISODate; /** latest allowed */ max?: ISODate; isDateDisabled?: (d: ISODate) => boolean; /** a clear button (default true) */ clearable?: boolean; disabled?: boolean; name?: string; id?: string; placeholder?: string }
+export interface DateRangeValue { from: ISODate; to: ISODate | null }
+export interface DateRangePreset { label: string; range: () => { from: ISODate; to: ISODate } }
+export interface DateRangePickerProps extends FieldProps { value?: DateRangeValue | null; defaultValue?: DateRangeValue | null; onChange?: (v: DateRangeValue | null) => void; min?: ISODate; max?: ISODate; /** longest allowed range, in days */ maxDays?: number; isDateDisabled?: (d: ISODate) => boolean; /** default: last 7 and 30 days, this and last month; [] for none */ presets?: DateRangePreset[]; placeholder?: string; disabled?: boolean; id?: string; /** preview only */ forceOpen?: boolean }
+export interface InlineEditProps { value: string; /** may return a promise; a rejection keeps the field open with its message */ onSave: (v: string) => void | Promise<void>; /** names the value ("Description") */ label: string; placeholder?: string; /** shown when empty (default "Not set") */ emptyText?: string; /** return a message to block saving */ validate?: (v: string) => string | null; multiline?: boolean; mono?: boolean; disabled?: boolean; /** show the label above the field while editing (default hidden) */ hideLabel?: boolean }
+export interface UploadItem { id: string; name: string; /** bytes */ size: number; status: 'queued' | 'uploading' | 'done' | 'error'; /** 0..100; omit for indeterminate */ progress?: number; error?: string }
+export interface FileUploadProps { label: string; hint?: string; error?: string; required?: boolean; /** e.g. ".json,.txt" or "image/*" */ accept?: string; /** bytes */ maxSize?: number; multiple?: boolean; maxFiles?: number; /** your uploads and their state */ files?: UploadItem[]; /** accepted files to upload */ onFiles?: (files: File[]) => void; onRemove?: (id: string) => void; onRetry?: (id: string) => void; disabled?: boolean; id?: string }
+

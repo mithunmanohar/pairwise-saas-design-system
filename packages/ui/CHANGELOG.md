@@ -78,6 +78,34 @@ stage lands; "Migrating from 1.x" is completed before release.
 - **Accessibility:** axe now reports no violations on any catalogue card in either theme. It found six component
   defects; all are fixed.
 
+- **New components:**
+  - **RadioGroup** (Radix): options with descriptions, horizontal or vertical.
+  - **Combobox** (Radix Popover + cmdk):
+    - Single or `multiple`. Multiple shows removable tags and is the tag input.
+    - Local or server search, `loading`, `creatable`, clearable.
+    - The highlighted option is announced.
+  - **DatePicker** and **DateRangePicker** (react-day-picker in a Radix Popover):
+    - Typed `YYYY-MM-DD`, checked with specific messages.
+    - `min`, `max`, `isDateDisabled`.
+    - Ranges have presets, a draft that you Apply, and `maxDays`.
+    - Day names include the visible number (WCAG 2.5.3).
+  - **InlineEdit:** edit a value in place, with validation and async save. Focus stays in the field while saving and
+    returns to the value afterwards.
+  - **FileUpload:**
+    - A drop zone with "Choose files".
+    - Type, size and count checks, listing rejected files with the reason.
+    - Per-file progress, Retry and Remove, announced in a live region.
+  - **KeyValueList:** labelled facts in `rows`, `grid` or `inline` layouts, with copy, loading and "–" for missing
+    values.
+  - **Avatar** and **AvatarGroup** (Radix Avatar): initials fallback, sizes, a status mark, and "+N" with a full
+    accessible name.
+  - **ProgressBar** (Radix Progress): determinate or indeterminate, `valueText`, `ink` / `warning` / `critical`.
+- **PageHeader** renders its fields with KeyValueList (pixel-identical).
+- **Icons:** `edit`, `upload`, `calendar`, `plus`, `file`.
+- `toISODate`, `parseISODate` and `DEFAULT_RANGE_PRESETS` are exported.
+- **New dependencies** (MIT): `@radix-ui/react-popover`, `-tooltip`, `-tabs`, `-toast`, `-radio-group`,
+  `-toggle-group`, `-progress`, `-avatar`, `-slot`; `cmdk`; `react-day-picker` with `date-fns`.
+
 ### Migrating from 1.x
 - `Icon name`, `Button icon`, `NavItem.icon` and `ActionMenuItem.icon` are now `IconName`, not `string`. If you pass
   an icon from a variable typed `string`, type it as `IconName`.

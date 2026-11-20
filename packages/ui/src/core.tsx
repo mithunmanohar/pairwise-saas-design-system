@@ -301,6 +301,29 @@ function searchRank(i: SearchItem, terms: string[]): number {
   const label = i.label.toLowerCase(), t0 = terms[0] || "";
   return label.startsWith(t0) ? 0 : label.includes(t0) ? 1 : 2;
 }
+/**
+ * cmdk always reports aria-expanded="true", and leaves aria-activedescendant empty for the item it highlights first.
+ * Keep both true to what is on screen so screen readers announce the highlighted option. (Shared with Combobox.)
+ * Returns a ref callback for the cmdk list: it attaches whenever the list mounts (also inside a portal).
+ */
+export function useCmdkAria(inputRef: React.RefObject<HTMLInputElement>, open: boolean | null) {
+  React.useLayoutEffect(() => { if (open !== null) inputRef.current?.setAttribute("aria-expanded", String(open)); });
+  const stop = useRef<(() => void) | undefined>(undefined);
+  return useCallback((list: HTMLDivElement | null) => {
+    stop.current?.(); stop.current = undefined;
+    const input = inputRef.current;
+    if (!list || !input) return;
+    const sync = () => {
+      const sel = list.hidden ? null : list.querySelector<HTMLElement>('[cmdk-item][aria-selected="true"]');
+      if (sel) { if (input.getAttribute("aria-activedescendant") !== sel.id) input.setAttribute("aria-activedescendant", sel.id); }
+      else input.removeAttribute("aria-activedescendant");
+    };
+    const mo = new MutationObserver(sync);
+    mo.observe(list, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected", "hidden"] });
+    sync();
+    stop.current = () => mo.disconnect();
+  }, [inputRef]);
+}
 const itemKey = (i: SearchItem) => i.id ?? (i.kind ? i.kind + ":" : "") + i.label;
 export function GlobalSearch({ items = [], onSelect, placeholder = "Search repositories, runs, files", forceQuery, emptyHint, recent, loading, onQueryChange, filter = true, limit = 7, shortcut = true, label = "Search" }: GlobalSearchProps) {
   const [q, setQ] = useState(forceQuery || "");
@@ -321,23 +344,7 @@ export function GlobalSearch({ items = [], onSelect, placeholder = "Search repos
     const g = groups.find((x) => x.name === name); if (g) g.items.push(i); else groups.push({ name, items: [i] });
   }
   const open = active && (q ? true : results.length > 0);
-  // cmdk always reports aria-expanded="true", and leaves aria-activedescendant empty for the result it highlights
-  // first. Keep both true to what is on screen, so screen readers announce the highlighted result.
-  const listRef = useRef<HTMLDivElement>(null);
-  React.useLayoutEffect(() => { inputRef.current?.setAttribute("aria-expanded", String(open)); });
-  useEffect(() => {
-    const list = listRef.current, input = inputRef.current;
-    if (!list || !input) return;
-    const sync = () => {
-      const sel = list.hidden ? null : list.querySelector<HTMLElement>('[cmdk-item][aria-selected="true"]');
-      if (sel) { if (input.getAttribute("aria-activedescendant") !== sel.id) input.setAttribute("aria-activedescendant", sel.id); }
-      else input.removeAttribute("aria-activedescendant");
-    };
-    const mo = new MutationObserver(sync);
-    mo.observe(list, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected", "hidden"] });
-    sync();
-    return () => mo.disconnect();
-  }, []);
+  const listRef = useCmdkAria(inputRef, open);
   const setQuery = (v: string) => { setQ(v); onQueryChange && onQueryChange(v); };
   const pick = (i: SearchItem) => { i.onRun && i.onRun(); onSelect && onSelect(i); setQuery(""); setActive(false); };
   return (
