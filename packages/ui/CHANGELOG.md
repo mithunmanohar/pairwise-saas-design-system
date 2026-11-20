@@ -3,10 +3,16 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
-## 2.0.0 (unreleased)
+## 2.0.0 (2026-11-20)
 
-Pairwise 2.0: the same Signal look, with sturdier interaction, accessibility and coverage. Entries are added as each
-stage lands; "Migrating from 1.x" is completed before release.
+Pairwise 2.0 keeps the same Signal look, with sturdier interaction, accessibility and coverage.
+
+- Every overlay, menu and form primitive now runs on Radix.
+- Search and comboboxes run on cmdk; calendars on react-day-picker.
+- Thirteen new components.
+- Keyboard and axe tests in CI.
+
+Props are backwards compatible. The major version is for the DOM and role changes listed under "Migrating from 1.x".
 
 - **Motion and layer tokens (new).**
   - `tokens.json` gains `motion` (`duration-fast` 120 ms, `duration-base` 160 ms, `duration-slow` 220 ms,
@@ -25,6 +31,7 @@ stage lands; "Migrating from 1.x" is completed before release.
   - Switch takes `error`.
   - Select, Checkbox and Switch forward their ref to the focusable element.
   - Options take `disabled`.
+- **TopBar `searchRecent` (new):** recent items for its search.
 - **Button `asChild` (new):** styles a single child, such as a router link, as a button.
 - **Popover (new):** a non-modal floating panel on Radix Popover, with `PopoverClose`.
 - **Icons:**
@@ -117,6 +124,10 @@ stage lands; "Migrating from 1.x" is completed before release.
 - MenuSelect options are now `menuitemradio` in a `menu` (were `option` in a `listbox`), and TimeRangePicker's ranges
   are radios. Update tests that query them by role.
 - GlobalSearch shows "Ctrl K" on non-Apple platforms (was always "⌘K").
+- TopBar's account button is named by hidden text after its initials instead of `aria-label`; query it by the same
+  name as before ("Account: Dev A").
+- `rowActions` returning `[]` renders no menu for that row.
+- The DataTable expand column's header is now a visually hidden "Details" (was an empty cell with `aria-label`).
 - BarChart, Heatmap and StatusGrid show a "Show table" toggle by default; pass `table={false}` to hide it.
 - An interactive StatusGrid (with `onCell`) spaces its cells 24 px apart (was 21 px) for the touch-target minimum.
 - Modal `tone="critical"` no longer closes on an outside click.

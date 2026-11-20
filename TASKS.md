@@ -4,7 +4,35 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 1.1.0 (font presets, stable layout, phone layout). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+Status: `@pairwise/ui` 2.0.0, committed but not yet tagged or released (interaction on Radix and cmdk, 13 new
+components, keyboard and axe tests in CI). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+
+## Done in 2.0.0
+- **Tests:**
+  - Playwright behaviour tests in Chromium for every interactive component (keyboard, focus, Escape order, live
+    regions), plus integration tests on the demo.
+  - axe-core on every card and 9 demo pages, in both themes: no violations.
+  - `capture --widths` for tablet and phone diffs.
+- **Foundations:**
+  - `motion` and `layer` tokens; the lint fails on raw durations and z-index values; reduced motion.
+  - Public `Field`, refs on every control, indeterminate Checkbox, `Button asChild`, typed `IconName`.
+- **Existing components on proven primitives:**
+  - Radix: Tooltip, MenuSelect, TimeRangePicker, Tabs, Toaster and the critical Modal.
+  - GlobalSearch on cmdk, with commands, groups, recents and async results.
+  - DataTable 2.0: controlled and server modes, selection, bulk and row actions, column visibility, a pinned first
+    column, page sizes, and a paging fix.
+  - StatusGrid as a keyboard grid; table views for every chart.
+- **New components:** Popover, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox (tags, creatable),
+  DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar / AvatarGroup, ProgressBar.
+- **The demo** uses them: bulk member actions, a topics combobox, code-owner uploads, inline release notes, a report
+  period, and a command palette.
+
+## Later, only when a project asks
+- TreeView, NotificationCenter, Stepper, FilterBuilder, WorkspaceSwitcher (the account menu covers switching orgs).
+- DataTable virtualisation, column resizing and pinning beyond the first column.
+- Agentic-coding components (DiffView, LogStream, …).
+- A charting or table library (DECISIONS #10, #11).
+- Localised month names in the calendar menus.
 
 ## Done in 1.1.0
 - Font presets (`data-font`: atkinson, inter, plex, system) for an app default or a person's own choice; the demo has

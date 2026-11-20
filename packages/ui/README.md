@@ -62,13 +62,16 @@ export function App() {
 
 ## What's in it
 
-- **Actions and status:** Button, ActionMenu, CopyButton, StatusBadge, StatusDot, SeverityMark, Trend, Tag, Icon
-- **Forms:** TextInput, Textarea, Select, Checkbox, Switch, MenuSelect (compact filter menu), FilterBar, TimeRangePicker
-- **Navigation and layout:** AppShell, SideNav, TopBar, PageHeader, Breadcrumbs, Tabs, Panel, GlobalSearch, ScopeSwitcher
-- **Feedback and overlays:** AlertBanner, `toast()` + Toaster, Toast, StateBlock, Skeleton, Tooltip, Modal, Drawer
-- **Data:** DataTable, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
-- **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend
-- **Helpers:** `cx`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values (`@pairwise/ui/tokens`)
+- **Actions and status:** Button (`asChild` for links), ActionMenu, CopyButton, StatusBadge, StatusDot, SeverityMark, Trend, Tag, Icon (typed `IconName`), Avatar, AvatarGroup
+- **Forms:** Field, TextInput, Textarea, Select, Checkbox (indeterminate), Switch, RadioGroup, Combobox (single, multiple, creatable), DatePicker, DateRangePicker, InlineEdit, FileUpload, SegmentedControl, MenuSelect (compact filter menu), FilterBar, TimeRangePicker
+- **Navigation and layout:** AppShell, SideNav, TopBar, PageHeader, Breadcrumbs, Tabs (+ TabPanel), Panel, GlobalSearch (search and commands), ScopeSwitcher
+- **Feedback and overlays:** AlertBanner, `toast()` + Toaster, Toast, StateBlock, Skeleton, ProgressBar, Tooltip (+ TooltipProvider), Popover, Modal, Drawer
+- **Data:** DataTable (sorting, paging, selection, bulk and row actions, column visibility, server mode), Pagination, ColumnsMenu, KeyValueList, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
+- **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend (every chart has a table view)
+- **Helpers:** `cx`, `toISODate` / `parseISODate`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values, including `motion` and `layer` (`@pairwise/ui/tokens`)
+
+Behaviour comes from Radix, cmdk and react-day-picker, styled only with Pairwise tokens. Every component is checked
+with keyboard tests and axe in light and dark (`packages/ui/test/e2e`).
 
 Browse them all, live: open `design-system/catalogue.html` from the repo in a browser. Every component's usage notes and
 props are also in `dist/COMPONENTS.md` inside the installed package. The rules (colour, status, writing, charts) are in

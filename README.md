@@ -120,7 +120,7 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 
 ## Every component, one visual language
 
-42 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
+55 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
 
 <table>
 <tr><td width="50%"><b>Buttons</b><br><img src="docs/images/components/Button.png" alt="Button variants and states"></td><td width="50%"><b>Status: icon + label + colour</b><br><img src="docs/images/components/StatusBadge.png" alt="Status badges and trends"></td></tr>
@@ -150,8 +150,9 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 | **One source of truth** | Every colour, space, radius and type style lives in [`tokens.json`](design-system/tokens.json): 31 colour tokens × 2 themes, 8 spacing steps, 8 type styles. | A small generator emits CSS variables and typed TypeScript names (`ColorToken`), so a typo in a colour name is a compile error. |
 | **Contrast with margin** | Text ≥ 4.8:1 and UI ≥ 3:1 on every surface, both themes. That's above the AA minimum, so rendering differences can't fail it. | Unit tests compute WCAG contrast for every token pair on every run. |
 | **Colour-blind-safe charts** | Five categorical colours whose worst adjacent pair stays ≥ 11 ΔE2000 under normal, protan, deutan and tritan vision (worst case: 14.9 light, 16.2 dark). | Unit tests simulate colour-vision deficiency and fail the build below 11. |
-| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys and screen-reader roles come from Radix (dialog, select, menu, checkbox, switch), styled with our own classes. | Checked in a real browser during development: focus wraps, Esc closes, focus returns. Keyboard tests in CI are on the roadmap. |
-| **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. |
+| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox) and react-day-picker (calendars), styled with our own classes. | 67 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions. axe-core finds no WCAG 2.2 A/AA violations on any of the 55 cards or 9 demo pages, in either theme. |
+| **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. Every card is captured and axe-checked in both themes. |
+| **Calm, optional motion** | Menus and popovers fade 4 px from their trigger; dialogs fade in, drawers slide in. Nothing decorative. | Durations and layers are tokens; the lint rejects raw durations and z-index values. `prefers-reduced-motion` sets every duration to 0 ms, which a test checks. |
 | **Writing is design** | Sentence case, verb + object buttons ("Roll back to v2.14.0", never "OK"), errors that say how to fix it, no emoji. | [Guidelines](design-system/GUIDELINES.md) plus every component's README. AI agents read them via `COMPONENTS.md`. |
 
 <table>
@@ -165,8 +166,8 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 
 - **Typed end to end.** Strict TypeScript (`noUncheckedIndexedAccess`) with **zero `any`**. `DataTable<Row>` infers your row type, so `render` and `onRowClick` are typed. Type-level tests compile against the *built* package to prove the published types work.
 - **One package, versioned.** `@pairwise/ui` ships ESM, generated `.d.ts`, `tokens.css`, `styles.css` and self-hosted fonts. Releases follow semver with a [CHANGELOG](packages/ui/CHANGELOG.md).
-- **Quality gates on every PR** ([`ci.yml`](.github/workflows/ci.yml)): build, typecheck (package + examples + type tests), the tokens-only lint, and unit tests (contrast, colour-vision separation, generators). It also fails if generated files weren't committed.
-- **Refactors proven pixel-identical.** A capture harness ([`scripts/capture-previews.mjs`](scripts/capture-previews.mjs)) screenshots every component in both themes and both densities and diffs them pixel by pixel. Rebuilding the preview kit from the package changed **0 of 180** captures (fonts aside). Moving Modal and Drawer onto Radix (with five new form controls) changed **0 of 132**, and the next five components changed **0 of 152** existing ones.
+- **Quality gates on every PR** ([`ci.yml`](.github/workflows/ci.yml)): build, typecheck (package + examples + type tests), the tokens-only lint (colours, layers, durations), unit tests (contrast, colour-vision separation, generators), and Playwright behaviour + axe accessibility tests in Chromium. It also fails if generated files weren't committed.
+- **Refactors proven pixel-identical.** A capture harness ([`scripts/capture-previews.mjs`](scripts/capture-previews.mjs)) screenshots every component in both themes and both densities and diffs them pixel by pixel. Rebuilding the preview kit from the package changed **0 of 180** captures (fonts aside). Moving Modal and Drawer onto Radix (with five new form controls) changed **0 of 132**, and the next five components changed **0 of 152** existing ones. For 2.0, every visible change to an existing card was reviewed in a before/after diff across 2 themes × 2 densities.
 - **Live site on every merge** ([`pages.yml`](.github/workflows/pages.yml)): CI runs, then the demo, catalogue and landing page deploy to GitHub Pages.
 - **Release pipeline** ([`release.yml`](.github/workflows/release.yml)): push `v1.2.0` and CI builds and verifies the package, then publishes it to a `ui-v1.2.0` git tag. Projects install with one command: no registry, no tokens.
 - **Docs that can't drift.** The catalogue and `COMPONENTS.md` are generated from the same cards and READMEs the components are tested with.
@@ -177,7 +178,7 @@ flowchart LR
   T["tokens.json<br/>(single source of truth)"] --> G["generators"]
   G --> CSS["tokens.css<br/>light/dark × compact/comfortable"]
   G --> TS["typed token names"]
-  CSS --> P["@pairwise/ui<br/>42 components · Radix behaviour"]
+  CSS --> P["@pairwise/ui<br/>55 components · Radix + cmdk behaviour"]
   TS --> P
   P --> D["catalogue.html + COMPONENTS.md"]
   P --> A1["Ops dashboard"]

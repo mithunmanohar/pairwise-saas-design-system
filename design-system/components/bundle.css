@@ -732,7 +732,7 @@ a.pw-btn { text-decoration: none; }
 .pw-datefield .pw-input { flex: 1; min-width: 0; }
 .pw-daterange { width: 100%; justify-content: flex-start; }
 .pw-daterange .pw-select__icon { margin-left: auto; }
-.pw-popover.pw-cal-pop { max-width: calc(100vw - 16px); padding: var(--space-3); }
+.pw-popover.pw-cal-pop { max-width: calc(100vw - 16px); max-height: var(--radix-popover-content-available-height); overflow: auto; padding: var(--space-3); }
 .pw-cal { position: relative; }
 .pw-cal__months { display: flex; flex-wrap: wrap; gap: var(--space-5); }
 .pw-cal__caption { display: flex; align-items: center; height: 32px; margin-bottom: var(--space-2); padding-right: 64px; }
