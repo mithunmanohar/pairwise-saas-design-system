@@ -1,6 +1,6 @@
 // Deployments: what shipped today, how delivery is trending (DORA-style), and a rollback one click away.
 import { useState } from "react";
-import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, FilterBar, Button, ActionMenu, Drawer, Timeline, CopyButton, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, FilterBar, Button, Drawer, Timeline, CopyButton, KeyValueList, InlineEdit, ProgressBar, toast, type Column } from "@pairwise/ui";
 import { Frame, useNav } from "../frame";
 import { deploys, deployDays, deploysOk, deploysFailed, deploysRolledBack, type Deploy } from "../data";
 
@@ -9,6 +9,7 @@ export function Deployments() {
   const [q, setQ] = useState("");
   const [f, setF] = useState<Record<string, string>>({});
   const [peek, setPeek] = useState<Deploy | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({ dep_9a1: "Adds retry with backoff to the payment provider client." });
   const rows = deploys.filter((d) => (!q || d.service.includes(q.toLowerCase()) || d.version.includes(q))
     && (!f.env || f.env === "all" || d.env === f.env) && (!f.status || f.status === "all" || d.status === f.status));
   const columns: Column<Deploy>[] = [
@@ -19,16 +20,6 @@ export function Deployments() {
     { key: "status", header: "Status", render: (d) => <StatusBadge size="sm" status={d.status} label={d.statusLabel} /> },
     { key: "author", header: "Author", nowrap: true, render: (d) => `${d.author}, PR ${d.pr}` },
     { key: "duration", header: "Duration", align: "right", num: true },
-    { key: "act", header: "", width: 44, render: (d) => (
-      <span onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-        <ActionMenu label={`Actions for ${d.service} ${d.version}`} items={[
-          { label: "View service", icon: "server", onSelect: () => go("services/" + d.service) },
-          { label: "Copy deploy id", icon: "copy", onSelect: () => toast(`Copied ${d.id}`) },
-          "separator",
-          { label: `Roll back ${d.service}`, icon: "refresh", tone: "critical", disabled: d.status === "unknown" || d.env !== "prod", onSelect: () => toast({ tone: "warning", title: `Rolling back ${d.service}`, body: "You can follow it on this page." }) },
-        ]} />
-      </span>
-    ) },
   ];
   return (
     <Frame active="deploys">
@@ -48,7 +39,8 @@ export function Deployments() {
           </Panel>
           <Panel title="In progress" meta="1 rollout">
             <div className="ex-stack">
-              <div className="ex-split"><span className="pw-mono">ranker-model v12</span><StatusBadge status="info" label="Canary 25 %" /></div>
+              <div className="ex-split"><span className="pw-mono">ranker-model v12</span><StatusBadge status="info" label="Canary" /></div>
+              <ProgressBar label="Search traffic on v12" value={25} hint="Next step: 50 % at 16:40 if the guardrails hold." />
               <p className="ex-p pw-muted">Comparing click-through on 25 % of search traffic. Promotes automatically at 16:40 if the guardrails hold.</p>
               <Timeline dense events={[
                 { time: "14:40", kind: "info", title: "Guardrails holding", body: "CTR +0.4 %, p95 64 ms" },
@@ -68,7 +60,13 @@ export function Deployments() {
               ]} />
           </div>
           <DataTable columns={columns} rows={rows} defaultSort={{ key: "when", dir: "desc" }} caption="Deployments today" onRowClick={setPeek} selectedKey={peek?.id}
-            rowTone={(d) => (d.status === "critical" ? "critical" : null)} />
+            rowTone={(d) => (d.status === "critical" ? "critical" : null)} rowLabel={(d) => `${d.service} ${d.version}`}
+            rowActions={(d) => [
+              { label: "View service", icon: "server", onSelect: () => go("services/" + d.service) },
+              { label: "Copy deploy id", icon: "copy", onSelect: () => toast(`Copied ${d.id}`) },
+              "separator",
+              { label: `Roll back ${d.service}`, icon: "refresh", tone: "critical", disabled: d.status === "unknown" || d.env !== "prod", onSelect: () => toast({ tone: "warning", title: `Rolling back ${d.service}`, body: "You can follow it on this page." }) },
+            ]} />
         </Panel>
       </div>
       <Drawer open={peek != null} title={peek ? `${peek.service} ${peek.version}` : ""} subtitle={peek ? `${peek.env}, started ${peek.when}` : undefined} onClose={() => setPeek(null)}
@@ -76,11 +74,13 @@ export function Deployments() {
         {peek ? (
           <>
             <StatusBadge status={peek.status} label={peek.statusLabel} />
-            <dl className="pw-fields ex-dl">
-              <div><dt>Deploy</dt><dd><CopyButton value={peek.id}>{peek.id}</CopyButton></dd></div>
-              <div><dt>Pull request</dt><dd>{peek.pr} by {peek.author}</dd></div>
-              <div><dt>Duration</dt><dd>{peek.duration}</dd></div>
-            </dl>
+            <KeyValueList label="Deployment details" items={[
+              { label: "Deploy", value: <CopyButton value={peek.id}>{peek.id}</CopyButton> },
+              { label: "Pull request", value: `${peek.pr} by ${peek.author}` },
+              { label: "Duration", value: peek.duration },
+              { label: "Release note", value: <InlineEdit label="Release note" value={notes[peek.id] ?? ""} emptyText="Add a release note" multiline
+                  onSave={(v) => new Promise<void>((done) => window.setTimeout(() => { setNotes({ ...notes, [peek.id]: v }); toast({ tone: "healthy", title: "Release note saved" }); done(); }, 400))} /> },
+            ]} />
             <Timeline dense events={[
               { time: peek.when, kind: "deploy", title: "Rollout started", actor: peek.author },
               { time: "+1 min", kind: "info", title: "Health checks passing on 1 of 12 replicas" },

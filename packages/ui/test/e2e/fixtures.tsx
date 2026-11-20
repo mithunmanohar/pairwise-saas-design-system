@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
   Switch, Tabs, TabPanel, TextInput, Toaster, toast, Tooltip, TimeRangePicker, SegmentedControl, StatusGrid, BarChart, Heatmap,
-  Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup,
+  Pagination, ColumnsMenu, FilterBar, RadioGroup, Combobox, DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup,
   ProgressBar, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
 } from "../../src/index";
 
@@ -316,9 +316,33 @@ function UploadFixture() {
   );
 }
 
+// Overlays inside overlays, and new controls in existing patterns.
+function IntegrationFixture() {
+  const [open, setOpen] = useState(false);
+  const [saved, setSaved] = useState("none");
+  const [range, setRange] = useState<DateRangeValue | null>(null);
+  const [q, setQ] = useState("");
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <FilterBar query={q} onQuery={setQ} values={{}} filters={[{ key: "env", label: "Environment", options: ["prod", "staging"] }]} count="12 runs">
+        <div style={{ width: 240 }}><DateRangePicker label="Run dates" hideLabel value={range} onChange={setRange} presets={[{ label: "First week", range: () => ({ from: "2026-11-01", to: "2026-11-07" }) }]} /></div>
+      </FilterBar>
+      <Button onClick={() => setOpen(true)}>Schedule run</Button>
+      <Modal open={open} title="Schedule a run" onClose={() => setOpen(false)}
+        actions={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" onClick={() => { setSaved("scheduled"); setOpen(false); }}>Schedule run</Button></>}>
+        <Combobox label="Repository" options={["sample-repo", "docs-site", "infra"]} defaultValue="sample-repo" />
+        <Select label="Runner" options={["linux-large", "linux-small"]} defaultValue="linux-large" />
+        <DatePicker label="Run on" defaultValue="2026-11-20" />
+        <Tooltip content="Runs at 02:00 in the repository's time zone"><Button size="sm" variant="ghost" icon="clock" aria-label="About scheduling" /></Tooltip>
+      </Modal>
+      <output data-testid="state">{JSON.stringify({ saved, range })}</output>
+    </div>
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
   foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
-  "new-form": NewFormFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
+  "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
 };

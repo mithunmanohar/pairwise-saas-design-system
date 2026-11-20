@@ -51,12 +51,12 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
       <ScopeSwitcher scope={scope} options={scopeOptions} onChange={onScope} compact={mode !== "full"} />
-      <div className="pw-topbar__search"><GlobalSearch items={searchItems} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
+      <div className="pw-topbar__search"><GlobalSearch items={searchItems} recent={searchRecent} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
       <div className="pw-topbar__end">
         <TimeRangePicker value={time} onChange={onTime} refresh={refresh} onRefreshChange={onRefresh} onCopy={onCopyRange} />
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
@@ -64,7 +64,7 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
         </button>
         {account ? (
           <ActionMenu label={accountLabel || "Account: " + account.name} items={account.items ?? []}
-            trigger={<button type="button" className="pw-avatar" aria-label={accountLabel || "Account: " + account.name}>{user}</button>}
+            trigger={<button type="button" className="pw-avatar"><span aria-hidden="true">{user}</span><span className="pw-sr">{accountLabel || "Account: " + account.name}</span></button>}
             header={
               <div className="pw-acct">
                 <span className="pw-avatar pw-acct__avatar" aria-hidden="true">{user}</span>
@@ -75,7 +75,7 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
                 </span>
               </div>
             } />
-        ) : <button type="button" className="pw-avatar" aria-label={accountLabel || "Account"}>{user}</button>}
+        ) : <button type="button" className="pw-avatar"><span aria-hidden="true">{user}</span><span className="pw-sr">{accountLabel || "Account"}</span></button>}
       </div>
     </header>
   );

@@ -1,6 +1,6 @@
 // One incident: what is happening, who is on it, what changed, and the next action.
 import { useState } from "react";
-import { PageHeader, Breadcrumbs, StatusBadge, SeverityMark, Button, ActionMenu, AlertBanner, Panel, Timeline, TimeSeriesChart, Textarea, StateBlock, CopyButton, Tag, toast, type TimelineEvent } from "@pairwise/ui";
+import { PageHeader, Breadcrumbs, StatusBadge, SeverityMark, Button, ActionMenu, AlertBanner, Panel, Timeline, TimeSeriesChart, Textarea, StateBlock, CopyButton, Tag, toast, type TimelineEvent, Avatar } from "@pairwise/ui";
 import { Frame, useNav, useCrumbNav } from "../frame";
 import { incidentById, isOpen, latencyWindow, DEPLOY_AT, members, type Incident } from "../data";
 import { stateBadge } from "./incidents";
@@ -86,7 +86,7 @@ function IncidentPage({ inc }: { inc: Incident }) {
             <Panel title="Responders" meta={responders.length === 1 ? "1 person" : `${responders.length} people`}>
               <ul className="ex-people">
                 {responders.map((m) => (
-                  <li key={m.id}><span className="ex-avatar" aria-hidden="true">{m.initials}</span><span className="ex-list__main"><span className="pw-body-strong">{m.name}</span><span className="pw-caption pw-muted">{m.name === inc.commander ? "Incident commander" : m.teams.join(", ")}</span></span></li>
+                  <li key={m.id}><Avatar name={m.name} initials={m.initials} decorative /><span className="ex-list__main"><span className="pw-body-strong">{m.name}</span><span className="pw-caption pw-muted">{m.name === inc.commander ? "Incident commander" : m.teams.join(", ")}</span></span></li>
                 ))}
               </ul>
             </Panel>

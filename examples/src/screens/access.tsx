@@ -1,6 +1,6 @@
 // Access: who can do what. Members with inline role changes, an invite form, API tokens and the audit log.
 import { useState } from "react";
-import { PageHeader, Tabs, Panel, FilterBar, DataTable, Select, StatusBadge, Tag, Button, ActionMenu, Modal, TextInput, Checkbox, Timeline, CopyButton, AlertBanner, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Tabs, Panel, FilterBar, DataTable, Select, StatusBadge, Tag, Button, ActionMenu, Modal, TextInput, Checkbox, Timeline, CopyButton, AlertBanner, Avatar, toast, type Column } from "@pairwise/ui";
 import { Frame, demoState } from "../frame";
 import { members as seed, tokens, auditLog, type Member, type Role } from "../data";
 
@@ -14,27 +14,25 @@ export function Access() {
   const [invite, setInvite] = useState(demoState === "invite");
   const [email, setEmail] = useState("");
   const [tried, setTried] = useState(false);
-  const [removing, setRemoving] = useState<Member | null>(null);
+  const [removing, setRemoving] = useState<Member[] | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
   const rows = list.filter((m) => (!q || (m.name + m.email).toLowerCase().includes(q.toLowerCase())) && (!f.role || f.role === "all" || m.role === f.role));
   const noMfa = list.filter((m) => !m.mfa).length;
   const emailError = tried && !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(email) ? "Enter a full email address, like dev.k@example-org.dev." : undefined;
   const closeInvite = () => { setInvite(false); setEmail(""); setTried(false); };
   const columns: Column<Member>[] = [
-    { key: "name", header: "Member", sortable: true, defaultDir: "asc", render: (m) => <span className="ex-who"><span className="ex-avatar" aria-hidden="true">{m.initials}</span><span className="ex-cell2"><span className="pw-body-strong">{m.name}</span><span className="pw-caption pw-muted pw-mono">{m.email}</span></span></span> },
+    { key: "name", header: "Member", sortable: true, defaultDir: "asc", render: (m) => <span className="ex-who"><Avatar name={m.name} initials={m.initials} decorative /><span className="ex-cell2"><span className="pw-body-strong">{m.name}</span><span className="pw-caption pw-muted pw-mono">{m.email}</span></span></span> },
     { key: "role", header: "Role", width: 160, render: (m) => m.role === "Owner" ? <span className="ex-roleowner">Owner</span>
       : <Select label={`Role of ${m.name}`} hideLabel value={m.role} options={ROLES.filter((r) => r !== "Owner")} onChange={(v) => { setList(list.map((x) => (x.id === m.id ? { ...x, role: v as Role } : x))); toast(`${m.name} is now ${v === "Admin" ? "an" : "a"} ${v}`); }} /> },
     { key: "teams", header: "Teams", render: (m) => <span className="ex-tags">{m.teams.map((t) => <Tag key={t}>{t}</Tag>)}</span> },
     { key: "mfa", header: "Two-factor", sortable: true, render: (m) => (m.mfa ? <StatusBadge size="sm" status="healthy" label="On" /> : <StatusBadge size="sm" status="warning" label="Off" />) },
     { key: "lastActive", header: "Last active", nowrap: true },
-    { key: "act", header: "", width: 44, render: (m) => m.role === "Owner" ? null : (
-      <ActionMenu label={`Actions for ${m.name}`} items={[
-        { label: "Resend MFA reminder", icon: "bell", disabled: m.mfa, onSelect: () => toast(`Reminder sent to ${m.name}`) },
-        { label: "View activity", icon: "page", onSelect: () => setTab("audit") },
-        "separator",
-        { label: "Remove from org", tone: "critical", onSelect: () => setRemoving(m) },
-      ]} />
-    ) },
   ];
+  const setRoles = (ids: string[], role: Role) => {
+    const changing = list.filter((m) => ids.includes(m.id) && m.role !== "Owner");
+    setList(list.map((m) => (changing.includes(m) ? { ...m, role } : m)));
+    toast(`${changing.length} member${changing.length === 1 ? " is" : "s are"} now ${role === "Admin" ? "Admins" : role + "s"}`);
+  };
   return (
     <Frame active="access">
       <PageHeader title="Access" meta="Members, roles and API tokens for example-org."
@@ -48,7 +46,19 @@ export function Access() {
               <FilterBar query={q} onQuery={setQ} queryPlaceholder="Filter by name or email" values={f} onChange={setF} onClear={() => { setQ(""); setF({}); }} count={`${rows.length} of ${list.length}`}
                 filters={[{ key: "role", label: "Role", options: ROLES }]} />
             </div>
-            <DataTable columns={columns} rows={rows} defaultSort={{ key: "name", dir: "asc" }} caption="Members" pageSize={10} />
+            <DataTable columns={columns} rows={rows} defaultSort={{ key: "name", dir: "asc" }} caption="Members" pageSize={10} pageSizeOptions={[10, 25]}
+              selection="multiple" selectedKeys={selected} onSelectionChange={setSelected} rowLabel={(m) => m.name}
+              bulkActions={(ids, picked) => <>
+                <ActionMenu label="Change role of selected members" trigger={<Button size="sm" iconRight="chevron-down">Change role</Button>}
+                  items={ROLES.filter((r) => r !== "Owner").map((r) => ({ label: r, onSelect: () => setRoles(ids, r) }))} />
+                <Button size="sm" variant="danger" disabled={picked.every((m) => m.role === "Owner")} onClick={() => setRemoving(picked.filter((m) => m.role !== "Owner"))}>Remove</Button>
+              </>}
+              rowActions={(m) => m.role === "Owner" ? [] : [
+                { label: "Resend MFA reminder", icon: "bell", disabled: m.mfa, onSelect: () => toast(`Reminder sent to ${m.name}`) },
+                { label: "View activity", icon: "page", onSelect: () => setTab("audit") },
+                "separator",
+                { label: "Remove from org", tone: "critical", onSelect: () => setRemoving([m]) },
+              ]} />
           </Panel>
         </div>
       ) : tab === "tokens" ? (
@@ -77,8 +87,8 @@ export function Access() {
         <Select label="Role" defaultValue="Developer" options={[{ value: "Admin", label: "Admin", meta: "Manages members and billing" }, { value: "Developer", label: "Developer", meta: "Deploys and runs CI" }, { value: "Viewer", label: "Viewer", meta: "Read only" }]} />
         <Checkbox label="Require two-factor sign-in" defaultChecked hint="Recommended for anyone who can deploy." />
       </Modal>
-      <Modal open={removing != null} tone="critical" title={`Remove ${removing?.name ?? ""} from example-org?`} onClose={() => setRemoving(null)}
-        actions={<><Button onClick={() => setRemoving(null)}>Cancel</Button><Button variant="danger" onClick={() => { if (removing) { setList(list.filter((m) => m.id !== removing.id)); toast(`${removing.name} removed`); } setRemoving(null); }}>Remove member</Button></>}>
+      <Modal open={removing != null} tone="critical" title={removing && removing.length === 1 ? `Remove ${removing[0]!.name} from example-org?` : `Remove ${removing?.length ?? 0} members from example-org?`} onClose={() => setRemoving(null)}
+        actions={<><Button onClick={() => setRemoving(null)}>Cancel</Button><Button variant="danger" onClick={() => { if (removing) { const ids = removing.map((m) => m.id); setList(list.filter((m) => !ids.includes(m.id))); setSelected(selected.filter((k) => !ids.includes(k))); toast(removing.length === 1 ? `${removing[0]!.name} removed` : `${removing.length} members removed`); } setRemoving(null); }}>{removing && removing.length > 1 ? `Remove ${removing.length} members` : "Remove member"}</Button></>}>
         <p className="ex-p">They lose access to every repository and service right away. Their API tokens are revoked.</p>
       </Modal>
     </Frame>

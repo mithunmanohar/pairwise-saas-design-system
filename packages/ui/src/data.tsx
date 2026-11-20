@@ -177,7 +177,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
                         onClick={(e) => { e.stopPropagation(); setOpen({ ...open, [k]: !isOpen }); }}><Icon name={isOpen ? "chevron-down" : "chevron-right"} size={14} /></button></td>
                     ) : null}
                     {columns.map((c) => <td key={c.key} style={{ textAlign: c.align }} className={cx(c.mono && "pw-mono", c.num && "is-nowrap", c.nowrap && "is-nowrap", c.pin === "start" && "is-pinned", c.className)}>{c.render ? c.render(r) : asNode(field(r, c.key))}</td>)}
-                    {rowActions ? <td className="pw-table__acts" onClick={(e) => e.stopPropagation()}><ActionMenu label={"Actions for " + nameOf(r)} items={rowActions(r)} /></td> : null}
+                    {rowActions ? <td className="pw-table__acts" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>{(() => { const acts = rowActions(r); return acts.length ? <ActionMenu label={"Actions for " + nameOf(r)} items={acts} /> : null; })()}</td> : null}
                   </tr>
                   {renderExpanded && isOpen ? <tr className="pw-table__exp">{selection ? <td /> : null}<td /><td colSpan={columns.length + (rowActions ? 1 : 0)}>{renderExpanded(r)}</td></tr> : null}
                 </Fragment>

@@ -47,7 +47,7 @@ export interface DataTableProps<T> {
   /** controlled page, 1-based */ page?: number; onPageChange?: (page: number) => void; /** offers a page-size menu */ pageSizeOptions?: number[]; onPageSizeChange?: (size: number) => void;
   /** adds a checkbox column */ selection?: 'multiple'; selectedKeys?: string[]; defaultSelectedKeys?: string[]; onSelectionChange?: (keys: string[]) => void;
   /** actions for the selected rows, shown in a bar above the table while any are selected */ bulkActions?: (keys: string[], rows: T[]) => React.ReactNode;
-  /** a trailing "⋯" menu per row */ rowActions?: (r: T) => ActionMenuEntry[];
+  /** a trailing "⋯" menu per row (none when it returns []) */ rowActions?: (r: T) => ActionMenuEntry[];
   /** how a row is named in labels ("Select run_8f3k2", "Actions for run_8f3k2"); default the rowKey value */ rowLabel?: (r: T) => string;
   /** column keys to hide (see ColumnsMenu) */ hiddenColumns?: string[];
 }
@@ -67,7 +67,7 @@ export interface TimelineProps { events: TimelineEvent[]; onEvent?: (e: Timeline
 export interface NavItem { key: string; label: string; icon: IconName }
 export interface NavGroup { group: string | null; items: NavItem[] }
 export interface SideNavProps { active: string; onNavigate?: (key: string) => void; collapsed?: boolean; badges?: Record<string, { count: number; tone?: 'critical' }>; nav?: NavGroup[]; /** set by AppShell below 1024 px */ overlay?: boolean; onClose?: () => void }
-export interface TopBarProps { scope: Scope; scopeOptions: ScopeSwitcherProps['options']; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** who is signed in; the account button then opens a menu with this header and `items` (switch organization, preferences, sign out) */ account?: TopBarAccount; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
+export interface TopBarProps { scope: Scope; scopeOptions: ScopeSwitcherProps['options']; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; /** shown when search is focused and empty */ searchRecent?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** who is signed in; the account button then opens a menu with this header and `items` (switch organization, preferences, sign out) */ account?: TopBarAccount; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
 export type ShellMode = 'full' | 'collapsed' | 'tablet';
 /** The signed-in person, shown at the top of the account menu. */
 export interface TopBarAccount { name: string; email?: string; /** their role in the current organization, e.g. "Owner" */ role?: string; /** the current organization */ org?: string; items?: ActionMenuEntry[] }

@@ -1,6 +1,6 @@
 // Everyday SaaS: a repository's settings page with validation, toggles, a toast and a confirmed destructive action.
-import { useEffect, useState } from "react";
-import { PageHeader, Breadcrumbs, Tabs, Panel, TextInput, Textarea, Select, Checkbox, Switch, Tag, Button, Modal, DataTable, StateBlock, toast } from "@pairwise/ui";
+import { useEffect, useRef, useState } from "react";
+import { PageHeader, Breadcrumbs, Tabs, Panel, TextInput, Textarea, Select, Checkbox, Switch, Button, Modal, DataTable, StateBlock, Combobox, FileUpload, toast, type UploadItem } from "@pairwise/ui";
 import { Frame, demoState, useCrumbNav, useNav } from "../frame";
 import { members, repoByName, type Repo } from "../data";
 
@@ -44,15 +44,16 @@ function RepoSettings({ repo }: { repo: Repo }) {
               <div className="ex-span"><Textarea label="Description" rows={3} defaultValue={repo.description} /></div>
               <div className="ex-span"><TextInput label="Deploy webhook" defaultValue={`http://hooks.example-org.dev/${repo.name}`} error="Use an https:// URL so the payload is encrypted." /></div>
               <div className="ex-span">
-                <div className="pw-formfield">
-                  <span className="pw-formfield__label">Topics</span>
-                  <div className="ex-tags">{topics.length ? topics.map((t) => <Tag key={t} onRemove={() => setTopics(topics.filter((x) => x !== t))}>{t}</Tag>) : <span className="pw-muted">No topics</span>}</div>
-                </div>
+                <Combobox label="Topics" multiple creatable hint="Help people find the repository. Type to add a new topic." placeholder="Add topics"
+                  options={Array.from(new Set([...TOPICS, ...topics]))} value={topics} onChange={setTopics} />
               </div>
             </div>
           </Panel>
           <Panel title="Before merging" meta="applies to the default branch">
             <BranchRules />
+          </Panel>
+          <Panel title="Code owners" meta="who reviews which paths">
+            <CodeOwners />
           </Panel>
           <Panel title="Danger zone">
             <div className="ex-danger">
@@ -100,6 +101,35 @@ function RepoSettings({ repo }: { repo: Repo }) {
         <TextInput label={`Type ${repo.name} to confirm`} autoFocus value={confirm} onChange={(e) => setConfirm(e.target.value)} />
       </Modal>
     </Frame>
+  );
+}
+
+const TOPICS = ["ci", "payments", "api", "retries", "observability", "infra", "docs", "ml", "search", "security"];
+
+// Uploads are simulated: each file climbs to 100 % over about two seconds; names containing "fail" fail once.
+function CodeOwners() {
+  const [files, setFiles] = useState<UploadItem[]>([{ id: "co-1", name: "CODEOWNERS", size: 1264, status: "done" }]);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => timers.current.forEach((t) => window.clearInterval(t)), []);
+  const upload = (id: string, fail: boolean) => {
+    const t = window.setInterval(() => setFiles((list) => list.map((f) => {
+      if (f.id !== id || f.status !== "uploading") return f;
+      const p = (f.progress ?? 0) + 20;
+      if (fail && p >= 60) { window.clearInterval(t); return { ...f, status: "error", error: "The connection dropped. Try again." }; }
+      if (p >= 100) { window.clearInterval(t); toast({ tone: "healthy", title: `${f.name} uploaded`, body: "Its rules apply to new pull requests." }); return { ...f, status: "done", progress: 100 }; }
+      return { ...f, progress: p };
+    })), 400);
+    timers.current.push(t);
+  };
+  return (
+    <FileUpload label="Ownership files" hint="CODEOWNERS or .txt rule files, up to 100 KB each." accept=".txt,CODEOWNERS,.codeowners" maxSize={100 * 1024} files={files}
+      onFiles={(fs) => fs.forEach((file, i) => {
+        const id = `co-${Date.now()}-${i}`;
+        setFiles((list) => [...list, { id, name: file.name, size: file.size, status: "uploading", progress: 0 }]);
+        upload(id, /fail/i.test(file.name));
+      })}
+      onRetry={(id) => { setFiles((list) => list.map((f) => (f.id === id ? { ...f, status: "uploading", progress: 0, error: undefined } : f))); upload(id, false); }}
+      onRemove={(id) => setFiles((list) => list.filter((f) => f.id !== id))} />
   );
 }
 

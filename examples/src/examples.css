@@ -20,7 +20,6 @@ html, body, #root, .ex-demo { height: 100%; margin: 0; }
 .ex-pad { padding: 0 var(--space-5); border-bottom: 1px solid var(--border); }
 .ex-split { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-3); }
 .ex-fill svg { width: 100%; height: auto; }
-.ex-dl { display: grid; gap: var(--space-2); }
 .ex-inline { font-size: inherit; }
 .ex-plain { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; border-radius: var(--radius-sm); }
 .ex-plain:hover { background: var(--surface-hover); }
@@ -28,7 +27,6 @@ html, body, #root, .ex-demo { height: 100%; margin: 0; }
 .ex-cell2 .pw-caption { min-width: 200px; }
 .ex-who { display: flex; align-items: center; gap: var(--space-3); white-space: nowrap; }
 .ex-roleowner { display: inline-flex; align-items: center; height: var(--pw-ctl); padding: 0 10px; color: var(--ink-muted); }
-.ex-avatar { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--ink); font-size: 12px; font-weight: 600; }
 /* Lists of clickable rows outside a table (open incidents) and people. */
 .ex-list, .ex-people, .ex-steps { margin: 0; padding: 0; list-style: none; display: grid; }
 .ex-list { margin: 0 calc(var(--space-2) * -1); gap: var(--space-1); }
@@ -71,3 +69,4 @@ html, body, #root, .ex-demo { height: 100%; margin: 0; }
 @media (max-width: 420px) {
   .ex-metrics { grid-template-columns: minmax(0, 1fr); }
 }
+.ex-period { width: 250px; }
