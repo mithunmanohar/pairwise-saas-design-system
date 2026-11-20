@@ -1,6 +1,7 @@
 import type { SideNavProps, TopBarProps, AppShellProps, PageHeaderProps, PageHeaderField, NavGroup, ShellMode } from "./types";
 import { Icon } from "./icons";
 import { cx, Button, Tooltip, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
+import { ActionMenu } from "./actions";
 import * as React from "react";
 import { Fragment } from "react";
 const { useState, useRef, useEffect } = React;
@@ -49,7 +50,7 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", accountLabel, onAccount, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
@@ -60,7 +61,20 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
           <Icon name="bell" />{alerts ? <span className="pw-iconbtn__n">{alerts}</span> : null}
         </button>
-        <button type="button" className="pw-avatar" aria-label={accountLabel || "Account"} onClick={onAccount}>{user}</button>
+        {account ? (
+          <ActionMenu label={accountLabel || "Account: " + account.name} items={account.items ?? []}
+            trigger={<button type="button" className="pw-avatar" aria-label={accountLabel || "Account: " + account.name}>{user}</button>}
+            header={
+              <div className="pw-acct">
+                <span className="pw-avatar pw-acct__avatar" aria-hidden="true">{user}</span>
+                <span className="pw-acct__who">
+                  <span className="pw-body-strong">{account.name}</span>
+                  {account.email ? <span className="pw-caption pw-muted">{account.email}</span> : null}
+                  {account.role || account.org ? <span className="pw-acct__role">{account.role ? <span className="pw-chip">{account.role}</span> : null}{account.org ? <span className="pw-caption pw-muted">{account.org}</span> : null}</span> : null}
+                </span>
+              </div>
+            } />
+        ) : <button type="button" className="pw-avatar" aria-label={accountLabel || "Account"}>{user}</button>}
       </div>
     </header>
   );

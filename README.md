@@ -101,7 +101,7 @@ Members with inline role changes and an invite form that validates; API tokens a
 </details>
 
 ### Personalisation: fonts, theme and density
-An app picks its default font with one attribute (`data-font` on `<html>`), and each person can choose their own under the account button, next to theme and density; the choice is saved in their browser. Four presets ship, all open-licence and self-hosted, and only the one in use downloads: **Atkinson Hyperlegible** (the default, drawn so I/l/1 and O/0 can't be confused), **Inter** with IBM Plex Mono, **IBM Plex** Sans and Mono, and the device's **system font**. A preset changes only the typeface, so every layout holds: each demo page was checked in every preset from 1440 down to 360 px.
+An app picks its default font with one attribute (`data-font` on `<html>`), and each person can choose their own in "Your preferences", next to theme and density; the choice is saved in their browser. The account menu (the avatar) shows who is signed in and their role, switches organization, and opens those preferences. Four presets ship, all open-licence and self-hosted, and only the one in use downloads: **Atkinson Hyperlegible** (the default, drawn so I/l/1 and O/0 can't be confused), **Inter** with IBM Plex Mono, **IBM Plex** Sans and Mono, and the device's **system font**. A preset changes only the typeface, so every layout holds: each demo page was checked in every preset from 1440 down to 360 px.
 
 ![Personal preferences drawer with a font picker, a live preview, theme and density](docs/images/screens/prefs-dark.png)
 

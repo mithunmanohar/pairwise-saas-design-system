@@ -22,12 +22,18 @@ export const showControls = params.get("controls") !== "0";
 // menu). Everything is applied as data-theme / data-density / data-font on <html>, which is all @pairwise/ui needs.
 type ThemeId = "light" | "dark";
 type DensityId = "compact" | "comfortable";
-export interface Prefs { theme: ThemeId; density: DensityId; font: FontPreset | "org"; orgFont: FontPreset }
+export interface Prefs { theme: ThemeId; density: DensityId; font: FontPreset | "org"; orgFont: FontPreset; org: string }
+/** Organizations Dev A belongs to, with their role in each (the account menu switches between them). */
+export const ORGS = [
+  { id: "example-org", role: "Owner" },
+  { id: "example-labs", role: "Developer" },
+  { id: "sample-partner", role: "Viewer" },
+] as const;
 const FONT_IDS = tokens.fonts.map((f) => f.id as FontPreset);
 export const isFont = (v: unknown): v is FontPreset => typeof v === "string" && (FONT_IDS as string[]).includes(v);
 export const fontLabel = (id: FontPreset) => tokens.fonts.find((f) => f.id === id)?.label ?? id;
 const STORE = "pairwise-demo-prefs";
-let prefs: Prefs = { theme: "dark", density: "compact", font: "org", orgFont: "atkinson" };
+let prefs: Prefs = { theme: "dark", density: "compact", font: "org", orgFont: "atkinson", org: "example-org" };
 const subs = new Set<() => void>();
 export const effectiveFont = (p: Prefs): FontPreset => (p.font === "org" ? p.orgFont : p.font);
 function apply() {
@@ -44,6 +50,7 @@ function initPrefs(defaultTheme: ThemeId) {
     if (saved.density === "compact" || saved.density === "comfortable") prefs.density = saved.density;
     if (saved.font === "org" || isFont(saved.font)) prefs.font = saved.font;
     if (isFont(saved.orgFont)) prefs.orgFont = saved.orgFont;
+    if (ORGS.some((o) => o.id === saved.org) && typeof saved.org === "string") prefs.org = saved.org;
   } catch { /* storage unavailable: defaults */ }
   const t = params.get("theme"), d = params.get("density"), f = params.get("font");
   if (t === "light" || t === "dark") prefs.theme = t;
@@ -123,6 +130,8 @@ const openIncidents = incidents.filter(isOpen).length;
 
 export function Frame({ active, children }: { active: string; children: ReactNode }) {
   const go = useNav();
+  const p = usePrefs();
+  const org = ORGS.find((o) => o.id === p.org) ?? ORGS[0];
   const [scope, setScope] = useState<Scope>({ env: "prod", cloud: "region-a", cluster: "cluster-1" });
   const [time, setTime] = useState("1h");
   const [refresh, setRefresh] = useState<"off" | "30s" | "1m" | "5m">("30s");
@@ -135,7 +144,20 @@ export function Frame({ active, children }: { active: string; children: ReactNod
           scope={scope} onScope={(s) => { setScope(s); toast(`Showing ${s.env} / ${s.cloud}`); }}
           scopeOptions={{ env: [{ value: "prod" }, { value: "staging" }], cloud: [{ value: "region-a" }, { value: "region-b" }], cluster: [{ value: "cluster-1" }, { value: "cluster-2" }] }}
           time={time} onTime={setTime} refresh={refresh} onRefresh={(r) => setRefresh(r as typeof refresh)}
-          alerts={openIncidents} onAlerts={() => go("incidents")} user="DA" accountLabel="Account: Dev A, preferences" onAccount={() => setPrefsOpen(true)}
+          alerts={openIncidents} onAlerts={() => go("incidents")} user="DA" accountLabel="Account: Dev A"
+          account={{
+            name: "Dev A", email: "dev.a@example-org.dev", role: org.role, org: org.id,
+            items: [
+              { heading: "Switch organization" },
+              ...ORGS.map((o) => ({ label: o.id, meta: o.role, checked: o.id === org.id,
+                onSelect: () => { if (o.id === org.id) return; setPrefs({ org: o.id }); toast({ title: `Switched to ${o.id}`, body: `You're ${o.role === "Owner" ? "an" : "a"} ${o.role} here. This demo shows the same sample data in every organization.` }); } })),
+              "separator",
+              { label: "Your preferences", icon: "settings", meta: "Font, theme", onSelect: () => setPrefsOpen(true) },
+              { label: "Keyboard shortcuts", icon: "terminal", onSelect: () => toast({ title: "Keyboard shortcuts", body: "⌘K or Ctrl+K searches. Arrow keys move between tabs. Esc closes menus and dialogs." }) },
+              "separator",
+              { label: "Sign out", icon: "external", onSelect: () => toast({ title: "This is a demo", body: "You stay signed in as Dev A." }) },
+            ],
+          }}
           searchItems={SEARCH} onSearch={(i) => { const hit = SEARCH.find((s) => s.label === i.label); if (hit) go(hit.path); }}
           onCopyRange={() => toast("Time range copied")}
         />

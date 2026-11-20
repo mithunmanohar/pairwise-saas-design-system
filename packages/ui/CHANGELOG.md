@@ -16,8 +16,19 @@ Font presets, a stable layout and a phone layout. 1.0.1 was never tagged; its ch
   - `fonts.css` now declares every preset, self-hosted from @fontsource (all OFL-1.1). Browsers download only the
     family in use, so an app on the default font fetches nothing extra.
   - New dependencies: `@fontsource/inter`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono`.
-- **TopBar `onAccount` (new prop):** called when the account button is pressed, for example to open personal
-  preferences.
+- **Account menu (new):** TopBar `account` (`{name, email, role, org, items}`) makes the avatar open a menu with who is
+  signed in, their role in the current organization, and your items (switch organization, preferences, sign out).
+- **ActionMenu (new props):**
+  - `header`: non-interactive content above the items.
+  - `{heading}` entries label a group.
+  - `checked` marks the current choice (a tick, announced as checked).
+  - `meta` shows muted text on the right.
+- **Timeline alignment fix:**
+  - Time and title now share a baseline in every font. Before, the title sat 1 px low, or 5 px low on a highlighted
+    event.
+  - The icon is centred on the connector (was 2.5 px off).
+  - The connector stops 4 px short of each icon, above and below. Before, the gaps were uneven, and in the dense
+    variant the connector touched the next icon.
 
 - **Stable layout: switching never moves the chrome.**
   - Tabs and the auto-refresh segments reserve the width of their bold, selected label, so switching never slides the

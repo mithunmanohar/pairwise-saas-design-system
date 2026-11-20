@@ -7,19 +7,27 @@ import { Icon } from "./icons";
 const { useState, useRef, useEffect } = React;
 
 /* ---------- ActionMenu (Radix DropdownMenu) ---------- */
-export function ActionMenu({ items, label = "More actions", trigger, align = "end", forceOpen }: ActionMenuProps) {
+// Items with `checked` render as checkbox items (a tick, announced as checked), for picking the current one of several.
+export function ActionMenu({ items, label = "More actions", trigger, align = "end", header, forceOpen }: ActionMenuProps) {
   return (
     <DM.Root {...(forceOpen ? { open: true, modal: false } : {})}>
       <DM.Trigger asChild>{trigger ?? <Button variant="ghost" icon="more" aria-label={label} />}</DM.Trigger>
       <DM.Portal>
-        <DM.Content className="pw-menu" align={align} sideOffset={4} loop>
-          {items.map((it, i) => it === "separator" ? <DM.Separator key={i} className="pw-menu__sep" /> : (
-            <DM.Item key={i} className={cx("pw-list__item", it.tone && "pw-tone--" + it.tone)} disabled={it.disabled} onSelect={it.onSelect}>
-              <span className="pw-list__check">{it.icon ? <Icon name={it.icon} size={14} /> : null}</span>
+        <DM.Content className="pw-menu" align={align} sideOffset={4} loop aria-label={label}>
+          {header ? <><DM.Label asChild><div className="pw-menu__header">{header}</div></DM.Label><DM.Separator className="pw-menu__sep" /></> : null}
+          {items.map((it, i) => {
+            if (it === "separator") return <DM.Separator key={i} className="pw-menu__sep" />;
+            if ("heading" in it) return <DM.Label key={i} className="pw-menu__heading pw-caption pw-muted">{it.heading}</DM.Label>;
+            const body = <>
+              <span className="pw-list__check">{it.checked ? <Icon name="check" size={14} /> : it.icon ? <Icon name={it.icon} size={14} /> : null}</span>
               <span>{it.label}</span>
-              {it.shortcut ? <span className="pw-muted pw-list__meta">{it.shortcut}</span> : null}
-            </DM.Item>
-          ))}
+              {it.meta || it.shortcut ? <span className="pw-muted pw-list__meta">{it.meta ?? it.shortcut}</span> : null}
+            </>;
+            const cls = cx("pw-list__item", it.tone && "pw-tone--" + it.tone, it.checked && "is-selected");
+            return it.checked !== undefined
+              ? <DM.CheckboxItem key={i} className={cls} disabled={it.disabled} checked={it.checked} onSelect={it.onSelect}>{body}</DM.CheckboxItem>
+              : <DM.Item key={i} className={cls} disabled={it.disabled} onSelect={it.onSelect}>{body}</DM.Item>;
+          })}
         </DM.Content>
       </DM.Portal>
     </DM.Root>

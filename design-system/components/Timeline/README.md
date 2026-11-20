@@ -4,5 +4,6 @@ Chronological events: a run's trace, a change feed, an object's history. In Pair
 
 - Time in mono: `HH:mm:ss` in a trace, `DD Mon HH:mm` in feeds, in the user's time zone. Newest last inside a trace (it reads as a story), newest first in feeds.
 - Only alert (critical), warn and resolve events are coloured; everything else stays ink.
-- `highlight` marks the suspected cause (e.g. the edit that preceded the failing test).
+- `highlight` marks the suspected cause (e.g. the edit that preceded the failing test). The highlight grows outward, so its text stays aligned with the other events.
+- Time and title share a text baseline in every font preset; the icon is centred on the title's first line and on the connector, which stops 4 px short of each icon.
 - Every event names its source by role (agent, your CI provider, your Git host) and its actor.

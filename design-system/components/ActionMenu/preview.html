@@ -1,4 +1,4 @@
-<!-- @dsCard group="Actions" height=300 -->
+<!-- @dsCard group="Actions" height=400 -->
 <!doctype html>
 <html><head><meta charset="utf-8"><title>ActionMenu</title>
 <style>
@@ -13,10 +13,13 @@ var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState =
 function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
 function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
 var items=[{label:'Re-run',icon:'refresh',shortcut:'R'},{label:'Copy link',icon:'link'},{label:'Open on GitHub',icon:'external'},'separator',{label:'Pause schedule',icon:'pause',disabled:true},{label:'Delete run',tone:'critical'}];
+var acctItems=[{heading:'Switch organization'},{label:'example-org',meta:'Owner',checked:true},{label:'example-labs',meta:'Developer',checked:false},'separator',{label:'Your preferences',icon:'settings'},{label:'Sign out',icon:'external'}];
+var acctHeader=h('div',{className:'pw-acct'},h('span',{className:'pw-avatar pw-acct__avatar','aria-hidden':'true'},'DA'),h('span',{className:'pw-acct__who'},h('span',{className:'pw-body-strong'},'Dev A'),h('span',{className:'pw-caption pw-muted'},'dev.a@example-org.dev'),h('span',{className:'pw-acct__role'},h('span',{className:'pw-chip'},'Owner'),h('span',{className:'pw-caption pw-muted'},'example-org'))));
 function Demo(){
   return row(cell('Default trigger (⋯)', h(C.ActionMenu,{label:'Actions for run_8f3k2',items:items})),
     cell('Own trigger', h(C.ActionMenu,{items:items,align:'start',trigger:h(C.Button,{iconRight:'chevron-down'},'Actions')})),
-    cell('Open', h('div',{style:{height:230}}, h(C.ActionMenu,{label:'Actions for run_8f3k2',items:items,forceOpen:true,align:'start'}))));
+    cell('Open', h('div',{style:{height:230,width:230}}, h(C.ActionMenu,{label:'Actions for run_8f3k2',items:items,forceOpen:true,align:'start'}))),
+    cell('Header, heading, checked (TopBar account menu)', h('div',{style:{height:330}}, h(C.ActionMenu,{label:'Account: Dev A',items:acctItems,header:acctHeader,forceOpen:true,align:'start',trigger:h('button',{type:'button',className:'pw-avatar'},'DA')}))));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
 </script>

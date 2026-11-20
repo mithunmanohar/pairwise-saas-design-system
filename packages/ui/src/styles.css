@@ -324,15 +324,18 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 
 /* Timeline */
 .pw-timeline { list-style: none; margin: 0; padding: 0; }
-.pw-tl { position: relative; display: grid; grid-template-columns: 58px 20px 1fr; gap: var(--space-3); padding: 8px 0; }
-.pw-tl::before { content: ""; position: absolute; left: 79px; top: 30px; bottom: -8px; width: 1px; background: var(--border); }
+/* Time and title share a text baseline (in every font preset); the 14 px icon is centred on the title's 20 px first line
+   and on the connector, which stops 4 px short of each icon. --tl-pad is the row's vertical padding. */
+.pw-tl { --tl-pad: 8px; position: relative; display: grid; grid-template-columns: 58px 20px minmax(0, 1fr); gap: var(--space-3); align-items: baseline; padding: var(--tl-pad) 0; }
+.pw-tl::before { content: ""; position: absolute; left: calc(58px + var(--space-3) + 9px); top: calc(var(--tl-pad) + 3px + 14px + 4px); bottom: calc(var(--tl-pad) * -1 + 1px); width: 1px; background: var(--border); }
 .pw-tl:last-child::before { display: none; }
-.pw-tl__t { padding-top: 2px; text-align: right; font-variant-numeric: tabular-nums; }
-.pw-tl__i { display: inline-flex; padding-top: 3px; color: var(--ink-muted); }
+.pw-tl__t { text-align: right; font-variant-numeric: tabular-nums; }
+.pw-tl__i { align-self: start; display: inline-flex; justify-content: center; padding-top: 3px; color: var(--ink-muted); }
 .pw-tl__b { display: grid; gap: 2px; min-width: 0; }
 .pw-tl__link { padding: 0; background: none; border: 0; font: inherit; font-weight: 600; color: var(--ink); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
-.pw-tl.is-hl .pw-tl__b { background: var(--surface-sunken); margin-left: -6px; padding: 4px 6px; border-radius: var(--radius-sm); }
-.pw-timeline.is-dense .pw-tl { padding: 5px 0; }
+/* The highlight grows outward (negative margin = padding), so a highlighted event's text stays on the same lines. */
+.pw-tl.is-hl .pw-tl__b { background: var(--surface-sunken); margin: -4px -6px; padding: 4px 6px; border-radius: var(--radius-sm); }
+.pw-timeline.is-dense .pw-tl { --tl-pad: 5px; }
 
 /* Shell */
 .pw-shell { position: relative; display: flex; height: 100%; min-height: 640px; background: var(--surface); overflow: hidden; }
@@ -421,6 +424,13 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-menu .pw-list__item[data-highlighted] { background: var(--surface-hover); }
 .pw-menu .pw-list__item[data-disabled] { color: var(--ink-disabled); cursor: not-allowed; }
 .pw-menu__sep { height: 1px; margin: var(--space-1) 0; background: var(--border); }
+.pw-menu__heading { padding: var(--space-2) var(--space-2) var(--space-1); }
+.pw-menu__header { padding: var(--space-2); }
+/* Account menu header (TopBar `account`): who is signed in, their role and organization. */
+.pw-acct { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 240px; }
+.pw-acct__avatar { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; cursor: default; }
+.pw-acct__who { display: grid; gap: 2px; min-width: 0; }
+.pw-acct__role { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
 
 /* ---------- Tag ---------- */
 .pw-chip { display: inline-flex; align-items: center; gap: var(--space-1); height: 22px; max-width: 100%; padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--ink); font-size: 12px; line-height: 16px; white-space: nowrap; }

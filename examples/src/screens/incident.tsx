@@ -83,7 +83,7 @@ function IncidentPage({ inc }: { inc: Incident }) {
             </Panel>
           </div>
           <div className="ex-stack">
-            <Panel title="Responders" meta={`${responders.length} people`}>
+            <Panel title="Responders" meta={responders.length === 1 ? "1 person" : `${responders.length} people`}>
               <ul className="ex-people">
                 {responders.map((m) => (
                   <li key={m.id}><span className="ex-avatar" aria-hidden="true">{m.initials}</span><span className="ex-list__main"><span className="pw-body-strong">{m.name}</span><span className="pw-caption pw-muted">{m.name === inc.commander ? "Incident commander" : m.teams.join(", ")}</span></span></li>
