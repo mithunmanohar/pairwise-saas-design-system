@@ -100,6 +100,15 @@ Members with inline role changes and an invite form that validates; API tokens a
 ![Administration page, dark theme](docs/images/screens/admin-dark.png)
 </details>
 
+### Personalisation: fonts, theme and density
+An app picks its default font with one attribute (`data-font` on `<html>`), and each person can choose their own under the account button, next to theme and density; the choice is saved in their browser. Four presets ship, all open-licence and self-hosted, and only the one in use downloads: **Atkinson Hyperlegible** (the default, drawn so I/l/1 and O/0 can't be confused), **Inter** with IBM Plex Mono, **IBM Plex** Sans and Mono, and the device's **system font**. A preset changes only the typeface, so every layout holds: each demo page was checked in every preset from 1440 down to 360 px.
+
+![Personal preferences drawer with a font picker, a live preview, theme and density](docs/images/screens/prefs-dark.png)
+
+| Atkinson Hyperlegible (default) | Inter | IBM Plex |
+|---|---|---|
+| ![CI run page in Atkinson Hyperlegible](docs/images/screens/font-atkinson-dark.png) | ![CI run page in Inter with IBM Plex Mono](docs/images/screens/font-inter-dark.png) | ![CI run page in IBM Plex Sans and Mono](docs/images/screens/font-plex-dark.png) |
+
 ### Responsive down to a phone
 The side nav collapses to icons below 1360 px and moves behind a menu below 1024 px. Below 640 px the top bar takes two rows, page headers stack, tabs scroll sideways, panels go full width and tables scroll inside their panel. The page itself never scrolls sideways (checked at 1440, 1024, 800, 390 and 360 px).
 
@@ -225,7 +234,7 @@ export function App() {
 }
 ```
 
-Set `data-theme="dark"` and `data-density="comfortable"` on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
+Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (or `plex`, `system`) on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
 
 ## Repository map
 

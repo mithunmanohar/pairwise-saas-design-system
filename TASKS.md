@@ -4,9 +4,11 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 1.0.1 (1.0.0 plus the phone layout). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+Status: `@pairwise/ui` 1.1.0 (font presets, stable layout, phone layout). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
 
-## Done in 1.0.1
+## Done in 1.1.0
+- Font presets (`data-font`: atkinson, inter, plex, system) for an app default or a person's own choice; the demo has
+  personal preferences under the account button and an organization default font in Administration.
 - Phone layout (≤ 640 px) for the shell, page header, tabs, banners, popovers and toasts.
 - Stable layout: tabs, scope, filters, the time range and page changes never move the surrounding chrome.
 - The live demo is a complete app: every nav page works (overview, services, incidents, deployments, CI runs,

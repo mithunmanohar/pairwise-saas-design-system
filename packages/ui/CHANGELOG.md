@@ -3,9 +3,21 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
-## 1.0.1 (2026-11-20)
+## 1.1.0 (2026-11-20)
 
-Phone layout and a stable layout. No prop or API changes.
+Font presets, a stable layout and a phone layout. 1.0.1 was never tagged; its changes ship here.
+
+- **Font presets (new).**
+  - Set `data-font` on `<html>` to `atkinson` (default), `inter` (Inter with IBM Plex Mono), `plex` (IBM Plex Sans
+    and Mono) or `system` (the device font). An app sets it for everyone; a person can choose their own the same way.
+  - `data-font` on any element scopes a preset to that subtree, so a picker can preview each font in its own face.
+  - The presets live in `tokens.json` (`type.fontPresets`). `tokens.fonts` lists them with labels and usage, and the
+    `FontPreset` type names them.
+  - `fonts.css` now declares every preset, self-hosted from @fontsource (all OFL-1.1). Browsers download only the
+    family in use, so an app on the default font fetches nothing extra.
+  - New dependencies: `@fontsource/inter`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono`.
+- **TopBar `onAccount` (new prop):** called when the account button is pressed, for example to open personal
+  preferences.
 
 - **Stable layout: switching never moves the chrome.**
   - Tabs and the auto-refresh segments reserve the width of their bold, selected label, so switching never slides the

@@ -162,7 +162,7 @@ const docs = [
   "",
   "Generated from the component cards. Use these components for all UI; don't build your own buttons, inputs, tables, menus, modals or toasts, and don't add another UI library.",
   "",
-  "Setup: import `@pairwise/ui/fonts.css`, `@pairwise/ui/tokens.css` and `@pairwise/ui/styles.css` once; set `data-theme` (light | dark) and `data-density` (compact | comfortable) on `<html>`; wrap the app in `<PairwiseProvider>`; render `<Toaster />` once if you use `toast()`.",
+  "Setup: import `@pairwise/ui/fonts.css`, `@pairwise/ui/tokens.css` and `@pairwise/ui/styles.css` once; set `data-theme` (light | dark), `data-density` (compact | comfortable) and optionally `data-font` (atkinson | inter | plex | system) on `<html>`; wrap the app in `<PairwiseProvider>`; render `<Toaster />` once if you use `toast()`.",
   "",
   "Styling your own layout: use the CSS variables from tokens.css (`var(--surface-raised)`, `var(--border)`, `var(--ink-muted)`, `var(--space-4)`, `var(--radius-md)`), never raw colours. Status is always icon + label + colour (`StatusBadge`); `status-critical` is the only colour that asks for action. Sentence case, no emoji.",
   "",

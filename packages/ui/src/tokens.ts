@@ -158,5 +158,29 @@ export const size = {
   "drawer-width": "520px"
 } as const;
 export type SizeToken = keyof typeof size;
+/** Font presets for data-font on <html> (the app default, or a person's own choice). The first is the default. */
+export const fonts = [
+  {
+    "id": "atkinson",
+    "label": "Atkinson Hyperlegible",
+    "usage": "Default. Drawn for legibility: distinct letterforms (I l 1, O 0) help low-vision readers and dense data."
+  },
+  {
+    "id": "inter",
+    "label": "Inter",
+    "usage": "A neutral, compact interface face; fits more text per line. Paired with IBM Plex Mono for identifiers."
+  },
+  {
+    "id": "plex",
+    "label": "IBM Plex",
+    "usage": "A technical, slightly condensed face with a matching mono."
+  },
+  {
+    "id": "system",
+    "label": "System font",
+    "usage": "The device's own interface font (San Francisco, Segoe UI, Roboto). Nothing to download."
+  }
+] as const;
+export type FontPreset = (typeof fonts)[number]["id"];
 /** CSS custom-property reference for a token, e.g. cssVar("chart-1") → "var(--chart-1)". */
 export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken): string => `var(--${name})`;

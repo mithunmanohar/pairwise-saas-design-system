@@ -5,7 +5,7 @@ import type { ColorToken } from "./tokens";
 export type Status = 'critical' | 'warning' | 'healthy' | 'unknown' | 'info';
 export type Density = 'compact' | 'comfortable';
 export type ViewState = 'ready' | 'loading' | 'empty' | 'error' | 'no-access';
-export type { ColorToken } from "./tokens";
+export type { ColorToken, FontPreset } from "./tokens";
 
 export interface IconProps { name: string; size?: 12 | 14 | 16 | 20; title?: string; className?: string }
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm'; icon?: string; iconRight?: string; loading?: boolean; forceState?: 'hover' | 'active' }
@@ -51,7 +51,7 @@ export interface TimelineProps { events: TimelineEvent[]; onEvent?: (e: Timeline
 export interface NavItem { key: string; label: string; icon: string }
 export interface NavGroup { group: string | null; items: NavItem[] }
 export interface SideNavProps { active: string; onNavigate?: (key: string) => void; collapsed?: boolean; badges?: Record<string, { count: number; tone?: 'critical' }>; nav?: NavGroup[]; /** set by AppShell below 1024 px */ overlay?: boolean; onClose?: () => void }
-export interface TopBarProps { scope: Scope; scopeOptions: ScopeSwitcherProps['options']; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
+export interface TopBarProps { scope: Scope; scopeOptions: ScopeSwitcherProps['options']; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** the account button was pressed, e.g. to open personal preferences */ onAccount?: () => void; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
 export type ShellMode = 'full' | 'collapsed' | 'tablet';
 export interface AppShellProps { nav: React.ReactElement<SideNavProps>; top: React.ReactElement<TopBarProps>; density?: Density; forceWidth?: number; children?: React.ReactNode }
 export interface PageHeaderField { label: string; value: React.ReactNode; mono?: boolean }

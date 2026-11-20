@@ -92,6 +92,11 @@
   --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
+[data-font="atkinson"] { --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif; --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+[data-font="inter"] { --font-sans: "Inter", "Segoe UI", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+[data-font="plex"] { --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+[data-font="system"] { --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace; }
+[data-font] { font-family: var(--font-sans); }
 :root { --pw-row: var(--row-compact); --pw-ctl: var(--control-compact); --pw-cell-x: var(--space-3); }
 [data-density="comfortable"] { --pw-row: var(--row-comfortable); --pw-ctl: var(--control-comfortable); --pw-cell-x: var(--space-4); }
 .pw-title { font-family: var(--font-sans); font-size: 24px; line-height: 32px; font-weight: 600; }

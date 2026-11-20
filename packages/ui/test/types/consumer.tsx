@@ -3,7 +3,7 @@
 import { DataTable, MenuSelect, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
-import { color, type ColorToken } from "@pairwise/ui/tokens";
+import { color, fonts, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
 
 interface Run { id: string; repo: string; durationMs: number; startedAt: Date }
 const runs: Run[] = [{ id: "run_8f3k2", repo: "sample-repo", durationMs: 1200, startedAt: new Date(0) }];
@@ -50,3 +50,9 @@ export const badIcon = <Icon name="check" size={18} />;
 
 export const f = createFormatter({ locale: "en-US", timeZone: "UTC", currency: "USD" });
 export const c: string = color["chart-1"].light;
+
+// Font presets: typed ids for data-font, with labels for a picker.
+export const font: FontPreset = fonts[0].id;
+export const fontLabels: string[] = fonts.map((x) => x.label);
+// @ts-expect-error unknown font preset
+export const badFont: FontPreset = "comic-sans";

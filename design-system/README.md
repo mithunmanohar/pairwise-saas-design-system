@@ -35,6 +35,7 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 ## Type
 
 - **Atkinson Hyperlegible Next** for interface text. It's designed so that I/l/1 and O/0 can't be confused, which matters when reading SHAs and run IDs at speed. **Atkinson Hyperlegible Mono** for identifiers and code: run IDs, SHAs, paths, branch names, log lines, diffs.
+- **Font presets.** Atkinson is the default. An app can set another preset for everyone, and a person can choose their own, with `data-font` on `<html>`: `inter` (Inter with IBM Plex Mono), `plex` (IBM Plex Sans and Mono) or `system` (the device font). Presets change the family only; sizes, line heights and weights stay the same, so layouts hold.
 - Scale ratio 1.2 from 14 px: `caption` 12, `body` 14, `subheading` 16, `heading` 20, `title` 24, `figure` 29. Body weight 400; 600 only for emphasis, headings and the active state.
 - Big figures use the sans face with proportional digits; tables and axes use tabular figures. Keep running text under about 75 characters per line.
 - Hierarchy comes from size, weight and placement, never from extra colour.

@@ -31,6 +31,10 @@ export function buildCss(t) {
   for (const fam of ["spacing", "radius", "size"]) root.push(...(t[fam]?.tokens ?? []).map((x) => `  --${x.name}: ${x.value};`));
   root.push(...Object.entries(t.type.families).map(([k, v]) => `  --font-${k}: ${v};`));
   out.push(`:root {\n${root.join("\n")}\n}`);
+  // Font presets: data-font on <html> sets the app's font; on any element it scopes a preset to that subtree (a font
+  // picker can show each option in its own face). The default needs no attribute.
+  for (const f of t.type.fontPresets ?? []) out.push(`[data-font="${f.id}"] { --font-sans: ${f.sans}; --font-mono: ${f.mono}; }`);
+  if (t.type.fontPresets?.length) out.push(`[data-font] { font-family: var(--font-sans); }`);
   // Densities: compact is the default; comfortable swaps only the spacing set used by components.
   // Compact is the :root default only. There is deliberately no [data-density="compact"] selector yet: AppShell stamps
   // data-density="compact" by default, and matching it would override a comfortable page (a visible change pending approval).
@@ -61,6 +65,9 @@ export const radius = ${q(flat("radius"))} as const;
 export type RadiusToken = keyof typeof radius;
 export const size = ${q(flat("size"))} as const;
 export type SizeToken = keyof typeof size;
+/** Font presets for data-font on <html> (the app default, or a person's own choice). The first is the default. */
+export const fonts = ${q((t.type.fontPresets ?? []).map((f) => ({ id: f.id, label: f.label, usage: f.usage })))} as const;
+export type FontPreset = (typeof fonts)[number]["id"];
 /** CSS custom-property reference for a token, e.g. cssVar("chart-1") → "var(--chart-1)". */
 export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken): string => \`var(--\${name})\`;
 `;
