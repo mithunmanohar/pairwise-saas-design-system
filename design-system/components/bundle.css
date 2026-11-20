@@ -97,7 +97,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font-family: va
 .pw-heading { font-size: 20px; line-height: 28px; font-weight: 600; margin: 0; }
 .pw-title { font-size: 24px; line-height: 32px; font-weight: 600; margin: 0; }
 .pw-title--mono { font-family: var(--font-mono); font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
-.pw-figure { font-size: 29px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; }
+.pw-figure { font-size: 29px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .pw-tone--critical { color: var(--status-critical); }
 .pw-tone--warning { color: var(--status-warning); }
 .pw-tone--healthy { color: var(--status-healthy); }
@@ -178,6 +178,12 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-field--quiet { border-color: transparent; background: transparent; padding: 0 8px; }
 .pw-field__pre { color: var(--ink-muted); }
 .pw-field__val { font-weight: 600; }
+/* Stable widths: a control keeps the width of its widest value (Fit) and of its bold, selected label (Reserve). */
+.pw-fit { display: inline-grid; text-align: left; }
+.pw-fit > * { grid-area: 1 / 1; white-space: nowrap; }
+.pw-fit__ghost { visibility: hidden; }
+.pw-reserve { display: inline-flex; flex-direction: column; }
+.pw-reserve::after { content: attr(data-text); height: 0; overflow: hidden; visibility: hidden; font-weight: 600; user-select: none; pointer-events: none; }
 .pw-menusel, .pw-time { position: relative; }
 .pw-pop { position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; min-width: 100%; background: var(--surface-overlay); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); padding: var(--space-1); }
 .pw-list { list-style: none; margin: 0; max-height: 340px; overflow: auto; }
@@ -214,7 +220,7 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; }
 .pw-filterbar__q { display: flex; align-items: center; gap: 6px; height: var(--pw-ctl); padding: 0 10px; min-width: 240px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink-muted); }
 .pw-filterbar__q:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.pw-filterbar__end { margin-left: auto; display: inline-flex; gap: var(--space-4); align-items: center; }
+.pw-filterbar__end { margin-left: auto; display: inline-flex; gap: var(--space-4); align-items: center; min-height: var(--pw-ctl); }
 
 /* Crumbs, tabs, page header */
 .pw-crumbs ol { display: flex; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--ink-muted); }
@@ -399,20 +405,23 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 
 /* Timeline */
 .pw-timeline { list-style: none; margin: 0; padding: 0; }
-.pw-tl { position: relative; display: grid; grid-template-columns: 58px 20px 1fr; gap: var(--space-3); padding: 8px 0; }
-.pw-tl::before { content: ""; position: absolute; left: 79px; top: 30px; bottom: -8px; width: 1px; background: var(--border); }
+/* Time and title share a text baseline (in every font preset); the 14 px icon is centred on the title's 20 px first line
+   and on the connector, which stops 4 px short of each icon. --tl-pad is the row's vertical padding. */
+.pw-tl { --tl-pad: 8px; position: relative; display: grid; grid-template-columns: 58px 20px minmax(0, 1fr); gap: var(--space-3); align-items: baseline; padding: var(--tl-pad) 0; }
+.pw-tl::before { content: ""; position: absolute; left: calc(58px + var(--space-3) + 9px); top: calc(var(--tl-pad) + 3px + 14px + 4px); bottom: calc(var(--tl-pad) * -1 + 1px); width: 1px; background: var(--border); }
 .pw-tl:last-child::before { display: none; }
-.pw-tl__t { padding-top: 2px; text-align: right; font-variant-numeric: tabular-nums; }
-.pw-tl__i { display: inline-flex; padding-top: 3px; color: var(--ink-muted); }
+.pw-tl__t { text-align: right; font-variant-numeric: tabular-nums; }
+.pw-tl__i { align-self: start; display: inline-flex; justify-content: center; padding-top: 3px; color: var(--ink-muted); }
 .pw-tl__b { display: grid; gap: 2px; min-width: 0; }
 .pw-tl__link { padding: 0; background: none; border: 0; font: inherit; font-weight: 600; color: var(--ink); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
-.pw-tl.is-hl .pw-tl__b { background: var(--surface-sunken); margin-left: -6px; padding: 4px 6px; border-radius: var(--radius-sm); }
-.pw-timeline.is-dense .pw-tl { padding: 5px 0; }
+/* The highlight grows outward (negative margin = padding), so a highlighted event's text stays on the same lines. */
+.pw-tl.is-hl .pw-tl__b { background: var(--surface-sunken); margin: -4px -6px; padding: 4px 6px; border-radius: var(--radius-sm); }
+.pw-timeline.is-dense .pw-tl { --tl-pad: 5px; }
 
 /* Shell */
 .pw-shell { position: relative; display: flex; height: 100%; min-height: 640px; background: var(--surface); overflow: hidden; }
 .pw-shell__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pw-shell__content { flex: 1; overflow: auto; position: relative; }
+.pw-shell__content { flex: 1; overflow: auto; position: relative; scrollbar-gutter: stable; }
 .pw-rail { display: flex; flex-direction: column; width: var(--rail-expanded); flex: none; background: var(--surface-raised); border-right: 1px solid var(--border); }
 .pw-rail.is-collapsed { width: var(--rail-collapsed); }
 .pw-rail.is-overlay { position: absolute; top: 0; bottom: 0; left: 0; z-index: 2; border-right: 0; box-shadow: var(--shadow-overlay); background: var(--surface-overlay); }
@@ -496,6 +505,13 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-menu .pw-list__item[data-highlighted] { background: var(--surface-hover); }
 .pw-menu .pw-list__item[data-disabled] { color: var(--ink-disabled); cursor: not-allowed; }
 .pw-menu__sep { height: 1px; margin: var(--space-1) 0; background: var(--border); }
+.pw-menu__heading { padding: var(--space-2) var(--space-2) var(--space-1); }
+.pw-menu__header { padding: var(--space-2); }
+/* Account menu header (TopBar `account`): who is signed in, their role and organization. */
+.pw-acct { display: flex; align-items: flex-start; gap: var(--space-3); min-width: 240px; }
+.pw-acct__avatar { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; cursor: default; }
+.pw-acct__who { display: grid; gap: 2px; min-width: 0; }
+.pw-acct__role { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
 
 /* ---------- Tag ---------- */
 .pw-chip { display: inline-flex; align-items: center; gap: var(--space-1); height: 22px; max-width: 100%; padding: 0 var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-sunken); color: var(--ink); font-size: 12px; line-height: 16px; white-space: nowrap; }
@@ -566,7 +582,6 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
   .pw-filterbar__q { flex: 1 1 100%; min-width: 0; }
   .pw-heat { overflow-x: auto; }
   .pw-heat__grid { min-width: 440px; }
-  .pw-filterbar__end { margin-left: 0; }
   .pw-state { padding: var(--space-8) var(--space-4); }
   .pw-toasts { left: var(--space-3); right: var(--space-3); bottom: var(--space-3); }
   .pw-toast { width: auto; }

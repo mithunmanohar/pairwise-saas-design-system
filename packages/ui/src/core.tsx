@@ -80,6 +80,16 @@ export function Tooltip({ content, children, side = "top", forceOpen }: TooltipP
   );
 }
 
+/* ---------- Stable widths (internal) ---------- */
+// Controls whose text changes (a menu's value, the time range, the selected tab) must not resize and push their
+// neighbours. Fit shows `current` but reserves the width of the widest of `all`; Reserve keeps room for the bold
+// (selected) weight of a label. The reserving copies are visibility: hidden, so screen readers skip them.
+function Fit({ current, all }: { current: string; all: string[] }) {
+  const texts = Array.from(new Set([current, ...all]));
+  return <span className="pw-fit">{texts.map((t) => <span key={t} className={t === current ? undefined : "pw-fit__ghost"} aria-hidden={t === current ? undefined : true}>{t}</span>)}</span>;
+}
+const Reserve = ({ text }: { text: string }) => <span className="pw-reserve" data-text={text}>{text}</span>;
+
 /* ---------- Popover (internal) ---------- */
 export function usePopover<T extends HTMLElement = HTMLDivElement>() {
   const [open, setOpen] = useState(false);
@@ -108,7 +118,7 @@ export function MenuSelect({ label, value, options, onChange, icon, disabled, wi
       <button type="button" className={cx("pw-field", quiet && "pw-field--quiet", isOpen && "is-open")} aria-haspopup="listbox" aria-expanded={isOpen} aria-label={label + ": " + curLabel} disabled={disabled} onClick={() => setOpen(!open)} style={width ? { minWidth: width } : undefined}>
         {icon ? <Icon name={icon} /> : null}
         {prefix ? <span className="pw-field__pre">{prefix}</span> : null}
-        <span className="pw-field__val">{curLabel}</span>
+        <span className="pw-field__val"><Fit current={curLabel} all={opts.map((o) => o.label)} /></span>
         <Icon name="chevron-down" size={14} />
       </button>
       {isOpen ? (
@@ -162,8 +172,8 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
     <div className="pw-time" ref={ref}>
       <button type="button" className={cx("pw-field", isOpen && "is-open")} aria-haspopup="dialog" aria-expanded={isOpen} onClick={() => setOpen(!open)} disabled={disabled}>
         <Icon name="clock" />
-        <span className="pw-field__val">{absolute || (cur ? cur.label : value)}</span>
-        {refresh !== "off" ? <span className="pw-time__live" title={"Auto-refresh every " + refresh}><Icon name="refresh" size={12} />{refresh}</span> : null}
+        <span className="pw-field__val"><Fit current={absolute || (cur ? cur.label ?? cur.value : value)} all={ranges.map((r) => r.label ?? r.value)} /></span>
+        <span className="pw-time__live" title={refresh === "off" ? "Auto-refresh off" : "Auto-refresh every " + refresh}><Icon name={refresh === "off" ? "pause" : "refresh"} size={12} /><Fit current={refresh} all={REFRESH.map((r) => r.value)} /></span>
         <Icon name="chevron-down" size={14} />
       </button>
       {isOpen ? (
@@ -189,7 +199,7 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
               <Button size="sm" onClick={apply}>Apply</Button>
               <div className="pw-caption pw-muted pw-pop__h" style={{ marginTop: 12 }}>Auto-refresh</div>
               <div className="pw-seg" role="radiogroup" aria-label="Auto-refresh">
-                {REFRESH.map((r) => <button key={r.value} type="button" role="radio" aria-checked={r.value === refresh} className={cx("pw-seg__b", r.value === refresh && "is-on")} onClick={() => onRefreshChange && onRefreshChange(r.value)}>{r.label}</button>)}
+                {REFRESH.map((r) => <button key={r.value} type="button" role="radio" aria-checked={r.value === refresh} className={cx("pw-seg__b", r.value === refresh && "is-on")} onClick={() => onRefreshChange && onRefreshChange(r.value)}><Reserve text={r.label} /></button>)}
               </div>
               <button type="button" className="pw-linkbtn" onClick={() => { setCopied(true); onCopy && onCopy(value); setTimeout(() => setCopied(false), 1500); }}>
                 <Icon name="copy" size={14} />{copied ? "Range copied" : "Copy range to paste elsewhere"}
@@ -265,8 +275,9 @@ export function FilterBar({ filters = [], values = {}, onChange, query, onQuery,
       ))}
       {children}
       <span className="pw-filterbar__end">
-        {count != null ? <span className="pw-caption pw-muted pw-num">{count}</span> : null}
+        {/* Clear comes first so the count stays anchored at the right edge when Clear appears. */}
         {active.length || query ? <button type="button" className="pw-linkbtn" onClick={onClear}>Clear {active.length + (query ? 1 : 0)}</button> : null}
+        {count != null ? <span className="pw-caption pw-muted pw-num">{count}</span> : null}
       </span>
     </div>
   );
@@ -306,7 +317,7 @@ export function Tabs({ tabs = [], value, onChange, size }: TabsProps) {
               const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (!d) return;
               const n = (i + d + tabs.length) % tabs.length; refs.current[n]?.focus(); const next = tabs[n]; if (onChange && next) onChange(next.value);
             }}>
-            {t.label}{t.count != null ? <span className={cx("pw-tab__count", t.tone && "pw-tone--" + t.tone)}>{t.count}</span> : null}
+            <Reserve text={t.label} />{t.count != null ? <span className={cx("pw-tab__count", t.tone && "pw-tone--" + t.tone)}>{t.count}</span> : null}
           </button>
         );
       })}

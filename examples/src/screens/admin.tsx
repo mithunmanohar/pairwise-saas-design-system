@@ -1,11 +1,12 @@
 // Administration: organization-wide settings, plan limits and data retention.
 import { useState } from "react";
-import { PageHeader, Panel, TextInput, Textarea, Select, Switch, Checkbox, Button, BulletBar, Modal, toast } from "@pairwise/ui";
-import { Frame } from "../frame";
+import { PageHeader, Panel, TextInput, Textarea, Select, Switch, Checkbox, Button, BulletBar, Modal, toast, tokens } from "@pairwise/ui";
+import { Frame, usePrefs, setPrefs, isFont, fontLabel } from "../frame";
 
 export function Admin() {
   const [sso, setSso] = useState(true);
   const [transfer, setTransfer] = useState(false);
+  const prefs = usePrefs();
   return (
     <Frame active="admin">
       <PageHeader title="Administration" meta="Settings that apply to everyone in example-org." />
@@ -16,6 +17,11 @@ export function Admin() {
             <TextInput label="Slug" defaultValue="example-org" hint="Used in URLs. Changing it breaks old links." />
             <Select label="Default region" defaultValue="region-a" options={[{ value: "region-a", label: "region-a", meta: "Primary" }, { value: "region-b", label: "region-b" }]} />
             <Select label="Locale and number format" defaultValue="en-US" options={[{ value: "en-US", label: "English (US)" }, { value: "en-GB", label: "English (UK)" }, { value: "en-IN", label: "English (India)" }]} />
+            <div className="ex-span">
+              <Select label="Default font" value={prefs.orgFont} hint="Applies to everyone in example-org. People can still choose their own from their account menu."
+                options={tokens.fonts.map((f) => ({ value: f.id, label: f.label, meta: f.id === "atkinson" ? "Pairwise default" : undefined }))}
+                onChange={(v) => { if (!isFont(v)) return; setPrefs({ orgFont: v }); toast({ tone: "healthy", title: `Default font set to ${fontLabel(v)}`, body: prefs.font === "org" ? "You see it now; so does everyone using the default." : "You chose your own font, so your view doesn't change." }); }} />
+            </div>
           </div>
         </Panel>
         <Panel title="Sign-in and security">

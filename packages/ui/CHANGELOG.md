@@ -3,17 +3,57 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
-## 1.0.1 (2026-11-20)
+## 1.1.0 (2026-11-20)
 
-Phone layout. CSS only; no prop or API changes, and desktop rendering is unchanged (all 168 card captures, both themes
-and densities, are pixel-identical to 1.0.0).
+Font presets, a stable layout and a phone layout. 1.0.1 was never tagged; its changes ship here.
 
-- **≤ 640 px viewport:** TopBar wraps to two rows (search and time range on the second); PageHeader stacks its
-  actions under the title and hides their leading icons; Tabs scroll sideways; AlertBanner wraps its action below the
-  text; the TimeRangePicker popover and toasts span the screen; Panel, DataTable and Modal tighten their side padding;
-  Heatmap scrolls sideways instead of being clipped.
-- **All widths:** PageHeader actions, Panel header actions and Modal/Drawer footers wrap instead of overflowing, and
-  a Metric's sparkline drops below the value when the tile is too narrow for both.
+- **Font presets (new).**
+  - Set `data-font` on `<html>` to `atkinson` (default), `inter` (Inter with IBM Plex Mono), `plex` (IBM Plex Sans
+    and Mono) or `system` (the device font). An app sets it for everyone; a person can choose their own the same way.
+  - `data-font` on any element scopes a preset to that subtree, so a picker can preview each font in its own face.
+  - The presets live in `tokens.json` (`type.fontPresets`). `tokens.fonts` lists them with labels and usage, and the
+    `FontPreset` type names them.
+  - `fonts.css` now declares every preset, self-hosted from @fontsource (all OFL-1.1). Browsers download only the
+    family in use, so an app on the default font fetches nothing extra.
+  - New dependencies: `@fontsource/inter`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono`.
+- **Account menu (new):** TopBar `account` (`{name, email, role, org, items}`) makes the avatar open a menu with who is
+  signed in, their role in the current organization, and your items (switch organization, preferences, sign out).
+- **ActionMenu (new props):**
+  - `header`: non-interactive content above the items.
+  - `{heading}` entries label a group.
+  - `checked` marks the current choice (a tick, announced as checked).
+  - `meta` shows muted text on the right.
+- **Timeline alignment fix:**
+  - Time and title now share a baseline in every font. Before, the title sat 1 px low, or 5 px low on a highlighted
+    event.
+  - The icon is centred on the connector (was 2.5 px off).
+  - The connector stops 4 px short of each icon, above and below. Before, the gaps were uneven, and in the dense
+    variant the connector touched the next icon.
+
+- **Stable layout: switching never moves the chrome.**
+  - Tabs and the auto-refresh segments reserve the width of their bold, selected label, so switching never slides the
+    tabs after them.
+  - MenuSelect (scope switcher, filters) keeps the width of its widest option, so `prod` → `staging` no longer pushes
+    the search box.
+  - TimeRangePicker keeps the width of its widest range. Its auto-refresh slot is always shown: a pause icon and "off"
+    when refresh is off.
+  - FilterBar shows "Clear" to the left of the result count, so the count stays at the right edge.
+  - AppShell's content area reserves a stable scrollbar gutter, so pages and tabs of different lengths no longer
+    shift sideways by a scrollbar's width on Windows, Linux or a Mac with a mouse.
+  - Metric figures use tabular digits (were proportional), so live values don't jitter.
+  - Visible change: those controls are slightly wider when showing a short value; inactive tabs gain 1–3 px of
+    spacing.
+- **Phone layout (≤ 640 px viewport):**
+  - TopBar wraps to two rows, with search and the time range on the second.
+  - PageHeader stacks its actions under the title and hides their leading icons.
+  - Tabs scroll sideways.
+  - AlertBanner wraps its action below the text.
+  - The TimeRangePicker popover and toasts span the screen.
+  - Panel, DataTable and Modal tighten their side padding.
+  - Heatmap scrolls sideways instead of being clipped.
+- **All widths:**
+  - PageHeader actions, Panel header actions and Modal and Drawer footers wrap instead of overflowing.
+  - A Metric's sparkline drops below the value when the tile is too narrow for both.
 
 ## 1.0.0 (2026-11-04)
 

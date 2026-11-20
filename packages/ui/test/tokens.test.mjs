@@ -18,6 +18,20 @@ test("generated CSS has every colour in every theme, plus both densities", () =>
   assert.doesNotMatch(css, /undefined/);
 });
 
+test("font presets: the first is the default, each emits a data-font rule and ships its files", () => {
+  const presets = t.type.fontPresets;
+  assert.ok(presets.length >= 2);
+  assert.equal(presets[0].sans, t.type.families.sans, "the first preset is the default families");
+  assert.equal(presets[0].mono, t.type.families.mono);
+  const css = buildCss(t), ts = buildTs(t);
+  for (const f of presets) {
+    assert.match(css, new RegExp(`\\[data-font="${f.id}"\\] \\{ --font-sans: .+; --font-mono: .+; \\}`), f.id);
+    assert.ok(ts.includes(`"id": "${f.id}"`), f.id);
+    for (const file of f.files) assert.match(file, /^@fontsource\/[a-z-]+\/\d00\.css$/, file);
+  }
+  assert.match(ts, /export type FontPreset = /);
+});
+
 test("generated TS exports typed token names", () => {
   const ts = buildTs(t);
   for (const c of t.color.tokens) assert.ok(ts.includes(`"${c.name}"`), c.name);

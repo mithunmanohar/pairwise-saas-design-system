@@ -1,9 +1,9 @@
 // Type-level tests against the built package (dist/*.d.ts), resolved through package.json "exports".
 // Run by `pnpm typecheck` after `pnpm build`. A line marked @ts-expect-error must stay an error.
-import { DataTable, MenuSelect, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
+import { DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
-import { color, type ColorToken } from "@pairwise/ui/tokens";
+import { color, fonts, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
 
 interface Run { id: string; repo: string; durationMs: number; startedAt: Date }
 const runs: Run[] = [{ id: "run_8f3k2", repo: "sample-repo", durationMs: 1200, startedAt: new Date(0) }];
@@ -50,3 +50,15 @@ export const badIcon = <Icon name="check" size={18} />;
 
 export const f = createFormatter({ locale: "en-US", timeZone: "UTC", currency: "USD" });
 export const c: string = color["chart-1"].light;
+
+// Font presets: typed ids for data-font, with labels for a picker.
+export const font: FontPreset = fonts[0].id;
+export const fontLabels: string[] = fonts.map((x) => x.label);
+// @ts-expect-error unknown font preset
+export const badFont: FontPreset = "comic-sans";
+
+// Account menu: a header, group headings and checked items.
+export const accountMenu = <ActionMenu header={<span>Dev A</span>} items={[{ heading: "Switch organization" }, { label: "example-org", meta: "Owner", checked: true }, "separator", { label: "Sign out" }]} />;
+export const topBar = <TopBar scope={{ env: "prod", cloud: "region-a", cluster: "cluster-1" }} scopeOptions={{ env: [], cloud: [], cluster: [] }} account={{ name: "Dev A", role: "Owner", org: "example-org", items: [{ label: "Sign out" }] }} />;
+// @ts-expect-error an account needs a name
+export const badAccount = <TopBar scope={{ env: "prod", cloud: "a", cluster: "b" }} scopeOptions={{ env: [], cloud: [], cluster: [] }} account={{ role: "Owner" }} />;

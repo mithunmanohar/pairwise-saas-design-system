@@ -43,6 +43,10 @@ const SCREENS = [
   ["access-dark", "access", "", [1440, 900], false],
   ["access-invite-dark", "access", "state=invite", [1440, 900], false],
   ["admin-dark", "admin", "", [1440, 1000], false],
+  ["prefs-dark", "overview", "state=prefs", [1440, 900], false],
+  ["font-atkinson-dark", "runs/run_8f3k2", "font=atkinson", [1440, 620], false],
+  ["font-inter-dark", "runs/run_8f3k2", "font=inter", [1440, 620], false],
+  ["font-plex-dark", "runs/run_8f3k2", "font=plex", [1440, 620], false],
   ["phone-overview-dark", "overview", "", PHONE, false],
   ["phone-incident-dark", "incidents/INC-2041", "", PHONE, false],
   ["phone-run-detail-dark", "runs/run_8f3k2", "", PHONE, false],
@@ -88,14 +92,20 @@ if (!existsSync(join(ROOT, "examples", "dist", "demo.html"))) throw new Error("r
 
 const { chromium } = loadPlaywright();
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ deviceScaleFactor: SCALE, locale: "en-US", timezoneId: "UTC", reducedMotion: "reduce" });
+const opts = { deviceScaleFactor: SCALE, locale: "en-US", timezoneId: "UTC", reducedMotion: "reduce" };
+const ctx = await browser.newContext(opts);
+// Phone captures use mobile emulation, so scrollbars overlay the page as they do on a real phone.
+const phoneCtx = await browser.newContext({ ...opts, isMobile: true, hasTouch: true });
+// Desktop captures render like overlay scrollbars too (macOS, phones): headless Chromium hides its scrollbar but would
+// still reserve the AppShell's stable scrollbar gutter, leaving a blank strip that no real user sees.
+const OVERLAY_SCROLLBARS = ".pw-shell__content{scrollbar-gutter:auto!important}";
 const errors = [];
 async function open(url, [w, h]) {
-  const page = await ctx.newPage();
+  const page = await (w === PHONE[0] ? phoneCtx : ctx).newPage();
   page.on("pageerror", (e) => errors.push(`${url}: ${e}`));
   await page.setViewportSize({ width: w, height: h });
   await page.goto(base + url, { waitUntil: "networkidle" });
-  await page.addStyleTag({ content: FREEZE });
+  await page.addStyleTag({ content: FREEZE + OVERLAY_SCROLLBARS });
   await page.evaluate(async () => { await document.fonts.ready; await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
   await page.waitForTimeout(300);
   return page;
@@ -115,21 +125,10 @@ for (const [file, route, query, vp, full] of SCREENS) {
   await page.close();
 }
 
-// Hero: the top of the overview screen in dark, with a light-theme sliver on the right, split on a diagonal.
+// Hero: the overview screen in the dark theme, as one plain capture (light variants have their own images below it).
 {
-  const page = await ctx.newPage();
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  const img = (f) => "data:image/png;base64," + readFileSync(join(OUT, "screens", f)).toString("base64");
-  const png = await page.evaluate(async ([a, b]) => {
-    const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
-    const [la, da] = await Promise.all([load(a), load(b)]);
-    const c = document.createElement("canvas"); c.width = la.width; c.height = Math.min(la.height, Math.round(la.width * 1000 / 1440)); const x = c.getContext("2d");
-    x.drawImage(da, 0, 0);
-    x.save(); x.beginPath(); x.moveTo(c.width * 0.86, 0); x.lineTo(c.width, 0); x.lineTo(c.width, c.height); x.lineTo(c.width * 0.70, c.height); x.closePath(); x.clip();
-    x.drawImage(la, 0, 0); x.restore();
-    return c.toDataURL("image/png").split(",")[1];
-  }, [img("overview-light.png"), img("overview-dark.png")]);
-  writeFileSync(join(OUT, "hero.png"), Buffer.from(png, "base64"));
+  const page = await open(`/examples/dist/demo.html?frozen=1&controls=0#/overview`, [1440, 900]);
+  await page.screenshot({ path: join(OUT, "hero.png") });
   await page.close();
 }
 

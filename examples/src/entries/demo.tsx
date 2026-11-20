@@ -1,9 +1,10 @@
 // The live demo (GitHub Pages): one routed app built only from @pairwise/ui. Every nav item is a working page, and list
 // rows open detail pages (#/services/checkout-api, #/incidents/INC-2041, #/runs/run_8f3k2, #/repos/sample-repo).
-// A floating control switches theme and density (hidden with ?controls=0, which the screenshot script uses).
+// A floating control switches theme, density and font (hidden with ?controls=0, which the screenshot script uses); the
+// account button opens the same preferences in a drawer.
 import { useEffect, useState } from "react";
-import { PageHeader, Panel, StateBlock, Switch } from "@pairwise/ui";
-import { mount, Frame, NavProvider, useNav, showControls } from "../frame";
+import { PageHeader, Panel, StateBlock, Switch, MenuSelect, tokens } from "@pairwise/ui";
+import { mount, Frame, NavProvider, useNav, showControls, usePrefs, setPrefs, isFont } from "../frame";
 import { Overview } from "../screens/overview";
 import { Services } from "../screens/services";
 import { ServiceHealth } from "../screens/service-health";
@@ -53,16 +54,17 @@ function Page({ section, id }: { section: string; id: string | undefined }) {
   }
 }
 
+// Shares the preferences store with the account drawer, so both always agree.
 function Display() {
-  const html = document.documentElement;
-  const [dark, setDark] = useState(html.dataset.theme === "dark");
-  const [comfy, setComfy] = useState(html.dataset.density === "comfortable");
-  useEffect(() => { html.dataset.theme = dark ? "dark" : "light"; }, [dark]);
-  useEffect(() => { html.dataset.density = comfy ? "comfortable" : "compact"; }, [comfy]);
+  const p = usePrefs();
   return (
     <div className="ex-display" role="group" aria-label="Display">
-      <Switch label="Dark" checked={dark} onChange={setDark} />
-      <Switch label="Comfortable" checked={comfy} onChange={setComfy} />
+      <Switch label="Dark" checked={p.theme === "dark"} onChange={(on) => setPrefs({ theme: on ? "dark" : "light" })} />
+      <Switch label="Comfortable" checked={p.density === "comfortable"} onChange={(on) => setPrefs({ density: on ? "comfortable" : "compact" })} />
+      <span className="ex-display__font">
+        <MenuSelect quiet label="Font" prefix="Font" value={p.font} onChange={(v) => setPrefs({ font: isFont(v) ? v : "org" })}
+          options={[{ value: "org", label: "Default" }, ...tokens.fonts.map((f) => ({ value: f.id, label: f.label }))]} />
+      </span>
     </div>
   );
 }
@@ -89,5 +91,5 @@ function Demo() {
   );
 }
 
-// Dark by default; ?theme=light starts in light. The floating switch changes it at any time.
+// Dark by default; ?theme=light starts in light. The floating control and the account menu change it at any time.
 mount(<Demo />, "dark");

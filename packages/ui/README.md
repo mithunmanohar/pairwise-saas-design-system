@@ -17,16 +17,30 @@ version; `CHANGELOG.md` says what changed.
 **2. Import the CSS once**, in your app entry, in this order:
 
 ```tsx
-import "@pairwise/ui/fonts.css";   // Atkinson Hyperlegible Next + Mono, self-hosted
+import "@pairwise/ui/fonts.css";   // every font preset, self-hosted; only the one in use downloads
 import "@pairwise/ui/tokens.css";  // colours, spacing, type; both themes and densities
 import "@pairwise/ui/styles.css";  // component styles (pw- classes)
 ```
 
-**3. Set theme and density on `<html>`**, once. Both have defaults (light, compact), so this is optional.
+**3. Set theme, density and font on `<html>`**, once. All have defaults (light, compact, Atkinson Hyperlegible), so this is optional.
 
 ```html
-<html data-theme="dark" data-density="comfortable">
+<html data-theme="dark" data-density="comfortable" data-font="inter">
 ```
+
+Font presets: `atkinson` (default), `inter` (Inter with IBM Plex Mono), `plex` (IBM Plex Sans and Mono) and `system` (the
+device's own font; nothing to download). They come from `tokens.json`; `tokens.fonts` lists them with labels, and the
+`FontPreset` type names them. To let people choose their own, write their choice to the same attribute, for example from a
+`Select` in an account menu:
+
+```tsx
+import { Select, tokens, type FontPreset } from "@pairwise/ui";
+
+<Select label="Font" value={font} options={tokens.fonts.map((f) => ({ value: f.id, label: f.label }))}
+  onChange={(v) => { document.documentElement.dataset.font = v; save(v as FontPreset); }} />
+```
+
+`data-font` also works on any element, which scopes a preset to that subtree (use it to preview a font in a picker).
 
 **4. Wrap the app in `PairwiseProvider`** (locale, time zone and currency default to the browser), and render `<Toaster />` once if you use `toast()`:
 
