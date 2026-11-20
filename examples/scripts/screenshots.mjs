@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Regenerates every image in docs/images/ from the real code: the example screens (examples/dist, built by
+// Regenerates every image in docs/images/ from the real code: the routed demo (examples/dist/demo.html, built by
 // build.mjs) and the component cards (design-system/components/<Name>/preview.html, using the generated preview kit).
 // Nothing is mocked up. Run: pnpm -C examples screenshots   (needs a Playwright install; resolved like
 // scripts/capture-previews.mjs). Chromium, 2× pixels, en-US, UTC, animations frozen.
@@ -15,21 +15,40 @@ const OUT = join(ROOT, "docs", "images");
 const CARDS = join(ROOT, "design-system", "components");
 const SCALE = 2;
 
-// Screens: [file, page, query, viewport]
+// Screens: [file, demo route, query, viewport, fullPage]. Dark is the primary theme; light variants live under it.
+// Every capture is the routed live demo (examples/dist/demo.html) with ?frozen=1&controls=0. fullPage grows the
+// viewport to the page's scroll height so nothing is cut off; phone captures keep the device viewport.
+const PHONE = [390, 844];
 const SCREENS = [
-  ["service-health-light", "service-health", "", [1440, 1300]],
-  ["service-health-dark", "service-health", "theme=dark", [1440, 1300]],
-  ["run-detail-light", "run-detail", "", [1440, 960]],
-  ["run-detail-dark", "run-detail", "theme=dark", [1440, 960]],
-  ["run-detail-drawer-dark", "run-detail", "theme=dark&state=drawer", [1440, 960]],
-  ["settings-light", "settings", "", [1440, 1060]],
-  ["settings-dark", "settings", "theme=dark", [1440, 1060]],
-  ["settings-modal-light", "settings", "state=modal", [1440, 1060]],
-  ["settings-toast-dark", "settings", "theme=dark&state=toast", [1440, 1060]],
-  ["service-health-collapsed-light", "service-health", "", [1180, 1000]],
-  ["service-health-comfortable-light", "service-health", "density=comfortable", [1440, 1000]],
+  ["overview-dark", "overview", "", [1440, 1000], true],
+  ["overview-light", "overview", "theme=light", [1440, 1000], true],
+  ["services-dark", "services", "", [1440, 760], false],
+  ["service-health-dark", "services/checkout-api", "", [1440, 1300], true],
+  ["service-health-light", "services/checkout-api", "theme=light", [1440, 1300], true],
+  ["service-health-collapsed-dark", "services/checkout-api", "", [1180, 1000], false],
+  ["service-health-comfortable-dark", "services/checkout-api", "density=comfortable", [1440, 1000], false],
+  ["incidents-dark", "incidents", "", [1440, 760], false],
+  ["incident-dark", "incidents/INC-2041", "", [1440, 1150], true],
+  ["deployments-dark", "deploys", "", [1440, 1100], true],
+  ["runs-dark", "runs", "", [1440, 720], false],
+  ["run-detail-dark", "runs/run_8f3k2", "", [1440, 960], true],
+  ["run-detail-light", "runs/run_8f3k2", "theme=light", [1440, 960], true],
+  ["run-detail-drawer-dark", "runs/run_8f3k2", "state=drawer", [1440, 960], false],
+  ["repos-dark", "repos", "", [1440, 720], false],
+  ["settings-dark", "repos/sample-repo", "", [1440, 1060], true],
+  ["settings-modal-dark", "repos/sample-repo", "state=modal", [1440, 900], false],
+  ["settings-toast-light", "repos/sample-repo", "theme=light&state=toast", [1440, 1060], false],
+  ["usage-dark", "usage", "", [1440, 1300], true],
+  ["usage-light", "usage", "theme=light", [1440, 1300], true],
+  ["access-dark", "access", "", [1440, 900], false],
+  ["access-invite-dark", "access", "state=invite", [1440, 900], false],
+  ["admin-dark", "admin", "", [1440, 1000], false],
+  ["phone-overview-dark", "overview", "", PHONE, false],
+  ["phone-incident-dark", "incidents/INC-2041", "", PHONE, false],
+  ["phone-run-detail-dark", "runs/run_8f3k2", "", PHONE, false],
+  ["phone-service-health-light", "services/checkout-api", "theme=light", PHONE, false],
 ];
-// Component cards for the README gallery (light theme, compact).
+// Component cards for the README gallery (dark theme, compact).
 const COMPONENTS = ["Button", "ActionMenu", "StatusBadge", "Tag", "CopyButton", "TextInput", "Select", "Checkbox", "Switch",
   "Tabs", "TimeRangePicker", "AlertBanner", "Toaster", "StateBlock", "Modal", "Drawer", "Metric", "DataTable", "CodeBlock",
   "Timeline", "TimeSeriesChart", "BarChart", "StatusGrid", "RunStrip", "Heatmap", "PageHeader", "Icon"];
@@ -65,7 +84,7 @@ const server = await new Promise((ok) => {
   s.listen(0, "127.0.0.1", () => ok(s));
 });
 const base = `http://127.0.0.1:${server.address().port}`;
-if (!existsSync(join(ROOT, "examples", "dist", "service-health.html"))) throw new Error("run `pnpm -C examples build` first");
+if (!existsSync(join(ROOT, "examples", "dist", "demo.html"))) throw new Error("run `pnpm -C examples build` first");
 
 const { chromium } = loadPlaywright();
 const browser = await chromium.launch();
@@ -86,13 +105,17 @@ rmSync(OUT, { recursive: true, force: true });
 mkdirSync(join(OUT, "screens"), { recursive: true });
 mkdirSync(join(OUT, "components"), { recursive: true });
 
-for (const [file, screen, query, vp] of SCREENS) {
-  const page = await open(`/examples/dist/${screen}.html?frozen=1${query ? "&" + query : ""}`, vp);
+for (const [file, route, query, vp, full] of SCREENS) {
+  const page = await open(`/examples/dist/demo.html?frozen=1&controls=0${query ? "&" + query : ""}#/${route}`, vp);
+  if (full) {
+    const h = await page.evaluate(() => { const m = document.getElementById("main"); return m ? m.scrollHeight + m.getBoundingClientRect().top : document.body.scrollHeight; });
+    if (h > vp[1]) { await page.setViewportSize({ width: vp[0], height: Math.ceil(h) }); await page.waitForTimeout(300); }
+  }
   await page.screenshot({ path: join(OUT, "screens", file + ".png") });
   await page.close();
 }
 
-// Hero: the top of the service-health screen, light on the left and dark on the right, split on a diagonal.
+// Hero: the top of the overview screen in dark, with a light-theme sliver on the right, split on a diagonal.
 {
   const page = await ctx.newPage();
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -101,23 +124,23 @@ for (const [file, screen, query, vp] of SCREENS) {
     const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
     const [la, da] = await Promise.all([load(a), load(b)]);
     const c = document.createElement("canvas"); c.width = la.width; c.height = Math.min(la.height, Math.round(la.width * 1000 / 1440)); const x = c.getContext("2d");
-    x.drawImage(la, 0, 0);
-    x.save(); x.beginPath(); x.moveTo(c.width * 0.62, 0); x.lineTo(c.width, 0); x.lineTo(c.width, c.height); x.lineTo(c.width * 0.42, c.height); x.closePath(); x.clip();
-    x.drawImage(da, 0, 0); x.restore();
+    x.drawImage(da, 0, 0);
+    x.save(); x.beginPath(); x.moveTo(c.width * 0.86, 0); x.lineTo(c.width, 0); x.lineTo(c.width, c.height); x.lineTo(c.width * 0.70, c.height); x.closePath(); x.clip();
+    x.drawImage(la, 0, 0); x.restore();
     return c.toDataURL("image/png").split(",")[1];
-  }, [img("service-health-light.png"), img("service-health-dark.png")]);
+  }, [img("overview-light.png"), img("overview-dark.png")]);
   writeFileSync(join(OUT, "hero.png"), Buffer.from(png, "base64"));
   await page.close();
 }
 
 for (const name of COMPONENTS) {
-  const page = await open(`/__card/${name}?th=light`, [cardWidth(name), 900]);
+  const page = await open(`/__card/${name}?th=dark`, [cardWidth(name), 900]);
   await page.locator("#root").screenshot({ path: join(OUT, "components", name + ".png") });
   await page.close();
 }
-// Density: the same table in both densities.
+// Density: the same table in both densities (dark).
 for (const d of ["compact", "comfortable"]) {
-  const page = await open(`/__card/DataTable?th=light`, [1100, 900]);
+  const page = await open(`/__card/DataTable?th=dark`, [1100, 900]);
   await page.evaluate((v) => document.documentElement.setAttribute("data-density", v), d);
   await page.waitForTimeout(200);
   await page.locator("#root table").first().screenshot({ path: join(OUT, `density-${d}.png`) });

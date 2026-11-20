@@ -1,22 +1,41 @@
 // Observability: a service's health at a glance. Exceptions first, everything else quiet.
+// checkout-api tells the degraded story (deploy v2.14.1 pushed p95 over the SLO); other services render quiet.
 // Live: the window rolls forward every few seconds (unless ?frozen=1). Roll back asks for confirmation; endpoint rows
 // open a drawer.
 import { useEffect, useState } from "react";
-import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, toast, type Column } from "@pairwise/ui";
-import { Frame, frozen, useNav } from "../frame";
-import { latencyWindow, DEPLOY_AT, spark, errorBuckets, errors5xx, errors4xx, errorsTimeout, endpoints, type Endpoint } from "../data";
+import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, toast, type Column } from "@pairwise/ui";
+import { Frame, frozen, useNav, useCrumbNav } from "../frame";
+import { latencyWindow, steadyWindow, DEPLOY_AT, spark, errorBuckets, errors5xx, errors4xx, errorsTimeout, endpointsFor, deploys, incidents, isOpen, serviceByName, type Endpoint, type Service } from "../data";
+import { SERVICE_STATUS } from "./services";
 
 const STATUS_LABEL = { healthy: "Healthy", warning: "Slow", critical: "SLO breach" } as const;
 const columns: Column<Endpoint>[] = [
   { key: "route", header: "Endpoint", mono: true },
   { key: "status", header: "Status", sortable: true, sortValue: (r) => ["critical", "warning", "healthy"].indexOf(r.status), render: (r) => <StatusBadge status={r.status} label={STATUS_LABEL[r.status]} size="sm" /> },
-  { key: "p95", header: "p95", align: "right", num: true, sortable: true, render: (r) => `${r.p95} ms` },
+  { key: "p95", header: "p95", align: "right", num: true, sortable: true, render: (r) => `${r.p95.toLocaleString("en")} ms` },
   { key: "rps", header: "Requests/s", align: "right", num: true, sortable: true },
   { key: "errors", header: "Errors", align: "right", num: true, sortable: true, render: (r) => `${r.errors.toFixed(1)} %` },
 ];
 
-export function ServiceHealth() {
+export function ServiceHealth({ name = "checkout-api" }: { name?: string }) {
+  const svc = serviceByName(name);
+  const crumbs = useCrumbNav();
+  if (!svc) {
+    return (
+      <Frame active="services">
+        <PageHeader crumbs={<Breadcrumbs onNavigate={crumbs} items={[{ label: "Services", href: "#/services" }, { label: name, mono: true }]} />} title={name} titleMono />
+        <div className="pw-page ex-narrow"><Panel><StateBlock kind="empty" title="No service with this name" body="It may have been renamed or removed." /></Panel></div>
+      </Frame>
+    );
+  }
+  return <ServicePage key={svc.name} svc={svc} />;
+}
+
+function ServicePage({ svc }: { svc: Service }) {
   const go = useNav();
+  const crumbs = useCrumbNav();
+  const story = svc.name === "checkout-api";
+  const [tab, setTab] = useState("overview");
   const [shift, setShift] = useState(0);
   const [rollback, setRollback] = useState(false);
   const [endpoint, setEndpoint] = useState<Endpoint | null>(null);
@@ -25,69 +44,107 @@ export function ServiceHealth() {
     const t = window.setInterval(() => setShift((s) => s + 1), 4000);
     return () => window.clearInterval(t);
   }, []);
-  const { labels, p95, p50 } = latencyWindow(shift);
+  const { labels, p95, p50 } = story ? latencyWindow(shift) : steadyWindow(shift, svc.p95, svc.name.length);
   const latest = p95[p95.length - 1] ?? 0;
   const marker = DEPLOY_AT - shift;
   const updated = (labels[labels.length - 1] ?? "") + ":12";
+  const eps = endpointsFor(svc);
+  const svcDeploys = deploys.filter((d) => d.service === svc.name);
+  const svcIncidents = incidents.filter((i) => i.service === svc.name);
+  const openInc = svcIncidents.find(isOpen);
+  const breach = latest > svc.slo;
+  const scale = svc.rps / 1219;
+  const endpointTable = <DataTable columns={columns} rows={eps} defaultSort={{ key: "status", dir: "asc" }} caption={`Endpoints of ${svc.name}`} onRowClick={setEndpoint} selectedKey={endpoint?.id} />;
   return (
     <Frame active="services">
       <PageHeader
-        crumbs={<Breadcrumbs items={[{ label: "Services", href: "#" }, { label: "checkout-api", mono: true }]} />}
-        title="checkout-api" titleMono
-        status={<StatusBadge status="warning" label="Degraded" />}
-        meta={[{ label: "Owner", value: "Payments team" }, { label: "Version", value: "v2.14.1", mono: true }, { label: "Region", value: "region-a" }, { label: "SLO", value: "99.9 %, p95 under 300 ms" }]}
+        crumbs={<Breadcrumbs onNavigate={crumbs} items={[{ label: "Services", href: "#/services" }, { label: svc.name, mono: true }]} />}
+        title={svc.name} titleMono
+        status={<StatusBadge status={svc.status} label={SERVICE_STATUS[svc.status]} />}
+        meta={[{ label: "Owner", value: svc.owner }, { label: "Version", value: svc.version, mono: true }, { label: "Region", value: svc.region }, { label: "SLO", value: `99.9 %, p95 under ${svc.slo.toLocaleString("en")} ms` }]}
         actions={<>
           <Button icon="book" onClick={() => toast("The runbook would open here")}>Runbook</Button>
-          <Button variant="primary" icon="refresh" onClick={() => setRollback(true)}>Roll back to v2.14.0</Button>
-          <ActionMenu label="More actions for checkout-api" items={[
+          {story ? <Button variant="primary" icon="refresh" onClick={() => setRollback(true)}>Roll back to v2.14.0</Button> : null}
+          <ActionMenu label={`More actions for ${svc.name}`} items={[
             { label: "Copy link", icon: "link", onSelect: () => toast("Link copied") },
             { label: "Open on GitHub", icon: "external", onSelect: () => toast("GitHub would open here") },
             "separator",
             { label: "Pause alerts", icon: "pause", onSelect: () => toast({ tone: "warning", title: "Alerts paused for 1 hour" }) },
           ]} />
         </>}
-        tabs={<Tabs value="overview" onChange={(v) => v === "incidents" && go("incidents")} tabs={[{ value: "overview", label: "Overview" }, { value: "endpoints", label: "Endpoints", count: 12 }, { value: "deploys", label: "Deployments" }, { value: "incidents", label: "Incidents", count: 1, tone: "critical" }, { value: "settings", label: "Settings" }]} />}
+        tabs={<Tabs value={tab} onChange={(v) => (v === "incidents" && openInc ? go("incidents/" + openInc.id) : setTab(v))} tabs={[
+          { value: "overview", label: "Overview" }, { value: "endpoints", label: "Endpoints", count: eps.length },
+          { value: "deploys", label: "Deployments", count: svcDeploys.length },
+          { value: "incidents", label: "Incidents", count: svcIncidents.filter(isOpen).length || undefined, tone: openInc ? "critical" : undefined },
+        ]} />}
       />
-      <div className="pw-page">
-        <AlertBanner tone="warning" title="p95 latency has been above the SLO since 14:31." meta="alert_q3x7n, 27 min" action="Open incident" onAction={() => go("incidents")}>
-          It started with deploy v2.14.1. Error rate is within budget.
-        </AlertBanner>
-        <div className="ex-metrics">
-          <Metric label="p95 latency" scope="last hour" value={String(latest)} unit="ms" status="warning" statusLabel="Above SLO" delta={{ value: 61, unit: " %", window: "previous hour" }} spark={{ points: p95.slice(-30), threshold: 300 }} freshness={`Updated ${updated}`} />
-          <Metric label="Error rate" scope="last hour" value="0.42" unit="%" delta={{ value: 0.6, unit: " pt", window: "previous hour", threshold: 0.1 }} spark={{ points: spark(0.3, 0.05, 24, 0.12) }} target="Budget 1 %" />
-          <Metric label="Requests" scope="per second" value="1,219" delta={{ value: 3.1, unit: " %", polarity: "neutral", window: "previous hour" }} spark={{ points: spark(1180, 60) }} />
-          <Metric label="Availability" scope="30 days" value="99.94" unit="%" target="Target 99.9 %" spark={{ points: spark(99.95, 0.02) }} />
+      {tab === "overview" ? (
+        <div className="pw-page">
+          {story ? (
+            <AlertBanner tone="warning" title="p95 latency has been above the SLO since 14:31." meta="alert_q3x7n, 27 min" action="Open incident" onAction={() => go("incidents/INC-2041")}>
+              It started with deploy v2.14.1. Error rate is within budget.
+            </AlertBanner>
+          ) : null}
+          <div className="ex-metrics">
+            <Metric label="p95 latency" scope="last hour" value={latest.toLocaleString("en")} unit="ms" status={breach ? "warning" : undefined} statusLabel="Above SLO"
+              delta={story ? { value: 61, unit: " %", window: "previous hour" } : { value: 1.2, unit: " %", window: "previous hour" }} spark={{ points: p95.slice(-30), threshold: svc.slo }} freshness={`Updated ${updated}`} />
+            <Metric label="Error rate" scope="last hour" value={svc.errors.toFixed(2)} unit="%" delta={{ value: story ? 0.6 : 0.01, unit: " pt", window: "previous hour", threshold: 0.1 }} spark={{ points: spark(svc.errors * 0.7, svc.errors * 0.12 + 0.01, 24, story ? 0.12 : 0) }} target="Budget 1 %" />
+            <Metric label="Requests" scope="per second" value={svc.rps.toLocaleString("en")} delta={{ value: 3.1, unit: " %", polarity: "neutral", window: "previous hour" }} spark={{ points: spark(svc.rps, svc.rps * 0.05) }} />
+            <Metric label="Availability" scope="30 days" value={svc.availability.toFixed(2)} unit="%" target="Target 99.9 %" spark={{ points: spark(svc.availability, 0.02) }} />
+          </div>
+          <div className="ex-row ex-2">
+            <Panel title="Latency" meta="p95 and p50, last hour">
+              <TimeSeriesChart ariaLabel={`${svc.name} latency, last hour`} labels={labels} unit="ms" height={220}
+                series={[{ name: "p95", points: p95, color: "chart-1" }, { name: "p50", points: p50, color: "chart-2" }]}
+                threshold={{ value: svc.slo, label: `SLO ${svc.slo.toLocaleString("en")} ms` }} markers={story && marker >= 0 ? [{ index: marker, label: "v2.14.1" }] : []}
+                onMarker={() => toast("Deploy v2.14.1, PR #1482 by Dev B")} />
+            </Panel>
+            <Panel title="Errors by type" meta="10-minute buckets">
+              <BarChart ariaLabel={`${svc.name} errors by type`} categories={errorBuckets} height={238} stacked
+                series={[
+                  { name: "5xx", values: story ? errors5xx : errors5xx.map((v) => Math.round(v * scale * 0.2)), color: "chart-1" },
+                  { name: "4xx", values: errors4xx.map((v) => Math.round(v * (story ? 1 : scale))), color: "chart-other" },
+                  { name: "Timeouts", values: story ? errorsTimeout : errorsTimeout.map((v) => Math.round(v * scale * 0.1)), color: "chart-3" },
+                ]} />
+            </Panel>
+          </div>
+          <div className="ex-row ex-2">
+            <Panel title="Endpoints" meta="worst first" flush>{endpointTable}</Panel>
+            <Panel title="Recent changes" meta="last 24 hours">
+              <Timeline dense onEvent={() => go("deploys")} events={story ? [
+                { time: "14:31", kind: "alert", title: "p95 above SLO", actor: "Alerting", highlight: true },
+                { time: "14:29", kind: "deploy", title: "Deployed v2.14.1", actor: "Deploy bot, PR #1482 by Dev B", link: true },
+                { time: "13:05", kind: "scale", title: "Max replicas 12 → 16", actor: "Dev C" },
+                { time: "11:48", kind: "config", title: "Retry budget raised to 3", actor: "Dev D, PR #1477" },
+                { time: "09:30", kind: "resolve", title: "Resolved alert_m2k9p", actor: "Dev A" },
+              ] : [
+                ...svcDeploys.map((d) => ({ time: d.when, kind: "deploy" as const, title: `Deployed ${d.version}`, actor: `${d.author}, PR ${d.pr}`, link: true })),
+                { time: "08:00", kind: "scale", title: "Scheduled scale-up for business hours", actor: "Autoscaler" },
+                { time: "Yesterday", kind: "config", title: "Alert thresholds reviewed", actor: svc.owner },
+              ]} />
+            </Panel>
+          </div>
         </div>
-        <div className="ex-row ex-2">
-          <Panel title="Latency" meta="p95 and p50, last hour">
-            <TimeSeriesChart ariaLabel="checkout-api latency, last hour" labels={labels} unit="ms" height={220}
-              series={[{ name: "p95", points: p95, color: "chart-1" }, { name: "p50", points: p50, color: "chart-2" }]}
-              threshold={{ value: 300, label: "SLO 300 ms" }} markers={marker >= 0 ? [{ index: marker, label: "v2.14.1" }] : []}
-              onMarker={() => toast("Deploy v2.14.1, PR #1482 by Dev B")} />
-          </Panel>
-          <Panel title="Errors by type" meta="10-minute buckets">
-            <BarChart ariaLabel="checkout-api errors by type" categories={errorBuckets} height={238} stacked
-              series={[{ name: "5xx", values: errors5xx, color: "chart-1" }, { name: "4xx", values: errors4xx, color: "chart-other" }, { name: "Timeouts", values: errorsTimeout, color: "chart-3" }]} />
+      ) : tab === "endpoints" ? (
+        <div className="pw-page"><Panel title="Endpoints" meta={`${eps.length} routes, last hour`} flush>{endpointTable}</Panel></div>
+      ) : tab === "deploys" ? (
+        <div className="pw-page">
+          <Panel title="Deployments" meta="today">
+            {svcDeploys.length ? <Timeline events={svcDeploys.map((d) => ({ time: d.when, kind: d.status === "critical" ? "alert" : d.status === "warning" ? "warn" : "deploy", title: `${d.version} to ${d.env}`, body: `${d.statusLabel}, took ${d.duration}`, actor: `${d.author}, PR ${d.pr}` }))} />
+              : <StateBlock kind="empty" inline title="No deployments today" body="The last deployment was more than 24 hours ago." action="All deployments" onAction={() => go("deploys")} />}
           </Panel>
         </div>
-        <div className="ex-row ex-2">
-          <Panel title="Endpoints" meta="worst first" flush>
-            <DataTable columns={columns} rows={endpoints} defaultSort={{ key: "status", dir: "asc" }} caption="Endpoints of checkout-api" onRowClick={setEndpoint} selectedKey={endpoint?.id} />
-          </Panel>
-          <Panel title="Recent changes" meta="last 24 hours">
-            <Timeline dense onEvent={() => toast("PR #1482 would open here")} events={[
-              { time: "14:31", kind: "alert", title: "p95 above SLO", actor: "Alerting", highlight: true },
-              { time: "14:29", kind: "deploy", title: "Deployed v2.14.1", actor: "Deploy bot, PR #1482 by Dev B", link: true },
-              { time: "13:05", kind: "scale", title: "Max replicas 12 → 16", actor: "Dev C" },
-              { time: "11:48", kind: "config", title: "Retry budget raised to 3", actor: "Dev D, PR #1477" },
-              { time: "09:30", kind: "resolve", title: "Resolved alert_m2k9p", actor: "Dev A" },
-            ]} />
+      ) : (
+        <div className="pw-page">
+          <Panel title="Incidents" meta="last 30 days">
+            {svcIncidents.length ? <Timeline onEvent={(e) => go("incidents/" + e.title.split(":")[0])} events={svcIncidents.map((i) => ({ time: i.started.replace(/^(Today|Yesterday) /, ""), kind: isOpen(i) ? "alert" : "resolve", title: `${i.id}: ${i.title}`, body: `${i.state}, ${i.duration}`, actor: `Commander ${i.commander}`, link: true }))} />
+              : <StateBlock kind="empty" inline title="No incidents in the last 30 days" body={`${svc.name} has met its SLO every day this month.`} />}
           </Panel>
         </div>
-      </div>
-      <Modal open={rollback} title="Roll back checkout-api to v2.14.0?" onClose={() => setRollback(false)}
+      )}
+      <Modal open={rollback} title={`Roll back ${svc.name} to v2.14.0?`} onClose={() => setRollback(false)}
         actions={<><Button onClick={() => setRollback(false)}>Cancel</Button><Button variant="primary" onClick={() => { setRollback(false); toast({ tone: "healthy", title: "Rolling back to v2.14.0", body: "3 of 12 replicas updated. You can follow it under Deployments." }); }}>Roll back</Button></>}>
-        <p style={{ margin: 0 }}>All 12 replicas in region-a move back to v2.14.0, one at a time. Traffic keeps flowing during the rollback.</p>
+        <p className="ex-p">All 12 replicas in region-a move back to v2.14.0, one at a time. Traffic keeps flowing during the rollback.</p>
       </Modal>
       <Drawer open={endpoint != null} title={endpoint?.route ?? ""} subtitle="Last hour" onClose={() => setEndpoint(null)}
         footer={<Button onClick={() => setEndpoint(null)}>Close</Button>}>
@@ -95,11 +152,11 @@ export function ServiceHealth() {
           <div className="ex-stack">
             <StatusBadge status={endpoint.status} label={STATUS_LABEL[endpoint.status]} />
             <dl className="pw-fields">
-              <div><dt>p95</dt><dd>{endpoint.p95} ms</dd></div>
+              <div><dt>p95</dt><dd>{endpoint.p95.toLocaleString("en")} ms</dd></div>
               <div><dt>Requests/s</dt><dd>{endpoint.rps}</dd></div>
               <div><dt>Errors</dt><dd>{endpoint.errors.toFixed(1)} %</dd></div>
             </dl>
-            <Sparkline points={spark(endpoint.p95 * 0.8, endpoint.p95 * 0.08, 24, endpoint.p95 * 0.2)} width={380} height={56} threshold={300} tone={endpoint.status} label={`p95 trend for ${endpoint.route}`} />
+            <div className="ex-fill"><Sparkline points={spark(endpoint.p95 * 0.8, endpoint.p95 * 0.08, 24, endpoint.status === "healthy" ? 0 : endpoint.p95 * 0.2)} width={380} height={56} threshold={svc.slo} tone={endpoint.status} label={`p95 trend for ${endpoint.route}`} /></div>
           </div>
         ) : null}
       </Drawer>
