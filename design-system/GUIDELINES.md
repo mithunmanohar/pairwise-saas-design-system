@@ -62,6 +62,55 @@ Every colour token is checked in both themes on every surface it can sit on (`su
 
 These checks are unit tests on `tokens.json`; a token change that fails them fails CI.
 
+## Forms
+
+- **Every control is a Field:** a visible label (or a hidden one, for a lone search box), an optional hint and an
+  optional error. Build custom controls with `<Field>` so they get the same wiring: `aria-describedby` for the hint
+  and error, `aria-invalid`, `aria-required`.
+- **Required:** mark it with `required`, which shows a muted "Required" and sets `aria-required`. If most fields are
+  required, mark the optional ones in the hint instead.
+- **Errors:** say what to do ("Use an https:// URL so the payload is encrypted."), in `status-critical`, with an icon
+  and under the field. Validate on blur or submit, never on every keystroke. On submit, focus the first invalid field;
+  every control forwards its ref for this.
+- **Read-only vs disabled:** read-only values stay focusable and copyable. Use disabled only when the field doesn't
+  apply, and say why in the hint.
+- **Saving:** a form saves with one primary button (verb + object). A single value saves in place with `InlineEdit`.
+  Async saves show "Saving…", keep focus where it is, and keep the person's input on failure.
+- **Choosing the control:**
+
+| Choice | Use |
+|---|---|
+| On or off, takes effect now | `Switch` |
+| On or off, saved with the form; or select-all | `Checkbox` (`indeterminate` for some) |
+| One of 2–5, differences need words | `RadioGroup` |
+| One of 2–5 views or intervals, in a toolbar | `SegmentedControl` |
+| One of a short fixed list | `Select` |
+| One or several of a long list, or free tags | `Combobox` (`multiple`, `creatable`) |
+| A filter value in a toolbar | `MenuSelect` / `FilterBar` |
+| A date / a date range | `DatePicker` / `DateRangePicker` (`TimeRangePicker` for the global time window) |
+| Files | `FileUpload` |
+
+## Overlays and layering
+
+- **One primitive per job.** Decisions that block the page: `Modal`. Investigation next to the list: `Drawer`. A small
+  panel anchored to a control: `Popover`. Commands: `ActionMenu`. A choice: `MenuSelect`, `Select` or `Combobox`.
+  A hint: `Tooltip`. Feedback after the fact: `toast()`.
+- **Floating layers portal to `<body>`** and stack by the `layer` tokens only: `z-overlay` (modal, drawer) <
+  `z-popover` (menus, selects, popovers, which also work inside a modal) < `z-toast` < `z-tooltip`.
+- **Escape closes one layer at a time**, top first. Focus returns to whatever opened the layer. Clicking outside
+  closes non-modal layers; a critical modal ignores outside clicks.
+- **Never nest a modal in a modal.** Replace the content, or move the second step into the same dialog.
+- **Phones:** popovers flip and shift to stay on screen; the time and date pickers stack their columns.
+
+## Motion
+
+- **Functional only.** Floating layers fade in 4 px from their trigger (`duration-base`, 160 ms). Dialogs fade in and
+  drawers slide in from the edge (`duration-slow`, 220 ms). Hover and press feedback uses `duration-fast` (120 ms).
+  Nothing bounces, nothing loops except progress.
+- **Reduced motion** sets every duration to 0 ms and turns off the overlay animations; indeterminate progress becomes
+  a still, half-tone bar.
+- **No raw durations or z-index values** in component CSS: the lint fails on them.
+
 ## Principles
 
 1. **Exceptions first; healthy is quiet.** Problems get filled colour and sort to the top.

@@ -2,7 +2,7 @@ import type * as React from "react";
 import type { IconProps } from "./types";
 
 // One icon set: 16px grid, 1.5 stroke, square-ish terminals. Drawn for this system.
-const P: Record<string, React.ReactElement> = {
+const P = {
   search: <g><circle cx="7" cy="7" r="4.25"/><path d="m10.2 10.2 3.3 3.3"/></g>,
   "chevron-down": <path d="m4.5 6.25 3.5 3.5 3.5-3.5"/>,
   "chevron-right": <path d="m6.25 4.5 3.5 3.5-3.5 3.5"/>,
@@ -47,25 +47,39 @@ const P: Record<string, React.ReactElement> = {
   comment: <path d="M2.5 3h11v7.5H7.25L4.5 13v-2.5h-2z"/>,
   page: <g><path d="M3.5 1.75h6l3 3v9.5h-9z"/><path d="M9.5 1.75v3h3M5.75 8h4.5M5.75 10.5h4.5"/></g>,
   ticket: <g><path d="M2 4.5h12v2a1.5 1.5 0 0 0 0 3v2H2v-2a1.5 1.5 0 0 0 0-3z"/><path d="M10 4.5v7" strokeDasharray="1.2 1.4"/></g>,
-};
+  minus: <path d="M4 8h8"/>,
+  "chevrons-left": <path d="m8.25 4.5-3.5 3.5 3.5 3.5M12.25 4.5 8.75 8l3.5 3.5"/>,
+  "chevrons-right": <path d="m3.75 4.5 3.5 3.5-3.5 3.5M7.75 4.5l3.5 3.5-3.5 3.5"/>,
+  edit: <g><path d="M10.25 3.25 12.75 5.75 6 12.5H3.5V10z"/><path d="m8.75 4.75 2.5 2.5"/></g>,
+  upload: <g><path d="M8 10.5V2.75M4.75 6 8 2.75 11.25 6"/><path d="M2.75 10.5v2.75h10.5V10.5"/></g>,
+  calendar: <g><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.75h11M5.5 2v3M10.5 2v3"/></g>,
+  plus: <path d="M8 3.5v9M3.5 8h9"/>,
+  file: <g><path d="M3.75 1.75h5.5l3 3v9.5h-8.5z"/><path d="M9.25 1.75v3h3"/></g>,
+  columns: <g><rect x="2.5" y="2.75" width="11" height="10.5"/><path d="M6.25 2.75v10.5M9.75 2.75v10.5"/></g>,
+} satisfies Record<string, React.ReactElement>;
 
 // Status glyphs: filled shapes so they read without colour.
-const S: Record<string, React.ReactElement> = {
+const S = {
   critical: <g><path d="M5.1 1.5h5.8l3.6 3.6v5.8l-3.6 3.6H5.1l-3.6-3.6V5.1z" fill="currentColor" stroke="none"/><path d="M8 4.5v4.25" stroke="var(--surface-raised)" strokeWidth="1.8"/><circle cx="8" cy="11.1" r="1" fill="var(--surface-raised)" stroke="none"/></g>,
   warning: <g><path d="M8 1.4 15 13.9H1z" fill="currentColor" stroke="none"/><path d="M8 5.75v3.75" stroke="var(--surface-raised)" strokeWidth="1.7"/><circle cx="8" cy="11.6" r=".95" fill="var(--surface-raised)" stroke="none"/></g>,
   healthy: <g><circle cx="8" cy="8" r="6.25"/><path d="m5.1 8.1 2 2 3.8-4"/></g>,
   unknown: <g><circle cx="8" cy="8" r="6.25" strokeDasharray="2.4 1.9"/><path d="M6.4 6.3a1.7 1.7 0 1 1 2.3 1.6c-.45.2-.7.55-.7 1.05"/><circle cx="8" cy="11.1" r=".8" fill="currentColor" stroke="none"/></g>,
   info: <g><circle cx="8" cy="8" r="6.25" strokeDasharray="28 11.3"/><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/></g>,
-};
+} satisfies Record<string, React.ReactElement>;
+
+/** Every icon name: the line set plus the five status glyphs. A typo is a type error, not a silent "x". */
+export type IconName = keyof typeof P | keyof typeof S;
+const GLYPHS: Record<IconName, React.ReactElement> = { ...P, ...S };
 
 export function Icon({ name, size = 16, title, className }: IconProps) {
-  const glyph = S[name] || P[name];
+  const glyph = GLYPHS[name];
   return (
     <svg className={"pw-icon" + (className ? " " + className : "")} width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor"
       strokeWidth={1.5} strokeLinecap="square" strokeLinejoin="miter" aria-hidden={title ? undefined : true} role={title ? "img" : undefined} focusable="false">
       {title ? <title>{title}</title> : null}
-      {glyph || P["x"]}
+      {glyph || P.x}
     </svg>
   );
 }
-export const iconNames = Object.keys(P);
+/** The line icons (status glyphs excluded), for pickers and docs. */
+export const iconNames = Object.keys(P) as Array<keyof typeof P>;

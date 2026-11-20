@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Component CSS must use tokens, never raw colour values. Fails on hex, rgb(), hsl() or named colours
-// outside tokens.css. Raw px lengths are reported (not failed) until they are moved to spacing tokens.
+// outside tokens.css, on a z-index that isn't a layer token, and on a transition or animation duration that isn't a
+// motion token. Raw px lengths are reported (not failed) until they are moved to spacing tokens.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,5 +11,12 @@ const NAMED = /:\s*[^;]*\b(red|blue|green|black|white|gray|grey|orange|purple|ye
 const colours = [...css.matchAll(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/gi)].map((m) => m[0]).concat([...css.matchAll(NAMED)].map((m) => m[1]));
 const px = (css.replace(/var\([^)]*\)/g, "").match(/\b\d+(\.\d+)?px\b/g) || []).length;
 if (px) console.log(`note: ${px} raw px lengths remain in styles.css (allowed for now)`);
+const zRaw = [...css.matchAll(/z-index:\s*(-?\d+)/g)].map((m) => m[0]);
+const timed = [...css.matchAll(/(?:transition|animation)(?:-duration)?:([^;}]*)/g)].map((m) => m[1].replace(/var\([^)]*\)/g, ""))
+  .filter((v) => /(^|[\s,])\d*\.?\d+m?s\b/.test(v));
+let failed = false;
+if (zRaw.length) { console.error(`${zRaw.length} raw z-index value(s) in styles.css (use var(--z-…)): ${[...new Set(zRaw)].join(", ")}`); failed = true; }
+if (timed.length) { console.error(`${timed.length} raw duration(s) in styles.css (use var(--duration-…)): ${[...new Set(timed.map((t) => t.trim()))].join(" | ")}`); failed = true; }
 if (colours.length) { console.error(`${colours.length} raw colour value(s) in styles.css: ${[...new Set(colours)].join(", ")}`); process.exit(1); }
-console.log("lint: tokens-only colours OK");
+if (failed) process.exit(1);
+console.log("lint: tokens-only colours, layers and durations OK");

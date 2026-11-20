@@ -158,6 +158,28 @@ export const size = {
   "drawer-width": "520px"
 } as const;
 export type SizeToken = keyof typeof size;
+/** Durations and easings. prefers-reduced-motion sets every duration to 0 ms in tokens.css. */
+export const motion = {
+  "duration-fast": "120ms",
+  "duration-base": "160ms",
+  "duration-slow": "220ms",
+  "duration-spin": "800ms",
+  "duration-pulse": "1400ms",
+  "ease-standard": "cubic-bezier(0.2, 0, 0, 1)",
+  "ease-exit": "cubic-bezier(0.4, 0, 1, 1)"
+} as const;
+export type MotionToken = keyof typeof motion;
+/** Stacking order (z-index) for floating layers. */
+export const layer = {
+  "z-sticky": "1",
+  "z-raised": "2",
+  "z-chart-tip": "5",
+  "z-overlay": "60",
+  "z-popover": "70",
+  "z-toast": "80",
+  "z-tooltip": "90"
+} as const;
+export type LayerToken = keyof typeof layer;
 /** Font presets for data-font on <html> (the app default, or a person's own choice). The first is the default. */
 export const fonts = [
   {
@@ -183,4 +205,4 @@ export const fonts = [
 ] as const;
 export type FontPreset = (typeof fonts)[number]["id"];
 /** CSS custom-property reference for a token, e.g. cssVar("chart-1") → "var(--chart-1)". */
-export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken): string => `var(--${name})`;
+export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken | MotionToken | LayerToken): string => `var(--${name})`;

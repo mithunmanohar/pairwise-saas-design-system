@@ -1,0 +1,25 @@
+<!-- @dsCard group="Data display" height=330 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>KeyValueList</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:100%}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){
+  var items=[{label:'Run',value:'run_8f3k2',mono:true,copy:'run_8f3k2'},{label:'Repository',value:'example-org/sample-repo',mono:true},{label:'Branch',value:'feature/add-retry',mono:true},{label:'Status',value:h(C.StatusBadge,{status:'critical',label:'Failed'})},{label:'Started',value:'20 Nov 14:02 UTC'},{label:'Reviewer',value:null}];
+  return h(F,null,
+    row(cell('rows (default): details in a drawer or panel', h('div',{className:'pv-box',style:{width:400}}, h(C.KeyValueList,{label:'Run details',items:items}))),
+        cell('grid, 3 columns', h('div',{className:'pv-box',style:{width:420}}, h(C.KeyValueList,{layout:'grid',columns:3,items:items})))),
+    row(cell('inline: page header fields', h(C.KeyValueList,{layout:'inline',items:items.slice(1,5)})), cell('loading', h('div',{className:'pv-box',style:{width:260}}, h(C.KeyValueList,{loading:true,items:items.slice(0,3)})))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

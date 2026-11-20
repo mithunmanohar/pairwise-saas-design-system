@@ -1,0 +1,30 @@
+<!-- @dsCard group="Forms" height=600 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Combobox</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:300px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var people=['Dev A','Dev B','Dev C','Dev D','Dev E','Dev F','Dev G'].map(function(n,i){return {value:'dev-'+'abcdefg'[i],label:n,meta:i===0?'Owner':i<3?'Maintainer':'Member'};});
+function Demo(){ var r=useState('dev-b'), t=useState(['ci','infra']);
+  return h(F,null,
+    row(cell('Single, clearable', h(C.Combobox,{label:'Reviewer',options:people,value:r[0],onChange:r[1]})),
+        cell('Multiple, creatable (tags)', h(C.Combobox,{label:'Topics',multiple:true,creatable:true,options:['ci','docs','infra','release','security'],value:t[0],onChange:t[1]})),
+        cell('Error', h(C.Combobox,{label:'Owner team',required:true,error:'Choose a team.',options:['example-team','platform','data-science']}))),
+    h('div',{style:{height:380}}, cell('Open, typing “dev”', h(OpenDemo))));
+}
+function OpenDemo(){ var ref=React.useRef(null);
+  React.useEffect(function(){ var b=document.querySelectorAll('.pw-combo__trigger')[3]; if(b){ b.focus(); b.dispatchEvent(new KeyboardEvent('keydown',{key:'d',bubbles:true})); } },[]);
+  return h(C.Combobox,{label:'Assignee',options:people,defaultValue:'dev-c'});
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

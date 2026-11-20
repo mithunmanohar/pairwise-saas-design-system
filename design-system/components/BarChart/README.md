@@ -7,3 +7,5 @@ Compare quantities across categories or days; stacked for parts of a whole.
 - Bars are at most 24 px thick with a 4 px rounded data-end, square at the baseline, and a 2 px surface gap between stacked segments.
 - `textures` (hatch at 45°/135°) is opt-in for print, forced-colours or an accessibility setting, never on by default.
 - Bars start at zero. Prefer a table over bars for more than about 12 categories.
+- "Show table" gives every value without hovering (`table={false}` hides it). With `onBar`, each bar is a keyboard button named with its values ("Tue: Passed 9, Failed 3") that also shows the tooltip on focus.
+- Without `ariaLabel`, the chart is named from its series, unit and range. Prefer an `ariaLabel` that states the takeaway.

@@ -58,6 +58,7 @@ function initPrefs(defaultTheme: ThemeId) {
   if (isFont(f)) prefs.font = f;
   apply();
 }
+export const getPrefs = (): Prefs => prefs;
 export function setPrefs(patch: Partial<Prefs>) {
   prefs = { ...prefs, ...patch };
   apply();
@@ -118,14 +119,24 @@ export const NAV: NavGroup[] = [
   ] },
 ];
 
-// Global search covers every routable object in the demo.
+// Global search covers every routable object in the demo, grouped by kind, plus commands (go to a page, switch
+// theme, open preferences). Recent items show when the box is focused and empty.
 const SEARCH: (SearchItem & { path: string })[] = [
-  ...services.map((s) => ({ label: s.name, kind: "Service", status: s.status === "healthy" ? undefined : s.status, path: "services/" + s.name })),
-  ...incidents.map((i) => ({ label: i.id, kind: "Incident", status: isOpen(i) ? (i.sev <= 2 ? "critical" as const : "warning" as const) : undefined, path: "incidents/" + i.id })),
-  ...runs.map((r) => ({ label: r.id, kind: "CI run", status: r.status === "critical" ? "critical" as const : undefined, path: "runs/" + r.id })),
-  ...repos.map((r) => ({ label: r.name, kind: "Repository", path: "repos/" + r.name })),
-  { label: "feature/add-retry", kind: "Branch", path: "runs/run_8f3k2" },
+  ...services.map((s) => ({ label: s.name, kind: "Service", group: "Services", status: s.status === "healthy" ? undefined : s.status, path: "services/" + s.name })),
+  ...incidents.map((i) => ({ label: i.id, kind: "Incident", group: "Incidents", description: i.title, status: isOpen(i) ? (i.sev <= 2 ? "critical" as const : "warning" as const) : undefined, path: "incidents/" + i.id })),
+  ...runs.map((r) => ({ label: r.id, kind: "CI run", group: "CI runs", status: r.status === "critical" ? "critical" as const : undefined, path: "runs/" + r.id })),
+  ...repos.map((r) => ({ label: r.name, kind: "Repository", group: "Repositories", path: "repos/" + r.name })),
+  { label: "feature/add-retry", kind: "Branch", group: "Branches", path: "runs/run_8f3k2" },
 ];
+const RECENT = ["checkout-api", "INC-2041", "run_8f3k2"].map((l) => SEARCH.find((s) => s.label === l)).filter((s): s is (typeof SEARCH)[number] => !!s);
+function commands(go: (path: string) => void, openPrefs: () => void): SearchItem[] {
+  const pages = NAV.flatMap((g) => g.items).concat([{ key: "admin", label: "Administration", icon: "settings" }]);
+  return [
+    ...pages.map((p): SearchItem => ({ id: "go:" + p.key, label: "Go to " + p.label.toLowerCase(), group: "Commands", icon: p.icon, keywords: ["open", "page", p.key], onRun: () => go(p.key) })),
+    { id: "cmd:theme", label: "Switch theme", group: "Commands", icon: "settings", description: "Between light and dark", keywords: ["dark", "light", "mode"], onRun: () => setPrefs({ theme: getPrefs().theme === "dark" ? "light" : "dark" }) },
+    { id: "cmd:prefs", label: "Open your preferences", group: "Commands", icon: "user", description: "Font, theme and density", keywords: ["settings", "font", "density"], onRun: openPrefs },
+  ];
+}
 const openIncidents = incidents.filter(isOpen).length;
 
 export function Frame({ active, children }: { active: string; children: ReactNode }) {
@@ -153,12 +164,12 @@ export function Frame({ active, children }: { active: string; children: ReactNod
                 onSelect: () => { if (o.id === org.id) return; setPrefs({ org: o.id }); toast({ title: `Switched to ${o.id}`, body: `You're ${o.role === "Owner" ? "an" : "a"} ${o.role} here. This demo shows the same sample data in every organization.` }); } })),
               "separator",
               { label: "Your preferences", icon: "settings", meta: "Font, theme", onSelect: () => setPrefsOpen(true) },
-              { label: "Keyboard shortcuts", icon: "terminal", onSelect: () => toast({ title: "Keyboard shortcuts", body: "⌘K or Ctrl+K searches. Arrow keys move between tabs. Esc closes menus and dialogs." }) },
+              { label: "Keyboard shortcuts", icon: "terminal", onSelect: () => toast({ title: "Keyboard shortcuts", body: "⌘K or Ctrl+K searches and runs commands. Arrow keys move between tabs. Esc closes menus and dialogs. F8 jumps to notifications." }) },
               "separator",
               { label: "Sign out", icon: "external", onSelect: () => toast({ title: "This is a demo", body: "You stay signed in as Dev A." }) },
             ],
           }}
-          searchItems={SEARCH} onSearch={(i) => { const hit = SEARCH.find((s) => s.label === i.label); if (hit) go(hit.path); }}
+          searchItems={[...commands(go, () => setPrefsOpen(true)), ...SEARCH]} searchRecent={RECENT} onSearch={(i) => { if (i.onRun) return; const hit = SEARCH.find((s) => s.label === i.label); if (hit) go(hit.path); }}
           onCopyRange={() => toast("Time range copied")}
         />
       }>

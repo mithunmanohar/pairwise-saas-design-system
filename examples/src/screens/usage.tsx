@@ -1,6 +1,6 @@
 // Usage and cost: spend against budget, where it goes, and when model tokens are used. Over-budget rows stand out.
 import { useState } from "react";
-import { PageHeader, Panel, Metric, BarChart, Heatmap, DataTable, BulletBar, Trend, Tabs, Button, ActionMenu, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Panel, Metric, BarChart, Heatmap, DataTable, BulletBar, Trend, Tabs, Button, ActionMenu, DateRangePicker, toast, type Column, type DateRangeValue } from "@pairwise/ui";
 import { Frame } from "../frame";
 import { months, costCompute, costModels, costStorage, costNetwork, costOther, days, hours, tokenHeat, workspaces, type Workspace } from "../data";
 
@@ -9,6 +9,7 @@ const money = (k: number) => `$${k.toFixed(1)}k`;
 
 export function Usage() {
   const [view, setView] = useState("category");
+  const [period, setPeriod] = useState<DateRangeValue | null>({ from: "2026-11-01", to: "2026-11-30" });
   const columns: Column<Workspace>[] = [
     { key: "name", header: "Workspace", mono: true },
     { key: "team", header: "Team", nowrap: true, sortable: true, defaultDir: "asc" },
@@ -28,6 +29,8 @@ export function Usage() {
     <Frame active="usage">
       <PageHeader title="Usage and cost" meta={[{ label: "Billing period", value: "Nov 1 – 30" }, { label: "Currency", value: "USD" }, { label: "Updated", value: "Today 06:00" }]}
         actions={<>
+          <div className="ex-period"><DateRangePicker label="Report period" hideLabel value={period} maxDays={366} max="2026-12-31"
+            onChange={(r) => { setPeriod(r); if (r?.to) toast({ title: `Showing ${r.from} to ${r.to}`, body: "This demo keeps the same sample data for every period." }); }} /></div>
           <Button icon="page" onClick={() => toast("Cost report exported as CSV")}>Export CSV</Button>
           <ActionMenu label="More cost actions" items={[{ label: "Set budget alerts", icon: "bell", onSelect: () => toast("Budget alerts would open here") }, { label: "Copy report link", icon: "link", onSelect: () => toast("Link copied") }]} />
         </>} />

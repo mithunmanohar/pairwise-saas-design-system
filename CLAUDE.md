@@ -9,7 +9,7 @@ now, not what a public design system might need. The current work list is `TASKS
 
 ## Repo map
 - `packages/ui/`: `@pairwise/ui`, the package apps install (ESM + generated types).
-  - `src/*.tsx`: components (React, automatic JSX). No `any`; `DataTable<Row>` is generic.
+  - `src/*.tsx`: components (React, automatic JSX). No `any`; `DataTable<Row>` is generic. `core.tsx` (actions, status, overlays, search, tabs), `forms.tsx` (Field + basic controls), `inputs.tsx` (RadioGroup, Combobox, dates, InlineEdit, FileUpload), `display.tsx` (KeyValueList, Avatar, ProgressBar), `data.tsx` (DataTable, Pagination, charts), `shell.tsx`, `actions.tsx`, `toast.tsx`.
   - `src/types.ts`: public prop contracts. The published `.d.ts` is generated from source.
   - `src/format.ts`: locale helper (`PairwiseProvider`, `useFormat`, `createFormatter`).
   - `src/tokens.ts`: **generated**, don't edit.
@@ -17,6 +17,7 @@ now, not what a public design system might need. The current work list is `TASKS
   - `scripts/`: `build-tokens.mjs`, `color.mjs`, `copy-css.mjs`, `lint-tokens-only.mjs`, `build-preview.mjs` (esbuild, dev-only: package → preview kit), `build-catalogue.mjs` (catalogue + `dist/COMPONENTS.md`).
   - `CHANGELOG.md`: one entry per release. Bump `version` in `package.json` with it (fix = patch, new component/prop = minor, breaking = major).
   - `test/tokens.test.mjs`: contrast, colour-blind ΔE and generator tests. `test/types/consumer.tsx`: type tests against `dist/`.
+  - `test/e2e/`: Playwright behaviour, keyboard and axe tests in Chromium (`pnpm test:e2e`). `fixtures.tsx` holds small compositions mounted by `harness.tsx`; `a11y.spec.ts` runs axe on every card and fixture in both themes. `a11y-known.json` is a shrinking ledger of old violations: never add to it.
 - `design-system/`: rules and the component catalogue.
   - `README.md`, `GUIDELINES.md`, `DECISIONS.md`: rules and rationale. Keep them in sync with code.
   - `tokens.json`: **the single source of truth** for every colour, space, radius, size and type style.
@@ -33,19 +34,21 @@ now, not what a public design system might need. The current work list is `TASKS
 - **Tokens only** in component CSS. No raw colours (the lint fails on them).
 - **Visible changes to existing components:** say so in the PR with before/after screenshots. Ask the user first only for big ones.
 - **Ask before:** adding a dependency, or renaming or removing a public prop. Licences: MIT, Apache-2.0 or OFL only.
-- **Accessibility:** WCAG 2.2 AA. Text ≥ 4.8:1, non-text ≥ 3:1 in both themes; categorical chart colours worst adjacent ΔE ≥ 11 (enforced by the tests). Use Radix for overlays and form controls where focus and keyboard handling matter.
+- **Accessibility:** WCAG 2.2 AA. Text ≥ 4.8:1, non-text ≥ 3:1 in both themes; categorical chart colours worst adjacent ΔE ≥ 11 (enforced by the tests). Behaviour comes from Radix (overlays, menus, tabs, toasts, form controls), cmdk (search, commands, combobox) and react-day-picker (calendars); don't hand-roll focus, keyboard or dismissal logic. axe must find nothing on any card or demo page.
 - **Sample content is fictional:** `example-org`, `sample-repo`, `feature/add-retry`, `run_8f3k2`, Dev A…J. GitHub may be named directly.
-- Don't build components speculatively. A new component goes into the package when a second project needs it. Every new component gets a preview card + README (with a `group` from the catalogue's list); the preview build fails if a card has no matching component in the package.
+- Don't build components speculatively. A new component goes into the package when a second project needs it (Pairwise 2.0's scope and the deferred list are in DECISIONS #24 and TASKS.md). Every new component gets a preview card + README (with a `group` from the catalogue's list), an e2e fixture with keyboard tests, and passes axe; the preview build fails if a card has no matching component in the package.
+- **Motion and layers:** durations and z-index come from the `motion` and `layer` tokens only (the lint fails otherwise); everything must work with reduced motion.
 
 ## Visual rules in one paragraph
-Flat neutral chrome with no accent hue. `status-critical` is the only colour that asks for action. Status is always icon + label + colour, and healthy is quiet (icon + text, no tint). Radius: 4 px for controls, 6 px for containers, 0 inside grids. Panels have a border and no shadow; floating layers have a shadow and no border. Focus: a 2 px ink ring offset 2 px. Atkinson Hyperlegible Next for UI text by default; apps or people can pick another font preset with `data-font` on `<html>` (`inter`, `plex`, `system`, from `tokens.json`). Mono only for identifiers and code. Sentence case, no emoji. Two densities, set once on `<html>`: compact (32 px rows) and comfortable (40 px).
+Flat neutral chrome with no accent hue. `status-critical` is the only colour that asks for action. Status is always icon + label + colour, and healthy is quiet (icon + text, no tint). Avatars and progress use neutral fills, never a per-person or decorative colour. Radius: 4 px for controls, 6 px for containers, 0 inside grids. Panels have a border and no shadow; floating layers have a shadow and no border. Focus: a 2 px ink ring offset 2 px. Atkinson Hyperlegible Next for UI text by default; apps or people can pick another font preset with `data-font` on `<html>` (`inter`, `plex`, `system`, from `tokens.json`). Mono only for identifiers and code. Sentence case, no emoji. Two densities, set once on `<html>`: compact (32 px rows) and comfortable (40 px).
 
 ## Commands
 ```sh
 pnpm install
-pnpm run ci            # build → typecheck → lint → test (`pnpm ci` is a pnpm built-in; use `run`)
+pnpm run ci            # build → typecheck → lint → test → test:e2e (`pnpm ci` is a pnpm built-in; use `run`)
+pnpm test:e2e          # Playwright + axe only (after a build)
 pnpm check:generated   # fails if a build changed generated files that weren't committed
-pnpm capture capture <dir>; pnpm capture diff <before> <after> <diffDir>   # optional screenshots
+pnpm capture capture <dir> [--widths 1440,1024,390]; pnpm capture diff <before> <after> <diffDir>   # optional screenshots
 ```
 
 ## How to work

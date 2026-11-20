@@ -89,8 +89,25 @@
   --rail-expanded: 232px;
   --rail-collapsed: 56px;
   --drawer-width: 520px;
+  --duration-fast: 120ms;
+  --duration-base: 160ms;
+  --duration-slow: 220ms;
+  --duration-spin: 800ms;
+  --duration-pulse: 1400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --z-sticky: 1;
+  --z-raised: 2;
+  --z-chart-tip: 5;
+  --z-overlay: 60;
+  --z-popover: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
   --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-fast: 0ms; --duration-base: 0ms; --duration-slow: 0ms; --duration-spin: 0ms; --duration-pulse: 0ms; }
 }
 [data-font="atkinson"] { --font-sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif; --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
 [data-font="inter"] { --font-sans: "Inter", "Segoe UI", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }

@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 .DS_Store
 _site/
+test-results/
+playwright-report/

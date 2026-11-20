@@ -1,7 +1,8 @@
 import type { SideNavProps, TopBarProps, AppShellProps, PageHeaderProps, PageHeaderField, NavGroup, ShellMode } from "./types";
 import { Icon } from "./icons";
-import { cx, Button, Tooltip, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
+import { cx, Button, Tooltip, TooltipProvider, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
 import { ActionMenu } from "./actions";
+import { KeyValueList } from "./display";
 import * as React from "react";
 import { Fragment } from "react";
 const { useState, useRef, useEffect } = React;
@@ -50,12 +51,12 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
       <ScopeSwitcher scope={scope} options={scopeOptions} onChange={onScope} compact={mode !== "full"} />
-      <div className="pw-topbar__search"><GlobalSearch items={searchItems} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
+      <div className="pw-topbar__search"><GlobalSearch items={searchItems} recent={searchRecent} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
       <div className="pw-topbar__end">
         <TimeRangePicker value={time} onChange={onTime} refresh={refresh} onRefreshChange={onRefresh} onCopy={onCopyRange} />
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
@@ -63,7 +64,7 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
         </button>
         {account ? (
           <ActionMenu label={accountLabel || "Account: " + account.name} items={account.items ?? []}
-            trigger={<button type="button" className="pw-avatar" aria-label={accountLabel || "Account: " + account.name}>{user}</button>}
+            trigger={<button type="button" className="pw-avatar"><span aria-hidden="true">{user}</span><span className="pw-sr">{accountLabel || "Account: " + account.name}</span></button>}
             header={
               <div className="pw-acct">
                 <span className="pw-avatar pw-acct__avatar" aria-hidden="true">{user}</span>
@@ -74,7 +75,7 @@ export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, on
                 </span>
               </div>
             } />
-        ) : <button type="button" className="pw-avatar" aria-label={accountLabel || "Account"}>{user}</button>}
+        ) : <button type="button" className="pw-avatar"><span aria-hidden="true">{user}</span><span className="pw-sr">{accountLabel || "Account"}</span></button>}
       </div>
     </header>
   );
@@ -92,6 +93,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
   }, [forceWidth]);
   const mode: ShellMode = w >= 1360 ? "full" : w >= 1024 ? "collapsed" : "tablet";
   return (
+    <TooltipProvider>
     <div ref={ref} className={cx("pw-shell", "is-" + mode, "is-" + density)} data-density={density}>
       {mode !== "tablet" ? React.cloneElement(nav, { collapsed: mode === "collapsed" }) : null}
       {mode === "tablet" && navOpen ? <div className="pw-layer is-contained"><div className="pw-scrim" onClick={() => setNavOpen(false)} />{React.cloneElement(nav, { collapsed: false, overlay: true, onClose: () => setNavOpen(false), onNavigate: (k: string) => { setNavOpen(false); nav.props.onNavigate && nav.props.onNavigate(k); } })}</div> : null}
@@ -100,6 +102,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
         <main className="pw-shell__content" id="main">{children}</main>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -107,7 +110,7 @@ const isFields = (m: PageHeaderProps["meta"]): m is PageHeaderField[] => Array.i
 export function PageHeader({ crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
   // meta: a short sentence, or structured fields [{label, value, mono?}] (preferred over dot-joined strings)
   const metaEl = isFields(meta)
-    ? <dl className="pw-fields">{meta.map((m) => <div key={m.label}><dt>{m.label}</dt><dd className={cx(m.mono && "pw-mono")}>{m.value}</dd></div>)}</dl>
+    ? <KeyValueList layout="inline" items={meta} />
     : meta ? <span className="pw-pagehead__meta">{meta}</span> : null;
   return (
     <div className="pw-pagehead">

@@ -5,5 +5,6 @@ The one global time control. It lives in the top bar and its value travels in th
 - The button keeps the width of its widest range, and the auto-refresh slot always shows (a pause icon and "off" when off), so changing either never resizes it.
 - Times show in the user’s time zone with the zone stated (from the locale settings). Absolute fields accept `YYYY-MM-DD HH:mm`; Apply (or Enter) checks the format and that From is before To, and shows an error otherwise.
 - When auto-refresh is on, the field shows the interval. Pause refresh while a drawer or modal is open, and when the tab is hidden.
-- "Copy range" copies an absolute range so a pasted link shows exactly what you saw.
+- "Copy range" copies an absolute range so a pasted link shows exactly what you saw. With an absolute range set, `onCopy` receives it.
+- Built on Radix Popover. It opens on the current range, with focus on it. The relative ranges are a radio group: arrows move without applying, Enter or Space applies and closes. Auto-refresh is a `SegmentedControl`. Esc closes and returns focus to the button.
 - Brushing a chart sets an absolute range and shows an undo chip. Never change the range silently.

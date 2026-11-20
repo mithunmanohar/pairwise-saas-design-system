@@ -1,0 +1,25 @@
+<!-- @dsCard group="Forms" height=200 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>InlineEdit</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:320px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){ var a=useState('Retries flaky jobs before failing a run.'), b=useState('sample-repo'), c=useState('');
+  return h('div',{className:'pv-box',style:{maxWidth:640}}, h(C.KeyValueList,{items:[
+    {label:'Description',value:h(C.InlineEdit,{label:'Description',value:a[0],onSave:a[1],multiline:true})},
+    {label:'Repository',value:h(C.InlineEdit,{label:'Repository name',value:b[0],mono:true,onSave:b[1],validate:function(v){return /^[a-z0-9-]+$/.test(v)?null:'Use lowercase letters, digits and dashes.';}})},
+    {label:'Homepage',value:h(C.InlineEdit,{label:'Homepage',value:c[0],emptyText:'Add a link',onSave:c[1]})},
+    {label:'Created by',value:'Dev A'}]}));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -65,4 +65,6 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 
 Apps install `@pairwise/ui` (ESM + types); see `packages/ui/README.md`. The preview cards here load the same code as a generated `components/bundle.js` (`window.Pairwise`).
 
-Charts are lightweight SVG and the table is our own; both are enough for operational dashboards. Overlays and form controls use Radix primitives where focus handling matters, styled with the `pw-` classes and tokens. All dependencies are MIT, Apache-2.0 or OFL.
+Charts are lightweight SVG and the table is our own; both are enough for operational dashboards. Every overlay, menu, tab, toast and form primitive is Radix; search, commands and comboboxes are cmdk; calendars are react-day-picker. All are styled with the `pw-` classes and tokens, never their own styles. Runtime dependencies are MIT or OFL; axe-core (MPL-2.0) is a dev-only test tool (DECISIONS #19).
+
+Forms, overlays and motion each have rules in [`GUIDELINES.md`](GUIDELINES.md).

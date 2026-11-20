@@ -2,13 +2,15 @@
 // Optional before/after screenshots of the component preview cards (design-system/components/<Card>/preview.html).
 // Typical use: capture on main, capture on your branch, diff, and attach the changed PNGs to the PR.
 //
-//   node scripts/capture-previews.mjs capture <outDir> [--only Card,Card] [--themes light,dark] [--densities compact,comfortable]
+//   node scripts/capture-previews.mjs capture <outDir> [--only Card,Card] [--themes light,dark] [--densities compact,comfortable] [--widths 1440,1024,390]
 //   node scripts/capture-previews.mjs diff <beforeDir> <afterDir> <diffDir> [--tolerance 2]
 //
 // capture: hosts each card the way the catalogue does (tokens.css, bundle.css, React, bundle.js injected ahead of the
 // card's own markup and script), sets data-theme / data-density on <html>, freezes animation and caret, waits for fonts,
 // and writes <Card>--<theme>--<density>.png plus manifest.json. Viewport = the card's @dsCard width (default 924) ×
-// height; the screenshot is full-page. Locale en-US, time zone UTC, deviceScaleFactor 1.
+// height; the screenshot is full-page. Locale en-US, time zone UTC, deviceScaleFactor 1. --widths captures each card
+// again at those viewport widths (tablet, phone) as <Card>--<theme>--<density>--<width>.png.
+// The card server (serve, wrap, cardList) is exported for the accessibility tests in packages/ui/test/e2e.
 // diff: compares two capture dirs pixel by pixel in the browser (no image dependencies) and writes a red-on-grey diff
 // PNG for every card that differs, plus report.json. A pixel differs when any channel moves by more than --tolerance
 // (default 2/255): back-to-back captures of the same kit differ by at most 2 on a few anti-aliased panel corners.
@@ -18,6 +20,7 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { execSync } from "node:child_process";
 
 const ROOT = new URL("..", import.meta.url).pathname;
@@ -39,7 +42,7 @@ export function cardList() {
     .map((d) => d.name).sort();
 }
 
-function cardMeta(name) {
+export function cardMeta(name) {
   const html = readFileSync(join(CARDS, name, "preview.html"), "utf8");
   const m = html.match(/<!--\s*@dsCard([^>]*)-->/);
   const attr = (k) => { const r = m && m[1].match(new RegExp(`\\b${k}=(\\d+)`)); return r ? Number(r[1]) : undefined; };
@@ -48,13 +51,13 @@ function cardMeta(name) {
 
 const FREEZE = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}";
 
-function wrap(name, html, theme, density) {
+export function wrap(name, html, theme, density, freeze = true) {
   const k = "/design-system/components/";
   const head = [
     `<base href="${k}${name}/">`,
     `<link rel="stylesheet" href="/design-system/tokens.css">`,
     `<link rel="stylesheet" href="${k}bundle.css">`,
-    `<style>${FREEZE}</style>`,
+    freeze ? `<style>${FREEZE}</style>` : "",
     `<script src="${k}lib/react.production.min.js"></script>`,
     `<script src="${k}lib/react-dom.production.min.js"></script>`,
     `<script src="${k}bundle.js"></script>`,
@@ -65,22 +68,24 @@ function wrap(name, html, theme, density) {
   return out;
 }
 
-function serve() {
+// Serves the repo root, /__cards (the card names), and /__card/<Name>?th=<theme>&dn=<density>[&live=1] (live keeps animations on).
+export function serve(port = 0) {
   return new Promise((ok) => {
     const srv = createServer((req, res) => {
       const url = new URL(req.url, "http://x");
+      if (url.pathname === "/__cards") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(cardList())); }
       const m = url.pathname.match(/^\/__card\/([^/]+)$/);
       if (m) {
         const { html } = cardMeta(decodeURIComponent(m[1]));
         res.writeHead(200, { "content-type": "text/html" });
-        return res.end(wrap(decodeURIComponent(m[1]), html, url.searchParams.get("th"), url.searchParams.get("dn")));
+        return res.end(wrap(decodeURIComponent(m[1]), html, url.searchParams.get("th") || "light", url.searchParams.get("dn") || "compact", url.searchParams.get("live") !== "1"));
       }
       const p = normalize(join(ROOT, decodeURIComponent(url.pathname)));
       if (!p.startsWith(ROOT) || !existsSync(p)) { res.writeHead(404); return res.end(); }
       res.writeHead(200, { "content-type": MIME[extname(p)] || "application/octet-stream" });
       res.end(readFileSync(p));
     });
-    srv.listen(0, "127.0.0.1", () => ok(srv));
+    srv.listen(port, "127.0.0.1", () => ok(srv));
   });
 }
 
@@ -94,8 +99,10 @@ async function capture(outDir, opts) {
   const manifest = [];
   const cards = opts.only ? opts.only : cardList();
   for (const name of cards) {
-    const { width, height } = cardMeta(name);
-    for (const th of opts.themes) for (const dn of opts.densities) {
+    const meta = cardMeta(name);
+    const widths = [null, ...(opts.widths || []).map(Number)];
+    for (const vw of widths) for (const th of opts.themes) for (const dn of opts.densities) {
+      const width = vw || meta.width, height = meta.height;
       const page = await ctx.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e)));
@@ -104,7 +111,7 @@ async function capture(outDir, opts) {
       await page.goto(`${base}/__card/${encodeURIComponent(name)}?th=${th}&dn=${dn}`, { waitUntil: "networkidle" });
       await page.evaluate(async () => { await document.fonts.ready; await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
       await page.waitForTimeout(250);
-      const file = `${name}--${th}--${dn}.png`;
+      const file = `${name}--${th}--${dn}${vw ? "--" + vw : ""}.png`;
       await page.screenshot({ path: join(outDir, file), fullPage: true });
       const fonts = await page.evaluate(() => [...document.fonts].filter((f) => f.status === "loaded").map((f) => `${f.family} ${f.weight}`));
       manifest.push({ file, card: name, theme: th, density: dn, viewport: [width, height], fonts: [...new Set(fonts)].sort(), errors });
@@ -158,8 +165,10 @@ async function diff(aDir, bDir, outDir, tol = 2) {
   console.log(`${files.length} compared, ${files.length - d.length} identical, ${d.length} differ → ${outDir}/report.json`);
 }
 
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
 const [cmd, ...args] = process.argv.slice(2);
 const flag = (k, dflt) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1].split(",") : dflt; };
-if (cmd === "capture" && args[0]) await capture(resolve(args[0]), { only: flag("--only"), themes: flag("--themes", ["light", "dark"]), densities: flag("--densities", ["compact", "comfortable"]) });
+if (cmd === "capture" && args[0]) await capture(resolve(args[0]), { only: flag("--only"), themes: flag("--themes", ["light", "dark"]), densities: flag("--densities", ["compact", "comfortable"]), widths: flag("--widths", []) });
 else if (cmd === "diff" && args[2]) await diff(resolve(args[0]), resolve(args[1]), resolve(args[2]), Number(flag("--tolerance", ["2"])[0]));
 else { console.error("usage: capture <outDir> [--only A,B] | diff <before> <after> <diffDir>"); process.exit(2); }
+}

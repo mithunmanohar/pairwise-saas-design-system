@@ -3,7 +3,7 @@
 // Live: the window rolls forward every few seconds (unless ?frozen=1). Roll back asks for confirmation; endpoint rows
 // open a drawer.
 import { useEffect, useState } from "react";
-import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, KeyValueList, toast, type Column } from "@pairwise/ui";
 import { Frame, frozen, useNav, useCrumbNav } from "../frame";
 import { latencyWindow, steadyWindow, DEPLOY_AT, spark, errorBuckets, errors5xx, errors4xx, errorsTimeout, endpointsFor, deploys, incidents, isOpen, serviceByName, type Endpoint, type Service } from "../data";
 import { SERVICE_STATUS } from "./services";
@@ -151,11 +151,11 @@ function ServicePage({ svc }: { svc: Service }) {
         {endpoint ? (
           <div className="ex-stack">
             <StatusBadge status={endpoint.status} label={STATUS_LABEL[endpoint.status]} />
-            <dl className="pw-fields">
-              <div><dt>p95</dt><dd>{endpoint.p95.toLocaleString("en")} ms</dd></div>
-              <div><dt>Requests/s</dt><dd>{endpoint.rps}</dd></div>
-              <div><dt>Errors</dt><dd>{endpoint.errors.toFixed(1)} %</dd></div>
-            </dl>
+            <KeyValueList label="Endpoint, last hour" items={[
+              { label: "p95", value: `${endpoint.p95.toLocaleString("en")} ms` },
+              { label: "Requests/s", value: endpoint.rps },
+              { label: "Errors", value: `${endpoint.errors.toFixed(1)} %` },
+            ]} />
             <div className="ex-fill"><Sparkline points={spark(endpoint.p95 * 0.8, endpoint.p95 * 0.08, 24, endpoint.status === "healthy" ? 0 : endpoint.p95 * 0.2)} width={380} height={56} threshold={svc.slo} tone={endpoint.status} label={`p95 trend for ${endpoint.route}`} /></div>
           </div>
         ) : null}

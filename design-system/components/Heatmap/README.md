@@ -5,3 +5,4 @@ Intensity across two dimensions: repository × hour, check × day, agent × minu
 - **One hue (`chart-1`), light to dark.** Darker means more. Never a rainbow, never a status colour.
 - No-data cells are hatched, never blank or zero.
 - Put the takeaway in `ariaLabel` and the panel title ("1 repository at 94 % of its token limit").
+- "Show table" lists every value, with "no data" for gaps (`table={false}` hides it).
