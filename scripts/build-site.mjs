@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Assembles the GitHub Pages site into <outDir> (default _site). Run after `pnpm -r build`.
 //   /             landing page, styled with the design system's own CSS
-//   /demo/        the live demo app (examples/dist/demo.*): three working screens, routed
+//   /demo/        the live demo app (examples/dist/demo.*): every nav page working, routed
 //   /catalogue/   every component, live (design-system/catalogue.html and the preview kit it loads)
 //   /images/      README screenshots used by the landing page
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -9,7 +9,7 @@ import { join, resolve } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
 const OUT = resolve(process.argv[2] || join(ROOT, "_site"));
-const need = ["examples/dist/demo.html", "design-system/catalogue.html", "docs/images/screens/service-health-dark.png"];
+const need = ["examples/dist/demo.html", "design-system/catalogue.html", "docs/images/screens/overview-dark.png"];
 for (const f of need) if (!existsSync(join(ROOT, f))) throw new Error(`${f} is missing: run \`pnpm -r build\` (and the screenshots) first`);
 
 rmSync(OUT, { recursive: true, force: true });
@@ -32,13 +32,14 @@ cpSync(join(ROOT, "design-system", "components"), join(cat, "components"), { rec
 // Images
 const img = join(OUT, "images");
 mkdirSync(img);
-for (const s of ["service-health", "run-detail", "settings"]) for (const t of ["dark"]) {
-  cpSync(join(ROOT, "docs", "images", "screens", `${s}-${t}.png`), join(img, `${s}-${t}.png`));
+// Every dark screen and the phone captures (the site, like the demo, is dark first).
+for (const f of readdirSync(join(ROOT, "docs", "images", "screens"))) {
+  if (f.endsWith("-dark.png")) cpSync(join(ROOT, "docs", "images", "screens", f), join(img, f));
 }
 
 const card = (route, img, title, body) => `
       <a class="lp-card" href="demo/#/${route}">
-        <img src="images/${img}-dark.png" alt="${title} screen" loading="lazy">
+        <img src="images/${img}-dark.png" alt="${title} screen, dark theme" loading="lazy">
         <span class="pw-subheading">${title}</span>
         <span class="pw-muted">${body}</span>
         <span class="pw-linkbtn">Open in the live demo</span>
@@ -69,8 +70,10 @@ body { margin: 0; }
 .lp-card img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-2); }
 .lp-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5) var(--space-6); margin: 0; padding: 0; list-style: none; }
 .lp-points b { display: block; margin-bottom: var(--space-1); }
+.lp-phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); max-width: 760px; }
+.lp-phones img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
 .lp-foot { margin: var(--space-12) 0 0; padding: var(--space-5) 0 var(--space-8); border-top: 1px solid var(--border); color: var(--ink-muted); }
-@media (max-width: 860px) { .lp-cards, .lp-points { grid-template-columns: 1fr; } .lp-hero h1 { font-size: 32px; line-height: 40px; } }
+@media (max-width: 860px) { .lp-cards, .lp-points { grid-template-columns: 1fr; } .lp-phones { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); } .lp-hero h1 { font-size: 32px; line-height: 40px; } }
 </style></head>
 <body><div class="lp">
   <header class="lp-top">
@@ -86,9 +89,13 @@ body { margin: 0; }
         <a class="pw-btn pw-btn--secondary" href="catalogue/"><span>Browse all components</span></a>
       </div>
     </section>
-    <img class="lp-shot" src="images/service-health-dark.png" alt="A service health dashboard built with Pairwise, in the dark theme">
-    <h2 class="pw-heading lp-h2">Three working screens, built only from the package</h2>
-    <div class="lp-cards">${card("services", "service-health", "Service health", "Observability: metrics with context, latency against the SLO, errors by type, endpoints worst first. Updates live.")}${card("runs", "run-detail", "CI run detail", "Developer platform: a checks matrix shows new versus flaky failures, the failing log, run history and steps.")}${card("repos", "settings", "Settings", "Everyday SaaS: validation that says how to fix it, toggles, toasts, and a type-to-confirm delete.")}
+    <img class="lp-shot" src="images/overview-dark.png" alt="The overview page of the demo app built with Pairwise, in the dark theme">
+    <h2 class="pw-heading lp-h2">A complete app, built only from the package</h2>
+    <div class="lp-cards">${card("overview", "overview", "Overview", "The whole estate at a glance: one open incident stands out, healthy services stay quiet.")}${card("services/checkout-api", "service-health", "Service health", "Observability: metrics with context, latency against the SLO, errors by type, endpoints worst first. Updates live.")}${card("incidents/INC-2041", "incident", "Incident", "Severity, customer impact, the latency regression marked on the chart, responders and a live timeline.")}${card("deploys", "deployments", "Deployments", "Delivery metrics, deploys by outcome, a canary in progress, and every rollout with a rollback one click away.")}${card("runs/run_8f3k2", "run-detail", "CI run detail", "Developer platform: a checks matrix shows new versus flaky failures, the failing log, run history and steps.")}${card("usage", "usage", "Usage and cost", "Spend against budget, cost by category or team, model tokens by hour, and workspaces near their limit.")}${card("access", "access", "Access", "Members with inline role changes, an invite form with validation, API tokens and the audit log.")}${card("repos/sample-repo", "settings", "Repository settings", "Everyday SaaS: validation that says how to fix it, toggles, toasts, and a type-to-confirm delete.")}${card("services", "services", "Services", "A filterable, sortable list of services with status and error budget, worst first.")}
+    </div>
+    <h2 class="pw-heading lp-h2">Responsive down to a phone</h2>
+    <div class="lp-phones">
+      <img src="images/phone-overview-dark.png" alt="Overview on a phone" loading="lazy"><img src="images/phone-incident-dark.png" alt="Incident on a phone" loading="lazy"><img src="images/phone-run-detail-dark.png" alt="CI run on a phone" loading="lazy">
     </div>
     <h2 class="pw-heading lp-h2">How it stays consistent</h2>
     <ul class="lp-points">

@@ -1,6 +1,6 @@
 {
   "name": "@pairwise/ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pairwise design system: tokens, styles and React components for AI applications and multi-tenant SaaS.",
   "keywords": [
     "design-system",

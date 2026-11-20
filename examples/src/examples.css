@@ -1,20 +1,69 @@
 /* Page layout for the example screens. App CSS like this uses the Pairwise variables only, never raw values. */
-html, body, #root { height: 100%; margin: 0; }
-.ex-row { display: grid; gap: var(--space-5); align-items: start; }
+html, body, #root, .ex-demo { height: 100%; margin: 0; }
+.ex-row { display: grid; gap: var(--space-5); align-items: stretch; }
 .ex-2 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 .ex-2-even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ex-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--border); }
-.ex-stack { display: grid; gap: var(--space-5); align-content: start; }
+.ex-stack { display: grid; gap: var(--space-5); align-content: start; min-width: 0; }
 .ex-narrow { max-width: 880px; }
 .ex-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); }
 .ex-form .ex-span { grid-column: 1 / -1; }
 .ex-checks { display: grid; gap: var(--space-3); }
-.ex-actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+.ex-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
 .ex-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.ex-danger { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
-.ex-danger p { margin: 0; }
+.ex-danger { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3) var(--space-5); }
+.ex-danger p { margin: 0; flex: 1 1 280px; }
 .ex-runs { display: grid; gap: var(--space-3); }
-.ex-runs > div { display: grid; gap: var(--space-1); }
-/* Demo-only floating display control (theme and density). */
-.ex-display { position: fixed; left: 50%; bottom: var(--space-5); z-index: 80; transform: translateX(-50%); display: flex; gap: var(--space-5); padding: var(--space-2) var(--space-4); background: var(--surface-overlay); color: var(--ink); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); }
+.ex-runs > div { display: grid; gap: var(--space-1); min-width: 0; }
+.ex-p { margin: 0; }
+.ex-mt { margin-top: var(--space-4); }
+.ex-pad { padding: 0 var(--space-5); border-bottom: 1px solid var(--border); }
+.ex-split { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-3); }
+.ex-fill svg { width: 100%; height: auto; }
+.ex-dl { display: grid; gap: var(--space-2); }
+.ex-inline { font-size: inherit; }
+.ex-plain { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; border-radius: var(--radius-sm); }
+.ex-plain:hover { background: var(--surface-hover); }
+.ex-cell2 { display: grid; gap: 2px; min-width: 0; }
+.ex-cell2 .pw-caption { min-width: 200px; }
+.ex-who { display: flex; align-items: center; gap: var(--space-3); white-space: nowrap; }
+.ex-roleowner { display: inline-flex; align-items: center; height: var(--pw-ctl); padding: 0 10px; color: var(--ink-muted); }
+.ex-avatar { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-selected); color: var(--ink); font-size: 12px; font-weight: 600; }
+/* Lists of clickable rows outside a table (open incidents) and people. */
+.ex-list, .ex-people, .ex-steps { margin: 0; padding: 0; list-style: none; display: grid; }
+.ex-list { margin: 0 calc(var(--space-2) * -1); gap: var(--space-1); }
+.ex-list__item { display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; padding: var(--space-2); border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ex-list__item:hover { background: var(--surface-hover); }
+.ex-list__item .pw-sev { padding-top: 2px; flex: none; width: 64px; }
+.ex-list__main { display: grid; gap: 2px; min-width: 0; }
+.ex-people { gap: var(--space-3); }
+.ex-people li { display: flex; align-items: center; gap: var(--space-3); }
+.ex-steps { gap: var(--space-2); counter-reset: step; }
+.ex-steps li { counter-increment: step; display: grid; grid-template-columns: 20px 1fr; gap: var(--space-2); }
+.ex-steps li::before { content: counter(step); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.ex-compose { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.ex-budgets { display: grid; gap: var(--space-4); }
+.ex-budget { display: grid; gap: var(--space-2); }
+
+/* Demo-only floating display control (theme and density), and room for it below each page. */
+.ex-demo.has-controls .pw-page { padding-bottom: calc(var(--space-12) + var(--space-12)); }
+.ex-display { position: fixed; left: 50%; bottom: var(--space-4); z-index: 55; transform: translateX(-50%); display: flex; gap: var(--space-5); padding: var(--space-2) var(--space-4); background: var(--surface-overlay); color: var(--ink); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); white-space: nowrap; }
 .ex-display .pw-formfield { gap: 0; }
+
+/* Responsive: two columns become one on narrow content; four metrics become two. */
+@media (max-width: 1100px) {
+  .ex-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 960px) {
+  .ex-2, .ex-2-even { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .ex-row, .ex-stack { gap: var(--space-4); }
+  .ex-form { grid-template-columns: minmax(0, 1fr); }
+  .ex-pad { padding: 0 var(--space-4); }
+  .ex-runs .pw-runs { gap: 2px; }
+  .ex-display { left: auto; right: var(--space-3); bottom: var(--space-3); transform: none; gap: var(--space-4); padding: var(--space-2) var(--space-3); }
+}
+@media (max-width: 420px) {
+  .ex-metrics { grid-template-columns: minmax(0, 1fr); }
+}

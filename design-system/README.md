@@ -49,7 +49,7 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 
 ## Layout
 
-- One shell (`AppShell`): `SideNav` + `TopBar` + page. The rail is expanded at ≥ 1360 px, collapsed to icons at 1024–1359 px, and behind a menu below 1024 px.
+- One shell (`AppShell`): `SideNav` + `TopBar` + page. The rail is expanded at ≥ 1360 px, collapsed to icons at 1024–1359 px, and behind a menu below 1024 px. At phone width (≤ 640 px) the top bar takes two rows and page headers stack.
 - Scope (organisation / repository / branch) and time range are global. They live in the URL and travel through every drill-down. Back navigation restores them, along with page filters.
 - **One focal section per page**, full width or in the wide column: the thing the person came for (what needs review, the failing check, the run's diff). Context goes in a narrower right column. Use three to five panels per page and no rows of equal tiles.
 - Lists sort worst-first. Every number links to the filtered list behind it. Every time series shows change markers.

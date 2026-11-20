@@ -2,7 +2,7 @@
   "name": "@pairwise/examples",
   "version": "0.0.0",
   "private": true,
-  "description": "Example screens built only from @pairwise/ui, and the script that screenshots them for the README.",
+  "description": "The demo app (every page built only from @pairwise/ui), and the script that screenshots it for the README.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
