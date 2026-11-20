@@ -125,21 +125,10 @@ for (const [file, route, query, vp, full] of SCREENS) {
   await page.close();
 }
 
-// Hero: the top of the overview screen in dark, with a light-theme sliver on the right, split on a diagonal.
+// Hero: the overview screen in the dark theme, as one plain capture (light variants have their own images below it).
 {
-  const page = await ctx.newPage();
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  const img = (f) => "data:image/png;base64," + readFileSync(join(OUT, "screens", f)).toString("base64");
-  const png = await page.evaluate(async ([a, b]) => {
-    const load = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = src; });
-    const [la, da] = await Promise.all([load(a), load(b)]);
-    const c = document.createElement("canvas"); c.width = la.width; c.height = Math.min(la.height, Math.round(la.width * 1000 / 1440)); const x = c.getContext("2d");
-    x.drawImage(da, 0, 0);
-    x.save(); x.beginPath(); x.moveTo(c.width * 0.86, 0); x.lineTo(c.width, 0); x.lineTo(c.width, c.height); x.lineTo(c.width * 0.70, c.height); x.closePath(); x.clip();
-    x.drawImage(la, 0, 0); x.restore();
-    return c.toDataURL("image/png").split(",")[1];
-  }, [img("overview-light.png"), img("overview-dark.png")]);
-  writeFileSync(join(OUT, "hero.png"), Buffer.from(png, "base64"));
+  const page = await open(`/examples/dist/demo.html?frozen=1&controls=0#/overview`, [1440, 900]);
+  await page.screenshot({ path: join(OUT, "hero.png") });
   await page.close();
 }
 
