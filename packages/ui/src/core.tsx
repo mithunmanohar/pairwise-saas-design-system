@@ -1,10 +1,15 @@
-import type { IconName, PopoverProps, ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
+import type { IconName, PopoverProps, ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, SegmentedControlProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
 import { createFormatter } from "./format";
 const timeZoneLabel = () => createFormatter({ locale: navigator.language, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, currency: "USD" }).timeZoneLabel();
 import { Icon } from "./icons";
 import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as RPopover from "@radix-ui/react-popover";
+import * as RTooltip from "@radix-ui/react-tooltip";
+import * as DM from "@radix-ui/react-dropdown-menu";
+import * as RToggle from "@radix-ui/react-toggle-group";
+import * as RTabs from "@radix-ui/react-tabs";
+import { Command } from "cmdk";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import { Fragment } from "react";
 const { useState, useRef, useEffect, useId, useCallback, useMemo } = React;
@@ -94,18 +99,25 @@ export function Trend({ value, unit = "%", polarity = "up-bad", window: win, thr
   );
 }
 
-/* ---------- Tooltip ---------- */
+/* ---------- Tooltip (Radix Tooltip) ---------- */
+// Radix adds the delay, collision handling, the portal (so the rail's scroll area can't clip it), Escape, and
+// aria-describedby on the trigger. Tooltips in one TooltipProvider share a "skip delay": moving from one to the next
+// opens it at once. AppShell provides one; a Tooltip outside any provider brings its own.
+const TipScope = React.createContext(false);
+export function TooltipProvider({ children, delay = 400 }: { children?: React.ReactNode; /** ms before a tooltip opens (default 400) */ delay?: number }) {
+  return <RTooltip.Provider delayDuration={delay} skipDelayDuration={300}><TipScope.Provider value={true}>{children}</TipScope.Provider></RTooltip.Provider>;
+}
 export function Tooltip({ content, children, side = "top", forceOpen }: TooltipProps) {
-  const [open, setOpen] = useState(false);
-  const id = useId();
-  const show = forceOpen || open;
-  return (
-    <span className="pw-tipwrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
-      onKeyDown={(e) => e.key === "Escape" && setOpen(false)}>
-      {React.cloneElement(children, { "aria-describedby": show ? id : undefined })}
-      {show ? <span role="tooltip" id={id} className={cx("pw-tip", "pw-tip--" + side)}>{content}</span> : null}
-    </span>
+  const scoped = React.useContext(TipScope);
+  const tip = (
+    <RTooltip.Root open={forceOpen ? true : undefined}>
+      <RTooltip.Trigger asChild>{children}</RTooltip.Trigger>
+      <RTooltip.Portal>
+        <RTooltip.Content className="pw-tooltip" side={side} sideOffset={6} collisionPadding={8}>{content}</RTooltip.Content>
+      </RTooltip.Portal>
+    </RTooltip.Root>
   );
+  return scoped ? tip : <TooltipProvider>{tip}</TooltipProvider>;
 }
 
 /* ---------- Stable widths (internal) ---------- */
@@ -118,54 +130,59 @@ function Fit({ current, all }: { current: string; all: string[] }) {
 }
 const Reserve = ({ text }: { text: string }) => <span className="pw-reserve" data-text={text}>{text}</span>;
 
-/* ---------- Popover (internal) ---------- */
-export function usePopover<T extends HTMLElement = HTMLDivElement>() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => { if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDoc); document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDoc); document.removeEventListener("keydown", onKey); };
-  }, [open]);
-  return { open, setOpen, ref };
-}
-
 /* ---------- Menu select (used by scope, filters) ---------- */
+// A compact picker for toolbars: a menu of choices on Radix DropdownMenu (arrow keys, typeahead, Home/End, focus
+// returns to the trigger, portal). The trigger keeps the width of the widest option (Fit), so switching never moves
+// its neighbours. Its accessible name is its visible text (prefix, or a hidden "Label:", then the value), so speech
+// input users can say what they see.
 // Options may be plain strings; a missing label falls back to the value.
 const toOption = (o: string | Option): Option & { label: string } => (typeof o === "string" ? { value: o, label: o } : { ...o, label: o.label ?? o.value });
 export function MenuSelect({ label, value, options, onChange, icon, disabled, width, prefix, forceOpen, quiet }: MenuSelectProps) {
-  const { open, setOpen, ref } = usePopover();
+  const [open, setOpen] = useState(false);
   const isOpen = forceOpen || open;
   const opts = options.map(toOption);
   const cur = opts.find((o) => o.value === value);
   const curLabel = cur ? cur.label : value;
   return (
-    <div className="pw-menusel" ref={ref}>
-      <button type="button" className={cx("pw-field", quiet && "pw-field--quiet", isOpen && "is-open")} aria-haspopup="listbox" aria-expanded={isOpen} aria-label={label + ": " + curLabel} disabled={disabled} onClick={() => setOpen(!open)} style={width ? { minWidth: width } : undefined}>
-        {icon ? <Icon name={icon} /> : null}
-        {prefix ? <span className="pw-field__pre">{prefix}</span> : null}
-        <span className="pw-field__val"><Fit current={curLabel} all={opts.map((o) => o.label)} /></span>
-        <Icon name="chevron-down" size={14} />
-      </button>
-      {isOpen ? (
-        <ul role="listbox" aria-label={label} className="pw-pop pw-list">
-          {opts.map((o) => {
-            const v = o.value; const sel = v === value;
-            return (
-              <li key={v} role="option" aria-selected={sel} tabIndex={0} className={cx("pw-list__item", sel && "is-selected")}
-                onClick={() => { onChange && onChange(v); setOpen(false); }}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange && onChange(v); setOpen(false); } }}>
-                <span className="pw-list__check">{sel ? <Icon name="check" size={14} /> : null}</span>
+    <DM.Root open={isOpen} onOpenChange={setOpen} modal={forceOpen ? false : undefined}>
+      <DM.Trigger asChild disabled={disabled}>
+        <button type="button" className={cx("pw-field", quiet && "pw-field--quiet", isOpen && "is-open")} style={width ? { minWidth: width } : undefined}>
+          {icon ? <Icon name={icon} /> : null}
+          {prefix ? <span className="pw-field__pre">{prefix}</span> : <span className="pw-sr">{label}: </span>}
+          <span className="pw-field__val"><Fit current={curLabel} all={opts.map((o) => o.label)} /></span>
+          <Icon name="chevron-down" size={14} />
+        </button>
+      </DM.Trigger>
+      <DM.Portal>
+        <DM.Content className="pw-menu pw-menusel" align="start" sideOffset={6} collisionPadding={8} loop aria-label={label}>
+          <DM.RadioGroup value={value} onValueChange={(v) => onChange && onChange(v)}>
+            {opts.map((o) => (
+              <DM.RadioItem key={o.value} value={o.value} disabled={o.disabled} className={cx("pw-list__item", o.value === value && "is-selected")}>
+                <span className="pw-list__check"><DM.ItemIndicator><Icon name="check" size={14} /></DM.ItemIndicator></span>
                 <span>{o.label}</span>
                 {o.meta ? <span className="pw-muted pw-list__meta">{o.meta}</span> : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-    </div>
+              </DM.RadioItem>
+            ))}
+          </DM.RadioGroup>
+        </DM.Content>
+      </DM.Portal>
+    </DM.Root>
+  );
+}
+
+/* ---------- Segmented control (Radix ToggleGroup, single) ---------- */
+// A few mutually exclusive options shown at once: view modes, auto-refresh, chart range. A radio group: Tab enters
+// at the selected option, arrows move, Space or Enter selects. Selected labels reserve their bold width.
+export function SegmentedControl({ label, value, defaultValue, onChange, options, disabled, size }: SegmentedControlProps) {
+  const [inner, setInner] = useState(defaultValue ?? "");
+  const cur = value ?? inner;
+  return (
+    <RToggle.Root type="single" className={cx("pw-seg", size === "sm" && "pw-seg--sm")} aria-label={label} value={cur} disabled={disabled}
+      onValueChange={(v) => { if (!v) return; setInner(v); onChange && onChange(v); }}>
+      {options.map(toOption).map((o) => (
+        <RToggle.Item key={o.value} value={o.value} disabled={o.disabled} className={cx("pw-seg__b", o.value === cur && "is-on")}><Reserve text={o.label} /></RToggle.Item>
+      ))}
+    </RToggle.Root>
   );
 }
 
@@ -181,10 +198,12 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 const localStamp = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 const STAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRefreshChange, onCopy, ranges = TIME_RANGES, forceOpen, disabled, absolute, defaultAbsolute, onAbsoluteChange }: TimeRangePickerProps) {
-  const { open, setOpen, ref } = usePopover();
+  const [open, setOpen] = useState(false);
   const isOpen = forceOpen || open;
   const cur = ranges.find((r) => r.value === value);
   const [copied, setCopied] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   const [from, setFrom] = useState(() => defaultAbsolute?.from ?? localStamp(new Date(Date.now() - 3600e3)));
   const [to, setTo] = useState(() => defaultAbsolute?.to ?? localStamp(new Date()));
   const [absErr, setAbsErr] = useState<string | null>(null);
@@ -195,29 +214,33 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
     if (f >= t) return setAbsErr("“From” must be before “To”.");
     setAbsErr(null); onAbsoluteChange && onAbsoluteChange({ from: f, to: t }); setOpen(false);
   };
+  const copy = () => { setCopied(true); onCopy && onCopy(absolute || value); window.clearTimeout(timer.current); timer.current = window.setTimeout(() => setCopied(false), 1500); };
   const absProps = { "aria-invalid": absErr ? true : undefined, "aria-describedby": absErr ? errId : undefined } as const;
+  const shown = absolute || (cur ? cur.label ?? cur.value : value);
   return (
-    <div className="pw-time" ref={ref}>
-      <button type="button" className={cx("pw-field", isOpen && "is-open")} aria-haspopup="dialog" aria-expanded={isOpen} onClick={() => setOpen(!open)} disabled={disabled}>
-        <Icon name="clock" />
-        <span className="pw-field__val"><Fit current={absolute || (cur ? cur.label ?? cur.value : value)} all={ranges.map((r) => r.label ?? r.value)} /></span>
-        <span className="pw-time__live" title={refresh === "off" ? "Auto-refresh off" : "Auto-refresh every " + refresh}><Icon name={refresh === "off" ? "pause" : "refresh"} size={12} /><Fit current={refresh} all={REFRESH.map((r) => r.value)} /></span>
-        <Icon name="chevron-down" size={14} />
-      </button>
-      {isOpen ? (
-        <div role="dialog" aria-label="Time range" className="pw-pop pw-time__pop">
+    <RPopover.Root open={isOpen} onOpenChange={setOpen}>
+      <RPopover.Trigger asChild disabled={disabled}>
+        <button type="button" className={cx("pw-field pw-time", isOpen && "is-open")}>
+          <Icon name="clock" />
+          <span className="pw-sr">Time range: </span>
+          <span className="pw-field__val"><Fit current={shown} all={ranges.map((r) => r.label ?? r.value)} /></span>
+          <span className="pw-time__live" title={refresh === "off" ? "Auto-refresh off" : "Auto-refresh every " + refresh}><Icon name={refresh === "off" ? "pause" : "refresh"} size={12} /><span className="pw-sr">, auto-refresh </span><Fit current={refresh} all={REFRESH.map((r) => r.value)} /></span>
+          <Icon name="chevron-down" size={14} />
+        </button>
+      </RPopover.Trigger>
+      <RPopover.Portal>
+        <RPopover.Content className="pw-popover pw-time__pop" align="end" sideOffset={6} collisionPadding={8} aria-label="Time range">
           <div className="pw-time__cols">
             <div>
-              <div className="pw-caption pw-muted pw-pop__h">Relative</div>
-              <ul role="listbox" aria-label="Relative ranges" className="pw-list pw-list--flat">
+              <div className="pw-caption pw-muted pw-pop__h" id={errId + "-rel"}>Relative</div>
+              <RToggle.Root type="single" orientation="vertical" loop className="pw-list pw-list--flat pw-time__rel" aria-labelledby={errId + "-rel"} value={absolute ? "" : value}
+                onValueChange={(v) => { if (v) { onChange && onChange(v); setOpen(false); } }}>
                 {ranges.map((r) => (
-                  <li key={r.value} role="option" tabIndex={0} aria-selected={r.value === value} className={cx("pw-list__item", r.value === value && "is-selected")}
-                    onClick={() => { onChange && onChange(r.value); setOpen(false); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") { onChange && onChange(r.value); setOpen(false); } }}>
-                    <span className="pw-list__check">{r.value === value ? <Icon name="check" size={14} /> : null}</span>{r.label}
-                  </li>
+                  <RToggle.Item key={r.value} value={r.value} className={cx("pw-list__item", !absolute && r.value === value && "is-selected")}>
+                    <span className="pw-list__check">{!absolute && r.value === value ? <Icon name="check" size={14} /> : null}</span>{r.label ?? r.value}
+                  </RToggle.Item>
                 ))}
-              </ul>
+              </RToggle.Root>
             </div>
             <div className="pw-time__abs">
               <div className="pw-caption pw-muted pw-pop__h">Absolute ({timeZoneLabel()})</div>
@@ -226,17 +249,15 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
               {absErr ? <div id={errId} className="pw-formfield__error pw-time__err" role="alert"><Icon name="critical" size={12} /><span>{absErr}</span></div> : null}
               <Button size="sm" onClick={apply}>Apply</Button>
               <div className="pw-caption pw-muted pw-pop__h" style={{ marginTop: 12 }}>Auto-refresh</div>
-              <div className="pw-seg" role="radiogroup" aria-label="Auto-refresh">
-                {REFRESH.map((r) => <button key={r.value} type="button" role="radio" aria-checked={r.value === refresh} className={cx("pw-seg__b", r.value === refresh && "is-on")} onClick={() => onRefreshChange && onRefreshChange(r.value)}><Reserve text={r.label} /></button>)}
-              </div>
-              <button type="button" className="pw-linkbtn" onClick={() => { setCopied(true); onCopy && onCopy(value); setTimeout(() => setCopied(false), 1500); }}>
+              <SegmentedControl label="Auto-refresh" value={refresh} options={REFRESH} onChange={(v) => onRefreshChange && onRefreshChange(v)} />
+              <button type="button" className="pw-linkbtn" onClick={copy}>
                 <Icon name="copy" size={14} />{copied ? "Range copied" : "Copy range to paste elsewhere"}
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
-    </div>
+        </RPopover.Content>
+      </RPopover.Portal>
+    </RPopover.Root>
   );
 }
 
@@ -254,41 +275,102 @@ export function ScopeSwitcher({ scope, options, onChange, compact }: ScopeSwitch
   );
 }
 
-/* ---------- Global search ---------- */
-export function GlobalSearch({ items = [], onSelect, placeholder = "Search repositories, runs, files", forceQuery, emptyHint }: GlobalSearchProps) {
+/* ---------- Global search and commands (cmdk) ---------- */
+// One box for finding things and running commands. cmdk provides the combobox/listbox semantics, the active option
+// (aria-activedescendant), arrow keys, Home/End and Enter. Items with `onRun` are commands; `group` sections the
+// results; `recent` shows when the box is focused and empty. Filtering is local (every word must match the label,
+// kind, description or keywords; label prefixes rank first) unless `filter={false}`, for results you fetch yourself
+// in `onQueryChange` (show `loading` meanwhile).
+// Ctrl+K (⌘K on Apple devices) focuses the most recently mounted search; only one listener is ever attached.
+const isApple = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const searchStack: Array<React.RefObject<HTMLInputElement>> = [];
+let shortcutBound = false;
+function bindSearchShortcut() {
+  if (shortcutBound || typeof document === "undefined") return;
+  shortcutBound = true;
+  document.addEventListener("keydown", (e) => {
+    if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "k") return;
+    const top = searchStack[searchStack.length - 1]?.current;
+    if (top) { e.preventDefault(); top.focus(); top.select(); }
+  });
+}
+const searchHay = (i: SearchItem) => [i.label, i.kind, i.description, ...(i.keywords || [])].filter(Boolean).join(" ").toLowerCase();
+function searchRank(i: SearchItem, terms: string[]): number {
+  const hay = searchHay(i);
+  if (!terms.every((t) => hay.includes(t))) return -1;
+  const label = i.label.toLowerCase(), t0 = terms[0] || "";
+  return label.startsWith(t0) ? 0 : label.includes(t0) ? 1 : 2;
+}
+const itemKey = (i: SearchItem) => i.id ?? (i.kind ? i.kind + ":" : "") + i.label;
+export function GlobalSearch({ items = [], onSelect, placeholder = "Search repositories, runs, files", forceQuery, emptyHint, recent, loading, onQueryChange, filter = true, limit = 7, shortcut = true, label = "Search" }: GlobalSearchProps) {
   const [q, setQ] = useState(forceQuery || "");
-  const [focus, setFocus] = useState(!!forceQuery);
-  const [hi, setHi] = useState(0);
+  const [active, setActive] = useState(!!forceQuery);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); inputRef.current?.focus(); } };
-    document.addEventListener("keydown", k); return () => document.removeEventListener("keydown", k);
+    if (!shortcut) return;
+    bindSearchShortcut(); searchStack.push(inputRef);
+    return () => { const i = searchStack.indexOf(inputRef); if (i >= 0) searchStack.splice(i, 1); };
+  }, [shortcut]);
+  const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const results = q
+    ? (filter ? items.map((i) => [i, searchRank(i, terms)] as const).filter(([, r]) => r >= 0).sort((a, b) => a[1] - b[1]).map(([i]) => i) : items).slice(0, limit)
+    : (recent || []).slice(0, limit);
+  const groups: Array<{ name: string; items: SearchItem[] }> = [];
+  for (const i of results) {
+    const name = q ? i.group || "" : "Recent";
+    const g = groups.find((x) => x.name === name); if (g) g.items.push(i); else groups.push({ name, items: [i] });
+  }
+  const open = active && (q ? true : results.length > 0);
+  // cmdk always reports aria-expanded="true", and leaves aria-activedescendant empty for the result it highlights
+  // first. Keep both true to what is on screen, so screen readers announce the highlighted result.
+  const listRef = useRef<HTMLDivElement>(null);
+  React.useLayoutEffect(() => { inputRef.current?.setAttribute("aria-expanded", String(open)); });
+  useEffect(() => {
+    const list = listRef.current, input = inputRef.current;
+    if (!list || !input) return;
+    const sync = () => {
+      const sel = list.hidden ? null : list.querySelector<HTMLElement>('[cmdk-item][aria-selected="true"]');
+      if (sel) { if (input.getAttribute("aria-activedescendant") !== sel.id) input.setAttribute("aria-activedescendant", sel.id); }
+      else input.removeAttribute("aria-activedescendant");
+    };
+    const mo = new MutationObserver(sync);
+    mo.observe(list, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-selected", "hidden"] });
+    sync();
+    return () => mo.disconnect();
   }, []);
-  const res = q ? items.filter((i) => (i.label + " " + (i.kind || "")).toLowerCase().includes(q.toLowerCase())).slice(0, 7) : [];
-  const pick = (i: SearchItem) => { onSelect && onSelect(i); setQ(""); setFocus(false); };
+  const setQuery = (v: string) => { setQ(v); onQueryChange && onQueryChange(v); };
+  const pick = (i: SearchItem) => { i.onRun && i.onRun(); onSelect && onSelect(i); setQuery(""); setActive(false); };
   return (
-    <div className="pw-search" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFocus(false); }}>
+    <Command className="pw-search" label={label} shouldFilter={false} loop
+      onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setActive(false); }}
+      onKeyDown={(e) => {
+        if (open) return;
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setActive(true); }
+        else if (e.key === "Enter" || e.key === "Home" || e.key === "End") e.preventDefault();
+      }}>
       <Icon name="search" />
-      <input ref={inputRef} className="pw-search__in" role="combobox" aria-expanded={focus && res.length > 0} aria-controls="pw-search-res" aria-label="Search"
-        placeholder={placeholder} value={q} onFocus={() => setFocus(true)} onChange={(e) => { setQ(e.target.value); setHi(0); }}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowDown") { e.preventDefault(); setHi(Math.min(hi + 1, res.length - 1)); }
-          if (e.key === "ArrowUp") { e.preventDefault(); setHi(Math.max(hi - 1, 0)); }
-          const sel = res[hi]; if (e.key === "Enter" && sel) pick(sel);
-          if (e.key === "Escape") { setQ(""); e.currentTarget.blur(); }
-        }} />
-      <kbd className="pw-kbd">⌘K</kbd>
-      {focus && q ? (
-        <ul id="pw-search-res" role="listbox" className="pw-pop pw-list pw-search__res">
-          {res.length ? res.map((i, n) => (
-            <li key={i.label} role="option" aria-selected={n === hi} tabIndex={-1} className={cx("pw-list__item", n === hi && "is-active")} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(i)}>
-              {i.status ? <StatusDot status={i.status} /> : <span className="pw-list__check" />}
-              <span className="pw-mono">{i.label}</span><span className="pw-muted pw-list__meta">{i.kind}</span>
-            </li>
-          )) : <li className="pw-list__empty pw-muted">No match for “{q}”.{emptyHint ? " " + emptyHint : ""}</li>}
-        </ul>
-      ) : null}
-    </div>
+      <Command.Input ref={inputRef} className="pw-search__in" placeholder={placeholder} value={q}
+        onValueChange={(v) => { setQuery(v); setActive(true); }} onFocus={() => setActive(true)}
+        onKeyDown={(e) => { if (e.key === "Escape") { if (open) setActive(false); else if (q) setQuery(""); else e.currentTarget.blur(); } }} />
+      {shortcut ? <kbd className="pw-kbd" aria-hidden="true">{isApple() ? "⌘K" : "Ctrl K"}</kbd> : null}
+      <Command.List ref={listRef} className="pw-pop pw-list pw-search__res" label="Search results" hidden={!open} onMouseDown={(e) => e.preventDefault()}>
+        {loading ? <Command.Loading className="pw-list__empty pw-muted">Searching…</Command.Loading> : null}
+        {!loading && q ? <Command.Empty className="pw-list__empty pw-muted">No match for “{q}”.{emptyHint ? " " + emptyHint : ""}</Command.Empty> : null}
+        {groups.map((g) => {
+          const body = g.items.map((i) => (
+            <Command.Item key={itemKey(i)} value={itemKey(i)} onSelect={() => pick(i)} className="pw-list__item">
+              {i.status ? <StatusDot status={i.status} /> : <span className="pw-list__check">{i.icon ? <Icon name={i.icon} size={14} /> : null}</span>}
+              <span className="pw-search__txt">
+                <span className={cx(i.onRun ? undefined : "pw-mono")}>{i.label}</span>
+                {i.description ? <span className="pw-caption pw-muted">{i.description}</span> : null}
+              </span>
+              {i.shortcut ? <kbd className="pw-kbd pw-list__meta">{i.shortcut}</kbd> : <span className="pw-muted pw-list__meta">{i.kind}</span>}
+            </Command.Item>
+          ));
+          return g.name ? <Command.Group key={g.name} heading={g.name} className="pw-search__group">{body}</Command.Group> : <Fragment key="">{body}</Fragment>;
+        })}
+      </Command.List>
+    </Command>
   );
 }
 
@@ -331,26 +413,25 @@ export function Breadcrumbs({ items = [], onNavigate }: BreadcrumbsProps) {
   );
 }
 
-/* ---------- Tabs ---------- */
-export function Tabs({ tabs = [], value, onChange, size }: TabsProps) {
-  const refs = useRef<Array<HTMLButtonElement | null>>([]);
-  return (
-    <div role="tablist" className={cx("pw-tabs", size === "sm" && "pw-tabs--sm")}>
-      {tabs.map((t, i) => {
-        const on = t.value === value;
-        return (
-          <button key={t.value} ref={(el: HTMLButtonElement | null) => (refs.current[i] = el)} role="tab" type="button" aria-selected={on} tabIndex={on ? 0 : -1} disabled={t.disabled}
-            className={cx("pw-tab", on && "is-on")} onClick={() => onChange && onChange(t.value)}
-            onKeyDown={(e) => {
-              const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (!d) return;
-              const n = (i + d + tabs.length) % tabs.length; refs.current[n]?.focus(); const next = tabs[n]; if (onChange && next) onChange(next.value);
-            }}>
-            <Reserve text={t.label} />{t.count != null ? <span className={cx("pw-tab__count", t.tone && "pw-tone--" + t.tone)}>{t.count}</span> : null}
-          </button>
-        );
-      })}
-    </div>
+/* ---------- Tabs (Radix Tabs) ---------- */
+// Arrow keys move and select (wrapping), Home/End jump, disabled tabs are skipped. Selected labels reserve their bold
+// width, so switching never moves the tabs after them. Pass the panels as children (<TabPanel value>) to link each tab
+// to its panel; without children the tabs only switch the page's content (e.g. in PageHeader) and don't point at it.
+export function Tabs({ tabs = [], value, onChange, size, label, children }: TabsProps) {
+  const list = (
+    <RTabs.List className={cx("pw-tabs", size === "sm" && "pw-tabs--sm")} aria-label={label} loop>
+      {tabs.map((t) => (
+        <RTabs.Trigger key={t.value} value={t.value} disabled={t.disabled} className={cx("pw-tab", t.value === value && "is-on")} {...(children ? {} : { "aria-controls": undefined })}>
+          <Reserve text={t.label} />{t.count != null ? <span className={cx("pw-tab__count", t.tone && "pw-tone--" + t.tone)}>{t.count}</span> : null}
+        </RTabs.Trigger>
+      ))}
+    </RTabs.List>
   );
+  return <RTabs.Root value={value} onValueChange={(v) => onChange && onChange(v)} activationMode="automatic" className="pw-tabsroot">{list}{children}</RTabs.Root>;
+}
+/** The content for one tab; render inside <Tabs>. Focusable, labelled by its tab. */
+export function TabPanel({ value, children, className }: { value: string; children?: React.ReactNode; className?: string }) {
+  return <RTabs.Content value={value} className={cx("pw-tabpanel", className)}>{children}</RTabs.Content>;
 }
 
 /* ---------- Panel (data surface) ---------- */
@@ -447,9 +528,11 @@ export function AlertBanner({ tone = "critical", title, children, action, onActi
     </div>
   );
 }
+// Toast is the visual: Toaster shows queued toasts in an always-present live region (Radix Toast). A Toast placed by
+// hand is announced as a status message.
 export function Toast({ tone = "info", title, body, action, onAction, onClose }: ToastProps) {
   return (
-    <div className={cx("pw-toast", "pw-toast--" + tone)} role="status" aria-live="polite">
+    <div className={cx("pw-toast", "pw-toast--" + tone)} role={tone === "critical" ? "alert" : "status"}>
       <Icon name={tone} />
       <div className="pw-toast__txt"><div className="pw-body-strong">{title}</div>{body ? <div className="pw-muted">{body}</div> : null}</div>
       {action ? <button type="button" className="pw-linkbtn" onClick={onAction}>{action}</button> : null}
@@ -457,7 +540,7 @@ export function Toast({ tone = "info", title, body, action, onAction, onClose }:
     </div>
   );
 }
-export function ToastRegion({ children }: ToastRegionProps) { return <div className="pw-toasts" aria-live="polite">{children}</div>; }
+export function ToastRegion({ children }: ToastRegionProps) { return <div className="pw-toasts" role="region" aria-label="Notifications">{children}</div>; }
 
 /* ---------- Drawer & modal (Radix Dialog) ---------- */
 // Radix handles the focus trap, Escape, outside click and aria-modal. `contained` renders a non-modal dialog inside the
@@ -491,16 +574,20 @@ export function Drawer({ open, title, subtitle, onClose, children, footer, width
     </Dialog.Root>
   );
 }
+// tone="critical" is an alert dialog: a destructive decision. It is described by its body (read on open), and clicking
+// outside doesn't dismiss it; Escape, Close and the actions do.
 export function Modal({ open, title, onClose, children, actions, contained, tone }: ModalProps) {
   const onCloseAutoFocus = useReturnFocus(open);
+  const alert = tone === "critical";
   return (
     <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={!contained}>
       {open ? (
         <div className={cx("pw-layer", "pw-layer--center", contained && "is-contained")}>
           <Scrim contained={contained} />
-          <Dialog.Content className="pw-modal" role={tone === "critical" ? "alertdialog" : "dialog"} aria-describedby={undefined} onCloseAutoFocus={onCloseAutoFocus}>
+          <Dialog.Content className="pw-modal" role={alert ? "alertdialog" : "dialog"} {...(alert ? {} : { "aria-describedby": undefined })} onCloseAutoFocus={onCloseAutoFocus}
+            onInteractOutside={alert ? (e) => e.preventDefault() : undefined}>
             <header className="pw-modal__h"><Dialog.Title asChild><div className="pw-heading">{title}</div></Dialog.Title><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
-            <div className="pw-modal__b">{children}</div>
+            {alert ? <Dialog.Description asChild><div className="pw-modal__b">{children}</div></Dialog.Description> : <div className="pw-modal__b">{children}</div>}
             {actions ? <footer className="pw-modal__f">{actions}</footer> : null}
           </Dialog.Content>
         </div>

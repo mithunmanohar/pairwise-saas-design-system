@@ -10,18 +10,39 @@ test("Tabs: arrow keys move focus and selection, wrapping at the ends", async ({
   await expect(page.getByRole("tab", { name: /Runs/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByTestId("tab")).toHaveText("runs");
   await page.keyboard.press("ArrowLeft");
+  await expect(overview).toBeFocused();
   await page.keyboard.press("ArrowLeft");
   await expect(page.getByRole("tab", { name: "Settings" })).toBeFocused();
   await expect(page.getByTestId("tab")).toHaveText("settings");
+  await page.keyboard.press("Home");
+  await expect(overview).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(page.getByRole("tab", { name: "Settings" })).toBeFocused();
 });
 
-test("MenuSelect: picks an option and closes", async ({ page }) => {
+test("MenuSelect: picks an option with the mouse and closes", async ({ page }) => {
   await open(page, "menu-select");
   const trigger = page.getByRole("button", { name: "Environment: prod" });
   await trigger.click();
-  await page.getByRole("option", { name: "staging" }).click();
+  await page.getByRole("menuitemradio", { name: "staging" }).click();
   await expect(page.getByTestId("env")).toHaveText("staging");
   await expect(page.getByRole("button", { name: "Environment: staging" })).toBeVisible();
+});
+
+test("MenuSelect: keyboard opens on the current value, arrows and typeahead move, Enter picks, focus returns", async ({ page }) => {
+  await open(page, "menu-select");
+  const trigger = page.getByRole("button", { name: "Environment: prod" });
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menu", { name: "Environment" })).toBeVisible();
+  await expect(page.getByRole("menuitemradio", { name: "prod" })).toHaveAttribute("aria-checked", "true");
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitemradio", { name: "staging" })).toBeFocused();
+  await page.keyboard.press("d");
+  await expect(page.getByRole("menuitemradio", { name: "dev" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("env")).toHaveText("dev");
+  await expect(page.getByRole("button", { name: "Environment: dev" })).toBeFocused();
 });
 
 test("GlobalSearch: Ctrl+K focuses, typing filters, arrows and Enter pick", async ({ page }) => {
@@ -32,6 +53,9 @@ test("GlobalSearch: Ctrl+K focuses, typing filters, arrows and Enter pick", asyn
   await page.keyboard.type("run_");
   await expect(page.getByRole("option")).toHaveCount(2);
   await expect(box).toHaveAttribute("aria-expanded", "true");
+  // The first result is highlighted (cmdk does this the frame after the query changes) and announced.
+  await expect(page.getByRole("option").first()).toHaveAttribute("aria-selected", "true");
+  await expect(box).toHaveAttribute("aria-activedescendant", (await page.getByRole("option").first().getAttribute("id"))!);
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("picked")).toHaveText("run_9a1x7");

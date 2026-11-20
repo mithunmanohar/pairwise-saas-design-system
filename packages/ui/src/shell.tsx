@@ -1,6 +1,6 @@
 import type { SideNavProps, TopBarProps, AppShellProps, PageHeaderProps, PageHeaderField, NavGroup, ShellMode } from "./types";
 import { Icon } from "./icons";
-import { cx, Button, Tooltip, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
+import { cx, Button, Tooltip, TooltipProvider, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
 import { ActionMenu } from "./actions";
 import * as React from "react";
 import { Fragment } from "react";
@@ -92,6 +92,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
   }, [forceWidth]);
   const mode: ShellMode = w >= 1360 ? "full" : w >= 1024 ? "collapsed" : "tablet";
   return (
+    <TooltipProvider>
     <div ref={ref} className={cx("pw-shell", "is-" + mode, "is-" + density)} data-density={density}>
       {mode !== "tablet" ? React.cloneElement(nav, { collapsed: mode === "collapsed" }) : null}
       {mode === "tablet" && navOpen ? <div className="pw-layer is-contained"><div className="pw-scrim" onClick={() => setNavOpen(false)} />{React.cloneElement(nav, { collapsed: false, overlay: true, onClose: () => setNavOpen(false), onNavigate: (k: string) => { setNavOpen(false); nav.props.onNavigate && nav.props.onNavigate(k); } })}</div> : null}
@@ -100,6 +101,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
         <main className="pw-shell__content" id="main">{children}</main>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
 

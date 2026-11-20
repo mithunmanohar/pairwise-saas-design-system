@@ -1,0 +1,21 @@
+<!-- @dsCard group="Data display" height=170 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Pagination</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-cell{display:grid;gap:6px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function Demo(){ var p=useState(2), s=useState(25), q=useState(1);
+  return h(React.Fragment,null,
+    cell('Full: page size, first/last', h('div',{className:'pv-box'}, h(C.Pagination,{page:p[0],pageSize:s[0],total:312,onPageChange:p[1],pageSizeOptions:[25,50,100],onPageSizeChange:function(n){s[1](n);p[1](1);}}))),
+    cell('Compact (firstLast=false)', h('div',{className:'pv-box'}, h(C.Pagination,{page:q[0],pageSize:10,total:42,onPageChange:q[1],firstLast:false}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

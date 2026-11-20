@@ -3,7 +3,8 @@
 import * as React from "react";
 import {
   ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
-  Switch, Tabs, TextInput, Toaster, toast, type Column,
+  Switch, Tabs, TabPanel, TextInput, Toaster, toast, Tooltip, TimeRangePicker, SegmentedControl, StatusGrid, BarChart, Heatmap,
+  Pagination, ColumnsMenu, type Column, type DataTableSort,
 } from "../../src/index";
 
 const { useState } = React;
@@ -152,8 +153,119 @@ function FoundationsFixture() {
   );
 }
 
+function TooltipFixture() {
+  return (
+    <div style={{ display: "flex", gap: 24, padding: 40 }}>
+      <Tooltip content="Re-run failed checks"><Button icon="refresh" aria-label="Re-run" /></Tooltip>
+      <Tooltip content="Opens in your CI provider" side="right"><a href="#ci">CI run</a></Tooltip>
+    </div>
+  );
+}
+
+function TimeFixture() {
+  const [range, setRange] = useState("1h");
+  const [refresh, setRefresh] = useState<"off" | "30s" | "1m" | "5m">("30s");
+  const [abs, setAbs] = useState<string | undefined>();
+  const [copied, setCopied] = useState("none");
+  const [view, setView] = useState("list");
+  return (
+    <div style={{ display: "grid", gap: 16, justifyItems: "start", paddingLeft: 400 }}>
+      <TimeRangePicker value={range} onChange={(v) => { setRange(v); setAbs(undefined); }} refresh={refresh} onRefreshChange={(r) => setRefresh(r as typeof refresh)}
+        absolute={abs} onAbsoluteChange={(r) => setAbs(`${r.from} – ${r.to}`)} onCopy={setCopied} defaultAbsolute={{ from: "2026-11-20 09:00", to: "2026-11-20 10:00" }} />
+      <SegmentedControl label="View" value={view} onChange={setView} options={[{ value: "list", label: "List" }, { value: "board", label: "Board" }, { value: "timeline", label: "Timeline", disabled: true }]} />
+      <output data-testid="state">{`${range}|${refresh}|${abs ?? ""}|${copied}|${view}`}</output>
+    </div>
+  );
+}
+
+function CommandsFixture() {
+  const [log, setLog] = useState<string[]>([]);
+  const [async, setAsync] = useState<{ q: string; loading: boolean }>({ q: "", loading: false });
+  const add = (x: string) => setLog((l) => [...l, x]);
+  return (
+    <div style={{ display: "grid", gap: 16, maxWidth: 520 }}>
+      <GlobalSearch onSelect={(i) => add("select:" + i.label)}
+        recent={[{ label: "sample-repo", kind: "Repository" }, { label: "run_8f3k2", kind: "Run", status: "critical" }]}
+        items={[
+          { label: "Go to incidents", group: "Commands", icon: "siren", shortcut: "G I", keywords: ["alerts"], onRun: () => add("run:incidents") },
+          { label: "Toggle theme", group: "Commands", icon: "settings", description: "Switch between light and dark", onRun: () => add("run:theme") },
+          { label: "sample-repo", kind: "Repository", group: "Repositories" },
+          { label: "run_8f3k2", kind: "Run", status: "critical", group: "Runs" },
+        ]} />
+      <GlobalSearch label="Search runs" shortcut={false} filter={false} loading={async.loading} placeholder="Search runs on the server"
+        onQueryChange={(q) => setAsync({ q, loading: !!q })} items={async.q && !async.loading ? [{ label: `run_${async.q}1`, kind: "Run" }] : []} />
+      <Button onClick={() => setAsync((a) => ({ ...a, loading: false }))}>Finish loading</Button>
+      <output data-testid="log">{log.join(",")}</output>
+    </div>
+  );
+}
+
+function CriticalModalFixture() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="danger" onClick={() => setOpen(true)}>Delete repository</Button>
+      <Modal open={open} tone="critical" title="Delete sample-repo?" onClose={() => setOpen(false)}
+        actions={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="danger" onClick={() => setOpen(false)}>Delete repository</Button></>}>
+        <p style={{ margin: 0 }}>Runs, settings and webhooks for sample-repo are removed. This can’t be undone.</p>
+      </Modal>
+    </>
+  );
+}
+
+const MANY: Run[] = Array.from({ length: 63 }, (_, i) => ({ id: `run_${String(i + 1).padStart(2, "0")}`, repo: ["sample-repo", "docs-site", "infra"][i % 3]!, status: i % 7 === 0 ? "Failed" : "Passed", durationMs: 900 + ((i * 7919) % 6000) }));
+const PINNED: Column<Run>[] = RUN_COLUMNS.map((c) => (c.key === "id" ? { ...c, pin: "start" as const, hideable: false } : c));
+function TablePlusFixture() {
+  const [sel, setSel] = useState<string[]>([]);
+  const [hidden, setHidden] = useState<string[]>(["status"]);
+  const [sort, setSort] = useState<DataTableSort | null>({ key: "durationMs", dir: "desc" });
+  const [log, setLog] = useState("none");
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}><ColumnsMenu columns={PINNED} hidden={hidden} onChange={setHidden} /></div>
+      <DataTable caption="All runs" columns={PINNED} rows={MANY} pageSize={10} pageSizeOptions={[10, 25]}
+        selection="multiple" selectedKeys={sel} onSelectionChange={setSel} hiddenColumns={hidden} sort={sort} onSortChange={setSort}
+        bulkActions={(keys) => <Button size="sm" onClick={() => setLog("rerun:" + keys.length)}>Re-run</Button>}
+        rowActions={(r) => [{ label: "Copy run id", icon: "copy", onSelect: () => setLog("copy:" + r.id) }, "separator", { label: "Cancel run", tone: "critical", onSelect: () => setLog("cancel:" + r.id) }]} />
+      <output data-testid="log">{log}</output>
+      <output data-testid="sort">{sort ? sort.key + ":" + sort.dir : "none"}</output>
+    </div>
+  );
+}
+
+function PaginationFixture() {
+  const [page, setPage] = useState(1);
+  return <><Pagination page={page} pageSize={25} total={312} onPageChange={setPage} /><output data-testid="page">{page}</output></>;
+}
+
+function GridFixture() {
+  const [cell, setCell] = useState("none");
+  const cols = ["01", "02", "03", "04"];
+  return (
+    <div style={{ display: "grid", gap: 24 }}>
+      <StatusGrid ariaLabel="Nightly jobs by run" cols={cols} rows={[{ key: "ingest", label: "daily_ingest" }, { key: "train", label: "train_model" }]}
+        cells={[["healthy", "warning", "critical", "info"], ["healthy", "healthy", "unknown", "critical"]]} onCell={(r, c, s) => setCell(`${r.label}:${c}:${s}`)} />
+      <output data-testid="cell">{cell}</output>
+      <BarChart ariaLabel="Runs per day" categories={["Mon", "Tue", "Wed"]} series={[{ name: "Passed", values: [12, 9, 14], color: "chart-1" }, { name: "Failed", values: [1, 3, 0], color: "chart-2" }]} onBar={(c) => setCell("bar:" + c)} />
+      <Heatmap ariaLabel="Queue wait by hour" unit="s" rows={["runner-a", "runner-b"]} cols={["00", "01", "02"]} values={[[1, 2, null], [3, 0.5, 4]]} />
+    </div>
+  );
+}
+
+function TabPanelsFixture() {
+  const [tab, setTab] = useState("checks");
+  return (
+    <Tabs label="Run details" value={tab} onChange={setTab} tabs={[{ value: "checks", label: "Checks", count: 3 }, { value: "logs", label: "Logs" }, { value: "files", label: "Files", disabled: true }]}>
+      <TabPanel value="checks">3 checks passed.</TabPanel>
+      <TabPanel value="logs">Build log for run_8f3k2.</TabPanel>
+      <TabPanel value="files">No files.</TabPanel>
+    </Tabs>
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
-  foundations: FoundationsFixture,
+  foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
+  "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
 };

@@ -48,6 +48,9 @@ const P = {
   page: <g><path d="M3.5 1.75h6l3 3v9.5h-9z"/><path d="M9.5 1.75v3h3M5.75 8h4.5M5.75 10.5h4.5"/></g>,
   ticket: <g><path d="M2 4.5h12v2a1.5 1.5 0 0 0 0 3v2H2v-2a1.5 1.5 0 0 0 0-3z"/><path d="M10 4.5v7" strokeDasharray="1.2 1.4"/></g>,
   minus: <path d="M4 8h8"/>,
+  "chevrons-left": <path d="m8.25 4.5-3.5 3.5 3.5 3.5M12.25 4.5 8.75 8l3.5 3.5"/>,
+  "chevrons-right": <path d="m3.75 4.5 3.5 3.5-3.5 3.5M7.75 4.5l3.5 3.5-3.5 3.5"/>,
+  columns: <g><rect x="2.5" y="2.75" width="11" height="10.5"/><path d="M6.25 2.75v10.5M9.75 2.75v10.5"/></g>,
 } satisfies Record<string, React.ReactElement>;
 
 // Status glyphs: filled shapes so they read without colour.

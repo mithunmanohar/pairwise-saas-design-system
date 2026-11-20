@@ -1,4 +1,4 @@
-<!-- @dsCard group="Data display" height=470 -->
+<!-- @dsCard group="Data display" height=900 -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>DataTable</title>
 <style>
@@ -16,8 +16,18 @@ function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(
 
 var rows=[{id:'sample-api',kind:'Deployment',ns:'example-team',status:'critical',label:'CrashLoopBackOff',ready:'4/6',restarts:37,cpu:1.84,age:'41d'},{id:'feature-store-api',kind:'Deployment',ns:'feature-store',status:'healthy',ready:'8/8',restarts:0,cpu:3.12,age:'93d'},{id:'search-index-svc',kind:'Deployment',ns:'search-ml',status:'warning',label:'Degraded',ready:'5/6',restarts:3,cpu:6.07,age:'12d'},{id:'eval-runner-2817',kind:'Job',ns:'data-science',status:'info',label:'Running',ready:'1/1',restarts:0,cpu:15.6,age:'2h'},{id:'inference-gateway',kind:'Deployment',ns:'serving',status:'healthy',ready:'12/12',restarts:1,cpu:2.48,age:'64d'}];
 var cols=[{key:'id',header:'Workload',sortable:true,mono:true},{key:'kind',header:'Kind'},{key:'ns',header:'Namespace',mono:true},{key:'status',header:'Status',sortable:true,sortValue:function(r){return {critical:0,warning:1,unknown:2,info:3,healthy:4}[r.status];},defaultDir:'asc',render:function(r){return h(C.StatusBadge,{status:r.status,label:r.label,size:'sm'});}},{key:'ready',header:'Ready',align:'right',mono:true},{key:'restarts',header:'Restarts 1 h',align:'right',sortable:true,mono:true},{key:'cpu',header:'CPU (cores)',align:'right',sortable:true,mono:true,render:function(r){return r.cpu.toFixed(2);}},{key:'age',header:'Age',align:'right',mono:true}];
+var runs=[];for(var i=0;i<23;i++){runs.push({id:'run_'+(8000+i*37).toString(36),repo:['sample-repo','docs-site','infra'][i%3],branch:i%4?'main':'feature/add-retry',status:i%6===0?'critical':'healthy',mins:(3+i*7%19)});}
+var runCols=[{key:'id',header:'Run',mono:true,pin:'start',hideable:false},{key:'repo',header:'Repository',mono:true,sortable:true,defaultDir:'asc'},{key:'branch',header:'Branch',mono:true},{key:'status',header:'Status',render:function(r){return h(C.StatusBadge,{status:r.status,label:r.status==='critical'?'Failed':'Passed'});}},{key:'mins',header:'Duration',num:true,align:'right',sortable:true,render:function(r){return r.mins+' min';}}];
+function Selectable(){ var sel=useState([runs[0].id,runs[2].id,runs[3].id]), hid=useState([]);
+  return h(F,null,
+    h('div',{style:{display:'flex',justifyContent:'flex-end',padding:'8px 12px'}},h(C.ColumnsMenu,{columns:runCols,hidden:hid[0],onChange:hid[1]})),
+    h(C.DataTable,{columns:runCols,rows:runs,rowKey:'id',pageSize:5,pageSizeOptions:[5,10,25],selection:'multiple',selectedKeys:sel[0],onSelectionChange:sel[1],hiddenColumns:hid[0],
+      bulkActions:function(keys){return h(F,null,h(C.Button,{size:'sm',icon:'refresh'},'Re-run '+keys.length),h(C.Button,{size:'sm',variant:'danger'},'Cancel runs'));},
+      rowActions:function(r){return [{label:'Copy run id',icon:'copy'},{label:'Open in CI provider',icon:'external'},'separator',{label:'Cancel run',tone:'critical'}];}}));
+}
 function Demo(){ return h(F,null,
   cell('Default: worst status first, row expand, critical row tint, sortable', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols,rows:rows,defaultSort:{key:'status',dir:'asc'},rowTone:function(r){return r.status==='critical'?'critical':null;},onRowClick:function(){},pageSize:4,renderExpanded:function(r){return h('div',{className:'pw-mono'},r.id+'-6f8b9d7c4-k2x9q ,  Back-off restarting failed container (exit 137, OOMKilled)');}}))),
+  cell('Selection, bulk actions, row actions, page size, pinned first column', h('div',{style:{width:'100%',border:'1px solid var(--border)',background:'var(--surface-raised)'}},h(Selectable))),
   h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}},
     cell('Loading', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'loading'}))),
     cell('Empty (filters active)', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],emptyTitle:'No failing workloads in example-team',emptyBody:'Filters: Status = Failing, Namespace = example-team.'}))),
