@@ -16,7 +16,7 @@ body { margin: 0; background: var(--surface); color: var(--ink); font-family: va
 .pw-heading { font-size: 20px; line-height: 28px; font-weight: 600; margin: 0; }
 .pw-title { font-size: 24px; line-height: 32px; font-weight: 600; margin: 0; }
 .pw-title--mono { font-family: var(--font-mono); font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
-.pw-figure { font-size: 29px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; }
+.pw-figure { font-size: 29px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .pw-tone--critical { color: var(--status-critical); }
 .pw-tone--warning { color: var(--status-warning); }
 .pw-tone--healthy { color: var(--status-healthy); }
@@ -97,6 +97,12 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-field--quiet { border-color: transparent; background: transparent; padding: 0 8px; }
 .pw-field__pre { color: var(--ink-muted); }
 .pw-field__val { font-weight: 600; }
+/* Stable widths: a control keeps the width of its widest value (Fit) and of its bold, selected label (Reserve). */
+.pw-fit { display: inline-grid; text-align: left; }
+.pw-fit > * { grid-area: 1 / 1; white-space: nowrap; }
+.pw-fit__ghost { visibility: hidden; }
+.pw-reserve { display: inline-flex; flex-direction: column; }
+.pw-reserve::after { content: attr(data-text); height: 0; overflow: hidden; visibility: hidden; font-weight: 600; user-select: none; pointer-events: none; }
 .pw-menusel, .pw-time { position: relative; }
 .pw-pop { position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; min-width: 100%; background: var(--surface-overlay); border-radius: var(--radius-md); box-shadow: var(--shadow-overlay); padding: var(--space-1); }
 .pw-list { list-style: none; margin: 0; max-height: 340px; overflow: auto; }
@@ -133,7 +139,7 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-filterbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-3) 0; }
 .pw-filterbar__q { display: flex; align-items: center; gap: 6px; height: var(--pw-ctl); padding: 0 10px; min-width: 240px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink-muted); }
 .pw-filterbar__q:focus-within { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.pw-filterbar__end { margin-left: auto; display: inline-flex; gap: var(--space-4); align-items: center; }
+.pw-filterbar__end { margin-left: auto; display: inline-flex; gap: var(--space-4); align-items: center; min-height: var(--pw-ctl); }
 
 /* Crumbs, tabs, page header */
 .pw-crumbs ol { display: flex; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--ink-muted); }
@@ -331,7 +337,7 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 /* Shell */
 .pw-shell { position: relative; display: flex; height: 100%; min-height: 640px; background: var(--surface); overflow: hidden; }
 .pw-shell__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pw-shell__content { flex: 1; overflow: auto; position: relative; }
+.pw-shell__content { flex: 1; overflow: auto; position: relative; scrollbar-gutter: stable; }
 .pw-rail { display: flex; flex-direction: column; width: var(--rail-expanded); flex: none; background: var(--surface-raised); border-right: 1px solid var(--border); }
 .pw-rail.is-collapsed { width: var(--rail-collapsed); }
 .pw-rail.is-overlay { position: absolute; top: 0; bottom: 0; left: 0; z-index: 2; border-right: 0; box-shadow: var(--shadow-overlay); background: var(--surface-overlay); }
@@ -485,7 +491,6 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
   .pw-filterbar__q { flex: 1 1 100%; min-width: 0; }
   .pw-heat { overflow-x: auto; }
   .pw-heat__grid { min-width: 440px; }
-  .pw-filterbar__end { margin-left: 0; }
   .pw-state { padding: var(--space-8) var(--space-4); }
   .pw-toasts { left: var(--space-3); right: var(--space-3); bottom: var(--space-3); }
   .pw-toast { width: auto; }

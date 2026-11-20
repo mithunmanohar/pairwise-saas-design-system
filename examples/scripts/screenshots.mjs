@@ -88,14 +88,20 @@ if (!existsSync(join(ROOT, "examples", "dist", "demo.html"))) throw new Error("r
 
 const { chromium } = loadPlaywright();
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ deviceScaleFactor: SCALE, locale: "en-US", timezoneId: "UTC", reducedMotion: "reduce" });
+const opts = { deviceScaleFactor: SCALE, locale: "en-US", timezoneId: "UTC", reducedMotion: "reduce" };
+const ctx = await browser.newContext(opts);
+// Phone captures use mobile emulation, so scrollbars overlay the page as they do on a real phone.
+const phoneCtx = await browser.newContext({ ...opts, isMobile: true, hasTouch: true });
+// Desktop captures render like overlay scrollbars too (macOS, phones): headless Chromium hides its scrollbar but would
+// still reserve the AppShell's stable scrollbar gutter, leaving a blank strip that no real user sees.
+const OVERLAY_SCROLLBARS = ".pw-shell__content{scrollbar-gutter:auto!important}";
 const errors = [];
 async function open(url, [w, h]) {
-  const page = await ctx.newPage();
+  const page = await (w === PHONE[0] ? phoneCtx : ctx).newPage();
   page.on("pageerror", (e) => errors.push(`${url}: ${e}`));
   await page.setViewportSize({ width: w, height: h });
   await page.goto(base + url, { waitUntil: "networkidle" });
-  await page.addStyleTag({ content: FREEZE });
+  await page.addStyleTag({ content: FREEZE + OVERLAY_SCROLLBARS });
   await page.evaluate(async () => { await document.fonts.ready; await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
   await page.waitForTimeout(300);
   return page;

@@ -5,15 +5,32 @@ All notable changes to `@pairwise/ui`. Versions follow semver:
 
 ## 1.0.1 (2026-11-20)
 
-Phone layout. CSS only; no prop or API changes, and desktop rendering is unchanged (all 168 card captures, both themes
-and densities, are pixel-identical to 1.0.0).
+Phone layout and a stable layout. No prop or API changes.
 
-- **≤ 640 px viewport:** TopBar wraps to two rows (search and time range on the second); PageHeader stacks its
-  actions under the title and hides their leading icons; Tabs scroll sideways; AlertBanner wraps its action below the
-  text; the TimeRangePicker popover and toasts span the screen; Panel, DataTable and Modal tighten their side padding;
-  Heatmap scrolls sideways instead of being clipped.
-- **All widths:** PageHeader actions, Panel header actions and Modal/Drawer footers wrap instead of overflowing, and
-  a Metric's sparkline drops below the value when the tile is too narrow for both.
+- **Stable layout: switching never moves the chrome.**
+  - Tabs and the auto-refresh segments reserve the width of their bold, selected label, so switching never slides the
+    tabs after them.
+  - MenuSelect (scope switcher, filters) keeps the width of its widest option, so `prod` → `staging` no longer pushes
+    the search box.
+  - TimeRangePicker keeps the width of its widest range. Its auto-refresh slot is always shown: a pause icon and "off"
+    when refresh is off.
+  - FilterBar shows "Clear" to the left of the result count, so the count stays at the right edge.
+  - AppShell's content area reserves a stable scrollbar gutter, so pages and tabs of different lengths no longer
+    shift sideways by a scrollbar's width on Windows, Linux or a Mac with a mouse.
+  - Metric figures use tabular digits (were proportional), so live values don't jitter.
+  - Visible change: those controls are slightly wider when showing a short value; inactive tabs gain 1–3 px of
+    spacing.
+- **Phone layout (≤ 640 px viewport):**
+  - TopBar wraps to two rows, with search and the time range on the second.
+  - PageHeader stacks its actions under the title and hides their leading icons.
+  - Tabs scroll sideways.
+  - AlertBanner wraps its action below the text.
+  - The TimeRangePicker popover and toasts span the screen.
+  - Panel, DataTable and Modal tighten their side padding.
+  - Heatmap scrolls sideways instead of being clipped.
+- **All widths:**
+  - PageHeader actions, Panel header actions and Modal and Drawer footers wrap instead of overflowing.
+  - A Metric's sparkline drops below the value when the tile is too narrow for both.
 
 ## 1.0.0 (2026-11-04)
 

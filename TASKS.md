@@ -7,7 +7,8 @@ second project needs it; until then it can live in the project.
 Status: `@pairwise/ui` 1.0.1 (1.0.0 plus the phone layout). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
 
 ## Done in 1.0.1
-- Phone layout (≤ 640 px) for the shell, page header, tabs, banners, popovers and toasts; desktop pixel-identical.
+- Phone layout (≤ 640 px) for the shell, page header, tabs, banners, popovers and toasts.
+- Stable layout: tabs, scope, filters, the time range and page changes never move the surrounding chrome.
 - The live demo is a complete app: every nav page works (overview, services, incidents, deployments, CI runs,
   repositories, usage and cost, access, administration), with detail pages, working tabs and breadcrumbs.
 - README and site screenshots are dark first, with light variants and phone captures.
