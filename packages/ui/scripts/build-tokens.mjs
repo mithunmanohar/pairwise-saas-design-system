@@ -28,9 +28,12 @@ export function buildCss(t) {
     out.push(`${sel} {\n${lines.join("\n")}\n}`);
   });
   const root = [];
-  for (const fam of ["spacing", "radius", "size"]) root.push(...(t[fam]?.tokens ?? []).map((x) => `  --${x.name}: ${x.value};`));
+  for (const fam of ["spacing", "radius", "size", "motion", "layer"]) root.push(...(t[fam]?.tokens ?? []).map((x) => `  --${x.name}: ${x.value};`));
   root.push(...Object.entries(t.type.families).map(([k, v]) => `  --font-${k}: ${v};`));
   out.push(`:root {\n${root.join("\n")}\n}`);
+  // Reduced motion: every duration becomes 0 ms, so transitions and enter/exit animations end immediately.
+  const durations = (t.motion?.tokens ?? []).filter((x) => x.name.startsWith("duration-"));
+  if (durations.length) out.push(`@media (prefers-reduced-motion: reduce) {\n  :root { ${durations.map((x) => `--${x.name}: 0ms;`).join(" ")} }\n}`);
   // Font presets: data-font on <html> sets the app's font; on any element it scopes a preset to that subtree (a font
   // picker can show each option in its own face). The default needs no attribute.
   for (const f of t.type.fontPresets ?? []) out.push(`[data-font="${f.id}"] { --font-sans: ${f.sans}; --font-mono: ${f.mono}; }`);
@@ -65,11 +68,17 @@ export const radius = ${q(flat("radius"))} as const;
 export type RadiusToken = keyof typeof radius;
 export const size = ${q(flat("size"))} as const;
 export type SizeToken = keyof typeof size;
+/** Durations and easings. prefers-reduced-motion sets every duration to 0 ms in tokens.css. */
+export const motion = ${q(flat("motion"))} as const;
+export type MotionToken = keyof typeof motion;
+/** Stacking order (z-index) for floating layers. */
+export const layer = ${q(flat("layer"))} as const;
+export type LayerToken = keyof typeof layer;
 /** Font presets for data-font on <html> (the app default, or a person's own choice). The first is the default. */
 export const fonts = ${q((t.type.fontPresets ?? []).map((f) => ({ id: f.id, label: f.label, usage: f.usage })))} as const;
 export type FontPreset = (typeof fonts)[number]["id"];
 /** CSS custom-property reference for a token, e.g. cssVar("chart-1") → "var(--chart-1)". */
-export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken): string => \`var(--\${name})\`;
+export const cssVar = (name: ColorToken | SpaceToken | RadiusToken | SizeToken | MotionToken | LayerToken): string => \`var(--\${name})\`;
 `;
 }
 

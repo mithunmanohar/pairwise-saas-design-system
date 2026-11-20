@@ -1,0 +1,25 @@
+<!-- @dsCard group="Forms" height=250 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Field</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:260px}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){
+  return h(F,null,
+    row(cell('Required + hint', h(C.TextInput,{label:'Repository name',required:true,defaultValue:'sample-repo',hint:'Lowercase letters, digits and dashes.'})),
+        cell('Read-only', h(C.TextInput,{label:'Created by',readOnly:true,defaultValue:'Dev A'})),
+        cell('Custom control in a Field', h(C.Field,{label:'Retention',hint:'Days to keep run logs.',error:'Must be 7 or more.'},function(p){ return h('input',Object.assign({className:'pw-input',type:'number',defaultValue:3},p)); }))),
+    row(cell('Checkbox: indeterminate', h(C.Checkbox,{label:'Select all runs',checked:'indeterminate'})),
+        cell('Switch: error', h(C.Switch,{label:'Deploy on merge',error:'Only admins can turn this on.'}))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

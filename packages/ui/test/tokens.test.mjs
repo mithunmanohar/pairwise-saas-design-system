@@ -32,6 +32,20 @@ test("font presets: the first is the default, each emits a data-font rule and sh
   assert.match(ts, /export type FontPreset = /);
 });
 
+test("motion and layer tokens are generated, and reduced motion zeroes every duration", () => {
+  const css = buildCss(t), ts = buildTs(t);
+  for (const fam of ["motion", "layer"]) {
+    assert.ok(t[fam].tokens.length, fam);
+    for (const x of t[fam].tokens) { assert.match(css, new RegExp(`--${x.name}: ${x.value.replace(/[()]/g, "\\$&")};`), x.name); assert.ok(ts.includes(`"${x.name}"`), x.name); }
+  }
+  const reduced = css.match(/@media \(prefers-reduced-motion: reduce\) \{[^}]*\}/);
+  assert.ok(reduced, "reduced-motion block");
+  for (const x of t.motion.tokens.filter((x) => x.name.startsWith("duration-"))) assert.ok(reduced[0].includes(`--${x.name}: 0ms;`), x.name);
+  // Layers keep the documented order: sticky < raised < chart tip < overlay < popover < toast < tooltip.
+  const z = t.layer.tokens.map((x) => Number(x.value));
+  assert.deepEqual([...z].sort((a, b) => a - b), z, "layer tokens are listed in stacking order");
+});
+
 test("generated TS exports typed token names", () => {
   const ts = buildTs(t);
   for (const c of t.color.tokens) assert.ok(ts.includes(`"${c.name}"`), c.name);

@@ -1,26 +1,54 @@
-import type { ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
+import type { IconName, PopoverProps, ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
 import { createFormatter } from "./format";
 const timeZoneLabel = () => createFormatter({ locale: navigator.language, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, currency: "USD" }).timeZoneLabel();
 import { Icon } from "./icons";
 import * as React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as RPopover from "@radix-ui/react-popover";
+import { Slot, Slottable } from "@radix-ui/react-slot";
 import { Fragment } from "react";
 const { useState, useRef, useEffect, useId, useCallback, useMemo } = React;
 
 export const cx = (...a: Array<string | false | null | undefined | 0>) => a.filter(Boolean).join(" ");
 
 /* ---------- Button ---------- */
-// Forwards its ref so it can be the trigger of a menu or popover.
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button({ variant = "secondary", size, icon, iconRight, loading, disabled, className, children, forceState, ...rest }, ref) {
+// Forwards its ref so it can be the trigger of a menu or popover. `asChild` styles its single child instead (e.g. a
+// router link): <Button asChild variant="primary"><a href="/runs/new">Start run</a></Button>.
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button({ variant = "secondary", size, icon, iconRight, loading, disabled, className, children, forceState, asChild, ...rest }, ref) {
+  const cls = cx("pw-btn", "pw-btn--" + variant, size === "sm" && "pw-btn--sm", !children && "pw-btn--icon", forceState && "is-" + forceState, className);
+  const lead = loading ? <span className="pw-spin" aria-hidden="true" /> : icon ? <Icon name={icon} /> : null;
+  const trail = iconRight ? <Icon name={iconRight} /> : null;
+  if (asChild) {
+    return (
+      <Slot ref={ref} {...rest} className={cls} aria-disabled={disabled || loading || undefined} aria-busy={loading || undefined}>
+        {lead}<Slottable>{children}</Slottable>{trail}
+      </Slot>
+    );
+  }
   return (
-    <button ref={ref} {...rest} type={rest.type || "button"} disabled={disabled || loading} aria-busy={loading || undefined}
-      className={cx("pw-btn", "pw-btn--" + variant, size === "sm" && "pw-btn--sm", !children && "pw-btn--icon", forceState && "is-" + forceState, className)}>
-      {loading ? <span className="pw-spin" aria-hidden="true" /> : icon ? <Icon name={icon} /> : null}
-      {children ? <span>{children}</span> : null}
-      {iconRight ? <Icon name={iconRight} /> : null}
+    <button ref={ref} {...rest} type={rest.type || "button"} disabled={disabled || loading} aria-busy={loading || undefined} className={cls}>
+      {lead}{children ? <span>{children}</span> : null}{trail}
     </button>
   );
 });
+
+/* ---------- Popover (Radix Popover) ---------- */
+// Non-modal floating panel for filters, details and small forms. Radix handles focus (moves in, returns to the
+// trigger), Escape, outside click, collision and the portal. Close it from inside with <PopoverClose>.
+export function Popover({ trigger, children, label, open, defaultOpen, onOpenChange, side = "bottom", align = "start", width, forceOpen, className }: PopoverProps) {
+  return (
+    <RPopover.Root open={forceOpen || open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+      <RPopover.Trigger asChild>{trigger}</RPopover.Trigger>
+      <RPopover.Portal>
+        <RPopover.Content className={cx("pw-popover", className)} side={side} align={align} sideOffset={6} collisionPadding={8} aria-label={label} style={width ? { width } : undefined}>
+          {children}
+        </RPopover.Content>
+      </RPopover.Portal>
+    </RPopover.Root>
+  );
+}
+/** Wraps an element inside a Popover so activating it closes the popover: <PopoverClose><Button>Done</Button></PopoverClose>. */
+export function PopoverClose({ children }: { children: React.ReactElement }) { return <RPopover.Close asChild>{children}</RPopover.Close>; }
 
 /* ---------- Status ---------- */
 const STATUS_LABEL: Record<Status, string> = { critical: "Critical", warning: "Warning", healthy: "Healthy", unknown: "No data", info: "Running" };
@@ -378,7 +406,7 @@ export function Metric({ label, scope, value, unit, delta, target, status, statu
 /* ---------- Skeleton & state templates ---------- */
 export function Skeleton({ w = "100%", h: ht = 12, style }: SkeletonProps) { return <span className="pw-skel" style={{ width: w, height: ht, ...style }} aria-hidden="true" />; }
 
-const STATE_DEF: Record<Exclude<StateBlockProps["kind"], "loading">, { icon: string; title: string }> = {
+const STATE_DEF: Record<Exclude<StateBlockProps["kind"], "loading">, { icon: IconName; title: string }> = {
   empty: { icon: "unknown", title: "Nothing here yet" },
   error: { icon: "critical", title: "Couldn’t load this view" },
   "no-access": { icon: "lock", title: "You don’t have access" },

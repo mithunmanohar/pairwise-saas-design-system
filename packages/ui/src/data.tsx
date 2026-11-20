@@ -1,4 +1,4 @@
-import type { Column, DataTableProps, SortValue, TimeSeriesChartProps, BarChartProps, RunStripProps, HeatmapProps, StatusGridProps, BulletBarProps, TimelineProps, TimelineEvent, LegendProps, ViewState, Status } from "./types";
+import type { IconName, Column, DataTableProps, SortValue, TimeSeriesChartProps, BarChartProps, RunStripProps, HeatmapProps, StatusGridProps, BulletBarProps, TimelineProps, TimelineEvent, LegendProps, ViewState, Status } from "./types";
 import { Icon } from "./icons";
 import { cx, StateBlock, StatusBadge, Button, Skeleton } from "./core";
 import * as React from "react";
@@ -322,7 +322,7 @@ export function BulletBar({ used, requested, limit, unit = "", warnAt = 0.8, cri
 }
 
 /* ---------- Timeline / event feed ---------- */
-const EV_ICON: Record<TimelineEvent["kind"], string> = { alert: "critical", warn: "warning", deploy: "changes", config: "settings", ack: "check", comment: "comment", scale: "scale", resolve: "healthy", page: "bell", ticket: "ticket", info: "info" };
+const EV_ICON: Record<TimelineEvent["kind"], IconName> = { alert: "critical", warn: "warning", deploy: "changes", config: "settings", ack: "check", comment: "comment", scale: "scale", resolve: "healthy", page: "bell", ticket: "ticket", info: "info" };
 export function Timeline({ events = [], onEvent, dense }: TimelineProps) {
   return (
     <ol className={cx("pw-timeline", dense && "is-dense")}>

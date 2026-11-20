@@ -2,8 +2,8 @@
 // ?fixture=<name>. Keep sample content fictional (example-org, sample-repo, run_8f3k2, Dev A…J).
 import * as React from "react";
 import {
-  ActionMenu, Button, Checkbox, DataTable, Drawer, GlobalSearch, MenuSelect, Modal, Select, Switch, Tabs, TextInput,
-  Toaster, toast, type Column,
+  ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
+  Switch, Tabs, TextInput, Toaster, toast, type Column,
 } from "../../src/index";
 
 const { useState } = React;
@@ -129,7 +129,31 @@ function ToastFixture() {
   );
 }
 
+function FoundationsFixture() {
+  const [rows, setRows] = useState<Record<string, boolean>>({ a: true, b: false });
+  const all = Object.values(rows).every(Boolean), some = Object.values(rows).some(Boolean);
+  return (
+    <div style={{ display: "grid", gap: 16, maxWidth: 360 }}>
+      <TextInput label="Repository name" required defaultValue="sample-repo" />
+      <TextInput label="Created by" readOnly defaultValue="Dev A" />
+      <Checkbox label="Select all runs" checked={all ? true : some ? "indeterminate" : false} onChange={(c) => setRows({ a: c, b: c })} />
+      <Checkbox label="run_8f3k2" checked={rows.a} onChange={(c) => setRows({ ...rows, a: c })} />
+      <Checkbox label="run_9a1x7" checked={rows.b} onChange={(c) => setRows({ ...rows, b: c })} />
+      <Switch label="Deploy on merge" error="Only admins can turn this on." />
+      <Field label="Owner" hint="A person or team." required>{(p) => <input className="pw-input" {...p} defaultValue="Dev B" />}</Field>
+      <Button asChild variant="primary" icon="play"><a href="#started">Start run</a></Button>
+      <Popover label="Run filters" trigger={<Button icon="filter">Filters</Button>}>
+        <div style={{ display: "grid", gap: 8 }}>
+          <Checkbox label="Only failed runs" />
+          <PopoverClose><Button size="sm">Done</Button></PopoverClose>
+        </div>
+      </Popover>
+    </div>
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
+  foundations: FoundationsFixture,
 };

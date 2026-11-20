@@ -1,9 +1,9 @@
 // Type-level tests against the built package (dist/*.d.ts), resolved through package.json "exports".
 // Run by `pnpm typecheck` after `pnpm build`. A line marked @ts-expect-error must stay an error.
-import { DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
+import { Field, Popover, PopoverClose, iconNames, type IconName, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
-import { color, fonts, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
+import { color, fonts, motion, layer, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
 
 interface Run { id: string; repo: string; durationMs: number; startedAt: Date }
 const runs: Run[] = [{ id: "run_8f3k2", repo: "sample-repo", durationMs: 1200, startedAt: new Date(0) }];
@@ -62,3 +62,22 @@ export const accountMenu = <ActionMenu header={<span>Dev A</span>} items={[{ hea
 export const topBar = <TopBar scope={{ env: "prod", cloud: "region-a", cluster: "cluster-1" }} scopeOptions={{ env: [], cloud: [], cluster: [] }} account={{ name: "Dev A", role: "Owner", org: "example-org", items: [{ label: "Sign out" }] }} />;
 // @ts-expect-error an account needs a name
 export const badAccount = <TopBar scope={{ env: "prod", cloud: "a", cluster: "b" }} scopeOptions={{ env: [], cloud: [], cluster: [] }} account={{ role: "Owner" }} />;
+
+// 2.0 foundations: refs on every control, indeterminate checkbox, Field for custom controls, Button asChild, Popover,
+// typed icon names, motion and layer tokens.
+export const refs = [
+  <Select ref={createRef<HTMLButtonElement>()} label="Repo" options={["a"]} required />,
+  <Checkbox ref={createRef<HTMLButtonElement>()} label="Select all" hideLabel checked="indeterminate" />,
+  <Switch ref={createRef<HTMLButtonElement>()} label="Auto-merge" error="Needs admin rights" />,
+  <Field label="Owner" hint="A person or team" required>{(p) => <input {...p} />}</Field>,
+  <Button asChild variant="primary" icon="play"><a href="#/runs/new">Start run</a></Button>,
+  <Popover label="Filters" trigger={<Button icon="filter">Filters</Button>} side="bottom" align="end"><PopoverClose><Button>Done</Button></PopoverClose></Popover>,
+];
+export const iconName: IconName = "search";
+export const someIcons: IconName[] = iconNames;
+// @ts-expect-error unknown icon names are a type error
+export const badIconName = <Icon name="serach" />;
+// @ts-expect-error Field children is a render function
+export const badField = <Field label="Owner"><input /></Field>;
+export const dur: string = motion["duration-base"];
+export const z: string = layer["z-popover"];

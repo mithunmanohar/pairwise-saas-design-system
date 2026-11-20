@@ -6,16 +6,18 @@ export type Status = 'critical' | 'warning' | 'healthy' | 'unknown' | 'info';
 export type Density = 'compact' | 'comfortable';
 export type ViewState = 'ready' | 'loading' | 'empty' | 'error' | 'no-access';
 export type { ColorToken, FontPreset } from "./tokens";
+import type { IconName } from "./icons";
+export type { IconName } from "./icons";
 
-export interface IconProps { name: string; size?: 12 | 14 | 16 | 20; title?: string; className?: string }
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm'; icon?: string; iconRight?: string; loading?: boolean; forceState?: 'hover' | 'active' }
+export interface IconProps { name: IconName; size?: 12 | 14 | 16 | 20; title?: string; className?: string }
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm'; icon?: IconName; iconRight?: IconName; loading?: boolean; forceState?: 'hover' | 'active'; /** render the single child (e.g. a router <a>) with button styling instead of a <button> */ asChild?: boolean }
 export interface StatusBadgeProps { status: Status; label?: string; emphasis?: boolean; size?: 'sm'; className?: string }
 export interface StatusDotProps { status: Status; label?: string }
 export interface SeverityMarkProps { level: 1 | 2 | 3 | 4; showLabel?: boolean; count?: number }
 export interface TrendProps { value: number; unit?: string; polarity?: 'up-bad' | 'up-good' | 'neutral'; window?: string; threshold?: number; breach?: boolean }
 export interface TooltipProps { content: React.ReactNode; side?: 'top' | 'right' | 'bottom'; children: React.ReactElement; forceOpen?: boolean }
-export interface Option { value: string; label?: string; meta?: string }
-export interface MenuSelectProps { label: string; value: string; options: (string | Option)[]; onChange?: (v: string) => void; prefix?: string; icon?: string; disabled?: boolean; width?: number; quiet?: boolean; /** preview only: render the menu open */ forceOpen?: boolean }
+export interface Option { value: string; label?: string; meta?: string; disabled?: boolean }
+export interface MenuSelectProps { label: string; value: string; options: (string | Option)[]; onChange?: (v: string) => void; prefix?: string; icon?: IconName; disabled?: boolean; width?: number; quiet?: boolean; /** preview only: render the menu open */ forceOpen?: boolean }
 export interface TimeRangePickerProps { value?: string; refresh?: 'off' | '30s' | '1m' | '5m'; onChange?: (v: string) => void; onRefreshChange?: (v: string) => void; onCopy?: (v: string) => void; ranges?: Option[]; absolute?: string; disabled?: boolean; /** preview only: render the popover open */ forceOpen?: boolean; /** initial "YYYY-MM-DD HH:mm" values for the absolute range (default: the last hour) */ defaultAbsolute?: AbsoluteRange; /** called with a validated absolute range when the user presses Apply */ onAbsoluteChange?: (r: AbsoluteRange) => void }
 /** Local time in the browser's zone, "YYYY-MM-DD HH:mm". */
 export interface AbsoluteRange { from: string; to: string }
@@ -48,7 +50,7 @@ export interface RunStripProps { runs: Status[]; labels?: string[]; name?: strin
 export interface BulletBarProps { used: number; requested: number; limit: number; unit?: string; warnAt?: number; critAt?: number; label?: string }
 export interface TimelineEvent { time: string; kind: 'alert' | 'warn' | 'deploy' | 'config' | 'scale' | 'page' | 'ack' | 'ticket' | 'comment' | 'resolve' | 'info'; title: string; body?: string; actor?: string; tag?: string; link?: boolean; highlight?: boolean }
 export interface TimelineProps { events: TimelineEvent[]; onEvent?: (e: TimelineEvent) => void; dense?: boolean }
-export interface NavItem { key: string; label: string; icon: string }
+export interface NavItem { key: string; label: string; icon: IconName }
 export interface NavGroup { group: string | null; items: NavItem[] }
 export interface SideNavProps { active: string; onNavigate?: (key: string) => void; collapsed?: boolean; badges?: Record<string, { count: number; tone?: 'critical' }>; nav?: NavGroup[]; /** set by AppShell below 1024 px */ overlay?: boolean; onClose?: () => void }
 export interface TopBarProps { scope: Scope; scopeOptions: ScopeSwitcherProps['options']; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** who is signed in; the account button then opens a menu with this header and `items` (switch organization, preferences, sign out) */ account?: TopBarAccount; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
@@ -64,15 +66,17 @@ export interface ToastRegionProps { children?: React.ReactNode }
 
 /* ---------- Form controls ---------- */
 /** Shared by every form control: a visible label (or a visually hidden one), optional hint and error text. */
-export interface FieldProps { label: string; /** keep the label for screen readers only */ hideLabel?: boolean; hint?: string; /** shown in status-critical with an icon; sets aria-invalid */ error?: string }
+export interface FieldProps { label: string; /** keep the label for screen readers only */ hideLabel?: boolean; hint?: string; /** shown in status-critical with an icon; sets aria-invalid */ error?: string; /** shows a muted "Required" after the label and sets aria-required */ required?: boolean }
+/** What Field passes to its control: spread it on the focusable element. */
+export interface FieldControlProps { id: string; 'aria-describedby'?: string; 'aria-invalid'?: boolean; 'aria-required'?: boolean }
 export interface TextInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>, FieldProps {}
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement>, FieldProps {}
 export interface SelectProps extends FieldProps { options: (string | Option)[]; value?: string; defaultValue?: string; onChange?: (v: string) => void; placeholder?: string; disabled?: boolean; required?: boolean; name?: string; id?: string; className?: string }
-export interface CheckboxProps extends Omit<FieldProps, 'hideLabel'> { checked?: boolean; defaultChecked?: boolean; onChange?: (checked: boolean) => void; disabled?: boolean; required?: boolean; name?: string; value?: string; id?: string }
-export interface SwitchProps extends Omit<FieldProps, 'hideLabel' | 'error'> { checked?: boolean; defaultChecked?: boolean; onChange?: (on: boolean) => void; disabled?: boolean; name?: string; id?: string }
+export interface CheckboxProps extends FieldProps { /** "indeterminate" shows a dash: some, not all, are selected */ checked?: boolean | 'indeterminate'; defaultChecked?: boolean; onChange?: (checked: boolean) => void; disabled?: boolean; required?: boolean; name?: string; value?: string; id?: string }
+export interface SwitchProps extends Omit<FieldProps, 'hideLabel' | 'required'> { checked?: boolean; defaultChecked?: boolean; onChange?: (on: boolean) => void; disabled?: boolean; name?: string; id?: string }
 
 /* ---------- Actions, feedback, content ---------- */
-export interface ActionMenuItem { label: string; icon?: string; onSelect?: () => void; disabled?: boolean; /** destructive actions */ tone?: 'critical'; /** shown on the right, e.g. "⌘D" */ shortcut?: string; /** muted text on the right, e.g. a role */ meta?: string; /** shows a tick and is announced as checked: the current choice, e.g. the active organization */ checked?: boolean }
+export interface ActionMenuItem { label: string; icon?: IconName; onSelect?: () => void; disabled?: boolean; /** destructive actions */ tone?: 'critical'; /** shown on the right, e.g. "⌘D" */ shortcut?: string; /** muted text on the right, e.g. a role */ meta?: string; /** shows a tick and is announced as checked: the current choice, e.g. the active organization */ checked?: boolean }
 /** A group heading inside a menu, e.g. "Switch organization". */
 export interface ActionMenuHeading { heading: string }
 /** A menu entry, a group heading, or "separator" for a divider line. */
@@ -82,4 +86,19 @@ export interface CopyButtonProps { /** the text that is copied */ value: string;
 export interface TagProps { children: React.ReactNode; /** identifiers: branch, commit, label selector */ mono?: boolean; /** shows a remove (×) button */ onRemove?: () => void; /** accessible name of the remove button (default "Remove <text>") */ removeLabel?: string }
 export interface CodeBlockProps { code: string; /** shown in the header bar, e.g. a file name or "Build log" */ title?: string; /** default: on when there is more than one line */ lineNumbers?: boolean; /** start with long lines wrapped (a toggle is always shown) */ wrap?: boolean; /** px; the block scrolls beyond it (default 320) */ maxHeight?: number; /** 1-based line numbers to highlight */ highlight?: number[]; /** show a copy button (default true) */ copy?: boolean }
 export interface ToastOptions { tone?: Status; title: string; body?: string; /** action button label, e.g. "Undo" */ action?: string; onAction?: () => void; /** ms before it hides; null keeps it until closed. Default 6000, and null for critical */ duration?: number | null }
+/* ---------- Popover ---------- */
+export interface PopoverProps {
+  /** the element that opens it; must forward a ref (Button does) */
+  trigger: React.ReactElement;
+  children?: React.ReactNode;
+  /** accessible name of the popover dialog */
+  label: string;
+  open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void;
+  side?: 'top' | 'right' | 'bottom' | 'left'; align?: 'start' | 'center' | 'end';
+  /** px; default fits the content (max 360) */
+  width?: number;
+  /** preview only: render it open */
+  forceOpen?: boolean;
+  className?: string;
+}
 export interface ToasterProps { /** most toasts shown at once (default 3) */ max?: number; /** position inside the nearest positioned parent instead of the window (demos) */ contained?: boolean }

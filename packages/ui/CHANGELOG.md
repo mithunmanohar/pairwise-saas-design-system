@@ -3,6 +3,40 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
+## 2.0.0 (unreleased)
+
+Pairwise 2.0: the same Signal look, with sturdier interaction, accessibility and coverage. Entries are added as each
+stage lands; "Migrating from 1.x" is completed before release.
+
+- **Motion and layer tokens (new).**
+  - `tokens.json` gains `motion` (`duration-fast` 120 ms, `duration-base` 160 ms, `duration-slow` 220 ms,
+    `duration-spin`, `duration-pulse`, `ease-standard`, `ease-exit`) and `layer` (`z-sticky` … `z-tooltip`).
+  - `prefers-reduced-motion` sets every duration to 0 ms in `tokens.css`.
+  - `@pairwise/ui/tokens` exports `motion` and `layer`.
+  - Component CSS uses only these: the lint now fails on a raw z-index or duration.
+- **Motion:** menus, selects and popovers fade in 4 px from their trigger and fade out. Modals fade in and drawers
+  slide in from the edge. All of it is off with reduced motion.
+- **Field (new):** the label, hint, error and "Required" wrapper shared by every control. It is now public, so any
+  control can join a form with the same wiring.
+- **Forms:**
+  - `required` shows a muted "Required" after the label and sets `aria-required`.
+  - Read-only inputs get the sunken surface.
+  - Checkbox takes `checked="indeterminate"` and `hideLabel`.
+  - Switch takes `error`.
+  - Select, Checkbox and Switch forward their ref to the focusable element.
+  - Options take `disabled`.
+- **Button `asChild` (new):** styles a single child, such as a router link, as a button.
+- **Popover (new):** a non-modal floating panel on Radix Popover, with `PopoverClose`.
+- **Icons:**
+  - `IconName` is a union of every icon, so a typo is a type error instead of a silent "x".
+  - New `minus` icon.
+
+### Migrating from 1.x
+- `Icon name`, `Button icon`, `NavItem.icon` and `ActionMenuItem.icon` are now `IconName`, not `string`. If you pass
+  an icon from a variable typed `string`, type it as `IconName`.
+- Stacking order: tooltips are now above popovers and menus, and toasts are above dialogs (`layer` tokens). If you
+  set your own `z-index` on Pairwise classes, use the tokens.
+
 ## 1.1.0 (2026-11-20)
 
 Font presets, a stable layout and a phone layout. 1.0.1 was never tagged; its changes ship here.
