@@ -6,11 +6,12 @@ import "@pairwise/ui/fonts.css";
 import "@pairwise/ui/tokens.css";
 import "@pairwise/ui/styles.css";
 import "./examples.css";
-import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { AppShell, SideNav, TopBar, PairwiseProvider, Toaster, Drawer, Select, Button, ScopePicker, ScopeNote, toast, tokens, type BreadcrumbsProps, type FontPreset, type NavGroup, type Scope, type ScopeDimension, type SearchItem } from "@pairwise/ui";
 import { incidents, isOpen, repos, runs, services } from "./data";
 import { ROOT, SCOPE_TREE, UNITS, inScope, pathBelow, rollup, scopeSummary, unitById, type ScopeMode } from "./org";
+import type { Selection } from "./vary";
 
 export const params = new URLSearchParams(location.search);
 export const demoState = params.get("state") ?? "";
@@ -92,13 +93,29 @@ export const useScope = () => useSyncExternalStore(onHash, getScope);
 
 let scopeMode: ScopeMode = "descendants";
 let runtime: Scope = { env: "prod", cloud: "region-a", cluster: "cluster-1" };
+let timeRange = "1h";
+type Refresh = "off" | "30s" | "1m" | "5m";
+let refreshEvery: Refresh = "30s";
 const ctxSubs = new Set<() => void>();
 const emit = () => ctxSubs.forEach((f) => f());
 const onCtx = (f: () => void) => { ctxSubs.add(f); return () => { ctxSubs.delete(f); }; };
 export const setScopeMode = (m: ScopeMode) => { scopeMode = m; emit(); };
 const setRuntime = (r: Scope) => { runtime = r; emit(); };
+const setTime = (t: string) => { timeRange = t; emit(); };
+const setRefresh = (r: Refresh) => { refreshEvery = r; emit(); };
 const useMode = () => useSyncExternalStore(onCtx, () => scopeMode);
 const useRuntime = () => useSyncExternalStore(onCtx, () => runtime);
+const useTime = () => useSyncExternalStore(onCtx, () => timeRange);
+const useRefresh = () => useSyncExternalStore(onCtx, () => refreshEvery);
+
+/** Everything the top bar selects: pages pass it to vary.ts so each selection gets its own (fictional) numbers. */
+export function useSelection(): Selection {
+  const scope = useScope();
+  const mode = useMode();
+  const rt = useRuntime();
+  const time = useTime();
+  return useMemo(() => ({ scope, mode, env: rt.env, cloud: rt.cloud, cluster: rt.cluster, time }), [scope, mode, rt, time]);
+}
 
 /** What a capability page needs: the scope, whether it reaches descendants, and helpers to filter and label rows. */
 export function useOwnership() {
@@ -110,12 +127,6 @@ export function useOwnership() {
     /** its ownership path below the scope, for DataTable getPath */ path: (owner: string) => pathBelow(owner, scope),
     directLabel: `Owned by ${scope ? unitById(scope)?.label ?? "this scope" : "the company"}`,
   };
-}
-
-/** Labels an organisation-wide figure on a scoped page, so a chart never reads as the scope's own numbers. */
-export function useOrgWide() {
-  const scope = useScope();
-  return (label: string) => (scope ? `${label}, whole organisation` : label);
 }
 
 /** "Showing AI transformation and its 2 projects, in prod / region-a" with Direct only / Including descendants. */
@@ -220,8 +231,8 @@ export function Frame({ active, children }: { active: string; children: ReactNod
     key: k, label: RUNTIME_LABEL[k], value: rt[k], options: RUNTIME_OPTIONS[k],
     onChange: (v) => { const next = { ...rt, [k]: v }; setRuntime(next); toast(`Showing ${next.env} / ${next.cloud}`); },
   }));
-  const [time, setTime] = useState("1h");
-  const [refresh, setRefresh] = useState<"off" | "30s" | "1m" | "5m">("30s");
+  const time = useTime();
+  const refresh = useRefresh();
   const [prefsOpen, setPrefsOpen] = useState(demoState === "prefs");
   return (
     <AppShell
@@ -230,7 +241,7 @@ export function Frame({ active, children }: { active: string; children: ReactNod
         <TopBar
           ownership={<ScopePicker nodes={SCOPE_TREE} value={scope} onChange={setScope} wholeLabel="Whole organisation" />}
           runtime={runtimeDims}
-          time={time} onTime={setTime} refresh={refresh} onRefresh={(r) => setRefresh(r as typeof refresh)}
+          time={time} onTime={setTime} refresh={refresh} onRefresh={(r) => setRefresh(r as Refresh)}
           alerts={openIncidents} onAlerts={() => go("incidents")} user="DA" accountLabel="Account: Dev A"
           account={{
             name: "Dev A", email: "dev.a@example-org.dev", role: org.role, org: org.id,

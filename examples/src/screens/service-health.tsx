@@ -4,7 +4,8 @@
 // open a drawer.
 import { useEffect, useState } from "react";
 import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, KeyValueList, toast, type Column } from "@pairwise/ui";
-import { Frame, frozen, useNav, useCrumbNav } from "../frame";
+import { Frame, frozen, useNav, useCrumbNav, useSelection } from "../frame";
+import { varyCounts, varyRound, varySeries, varyService, windowFor } from "../vary";
 import { latencyWindow, steadyWindow, DEPLOY_AT, spark, errorBuckets, errors5xx, errors4xx, errorsTimeout, endpointsFor, deploys, incidents, isOpen, serviceByName, type Endpoint, type Service } from "../data";
 import { SERVICE_STATUS } from "./services";
 
@@ -31,7 +32,9 @@ export function ServiceHealth({ name = "checkout-api" }: { name?: string }) {
   return <ServicePage key={svc.name} svc={svc} />;
 }
 
-function ServicePage({ svc }: { svc: Service }) {
+function ServicePage({ svc: base }: { svc: Service }) {
+  const sel = useSelection();
+  const svc = varyService(sel, base);
   const go = useNav();
   const crumbs = useCrumbNav();
   const story = svc.name === "checkout-api";
@@ -44,10 +47,19 @@ function ServicePage({ svc }: { svc: Service }) {
     const t = window.setInterval(() => setShift((s) => s + 1), 4000);
     return () => window.clearInterval(t);
   }, []);
-  const { labels, p95, p50 } = story ? latencyWindow(shift) : steadyWindow(shift, svc.p95, svc.name.length);
+  // The selected time range sets the window; the runtime scope and the rest of the selection vary the values.
+  const hour = story ? latencyWindow(shift) : steadyWindow(shift, base.p95, svc.name.length);
+  const win = windowFor(sel.time, shift);
+  const pick = (pts: number[]) => (sel.time === "1h" ? pts : win.labels.map((_, i) => pts[Math.min(pts.length - 1, Math.floor((i * pts.length) / win.labels.length))] ?? 0));
+  const labels = sel.time === "1h" ? hour.labels : win.labels;
+  const p95 = varySeries(sel, svc.name + ":p95-series", pick(hour.p95), 0.2, 0.03).map((v) => Math.round(v));
+  const p50 = varySeries(sel, svc.name + ":p50-series", pick(hour.p50), 0.2, 0.03).map((v) => Math.round(v));
   const latest = p95[p95.length - 1] ?? 0;
-  const marker = DEPLOY_AT - shift;
-  const updated = (labels[labels.length - 1] ?? "") + ":12";
+  const marker = sel.time === "1h" ? DEPLOY_AT - shift : -1;
+  const updated = (hour.labels[hour.labels.length - 1] ?? "") + ":12";
+  const prev = sel.time === "1h" ? "previous hour" : "previous period";
+  // Errors come in six buckets across the selected window.
+  const buckets = sel.time === "1h" ? errorBuckets : errorBuckets.map((_, i) => win.labels[Math.round((i * (win.labels.length - 1)) / (errorBuckets.length - 1))] ?? "");
   const eps = endpointsFor(svc);
   const svcDeploys = deploys.filter((d) => d.service === svc.name);
   const svcIncidents = incidents.filter((i) => i.service === svc.name);
@@ -86,25 +98,25 @@ function ServicePage({ svc }: { svc: Service }) {
             </AlertBanner>
           ) : null}
           <div className="ex-metrics">
-            <Metric label="p95 latency" scope="last hour" value={latest.toLocaleString("en")} unit="ms" status={breach ? "warning" : undefined} statusLabel="Above SLO"
-              delta={story ? { value: 61, unit: " %", window: "previous hour" } : { value: 1.2, unit: " %", window: "previous hour" }} spark={{ points: p95.slice(-30), threshold: svc.slo }} freshness={`Updated ${updated}`} />
-            <Metric label="Error rate" scope="last hour" value={svc.errors.toFixed(2)} unit="%" delta={{ value: story ? 0.6 : 0.01, unit: " pt", window: "previous hour", threshold: 0.1 }} spark={{ points: spark(svc.errors * 0.7, svc.errors * 0.12 + 0.01, 24, story ? 0.12 : 0) }} target="Budget 1 %" />
-            <Metric label="Requests" scope="per second" value={svc.rps.toLocaleString("en")} delta={{ value: 3.1, unit: " %", polarity: "neutral", window: "previous hour" }} spark={{ points: spark(svc.rps, svc.rps * 0.05) }} />
+            <Metric label="p95 latency" scope={win.phrase} value={latest.toLocaleString("en")} unit="ms" status={breach ? "warning" : undefined} statusLabel="Above SLO"
+              delta={{ value: varyRound(sel, svc.name + ":p95-delta", story ? 61 : 1.2, 1, 0.6), unit: " %", window: prev }} spark={{ points: p95.slice(-30), threshold: svc.slo }} freshness={`Updated ${updated}`} />
+            <Metric label="Error rate" scope={win.phrase} value={svc.errors.toFixed(2)} unit="%" delta={{ value: story ? 0.6 : 0.01, unit: " pt", window: prev, threshold: 0.1 }} spark={{ points: spark(svc.errors * 0.7, svc.errors * 0.12 + 0.01, 24, story ? 0.12 : 0) }} target="Budget 1 %" />
+            <Metric label="Requests" scope="per second" value={svc.rps.toLocaleString("en")} delta={{ value: 3.1, unit: " %", polarity: "neutral", window: prev }} spark={{ points: spark(svc.rps, svc.rps * 0.05) }} />
             <Metric label="Availability" scope="30 days" value={svc.availability.toFixed(2)} unit="%" target="Target 99.9 %" spark={{ points: spark(svc.availability, 0.02) }} />
           </div>
           <div className="ex-row ex-2">
-            <Panel title="Latency" meta="p95 and p50, last hour">
-              <TimeSeriesChart ariaLabel={`${svc.name} latency, last hour`} labels={labels} unit="ms" height={220}
+            <Panel title="Latency" meta={`p95 and p50, ${win.phrase}`}>
+              <TimeSeriesChart ariaLabel={`${svc.name} latency, ${win.phrase}`} labels={labels} unit="ms" height={220}
                 series={[{ name: "p95", points: p95, color: "chart-1" }, { name: "p50", points: p50, color: "chart-2" }]}
                 threshold={{ value: svc.slo, label: `SLO ${svc.slo.toLocaleString("en")} ms` }} markers={story && marker >= 0 ? [{ index: marker, label: "v2.14.1" }] : []}
                 onMarker={() => toast("Deploy v2.14.1, PR #1482 by Dev B")} />
             </Panel>
-            <Panel title="Errors by type" meta="10-minute buckets">
-              <BarChart ariaLabel={`${svc.name} errors by type`} categories={errorBuckets} height={238} stacked
+            <Panel title="Errors by type" meta={sel.time === "1h" ? "10-minute buckets" : win.phrase}>
+              <BarChart ariaLabel={`${svc.name} errors by type`} categories={buckets} height={238} stacked
                 series={[
-                  { name: "5xx", values: story ? errors5xx : errors5xx.map((v) => Math.round(v * scale * 0.2)), color: "chart-1" },
-                  { name: "4xx", values: errors4xx.map((v) => Math.round(v * (story ? 1 : scale))), color: "chart-other" },
-                  { name: "Timeouts", values: story ? errorsTimeout : errorsTimeout.map((v) => Math.round(v * scale * 0.1)), color: "chart-3" },
+                  { name: "5xx", values: varyCounts(sel, svc.name + ":5xx", story ? errors5xx : errors5xx.map((v) => Math.round(v * scale * 0.2))), color: "chart-1" },
+                  { name: "4xx", values: varyCounts(sel, svc.name + ":4xx", errors4xx.map((v) => Math.round(v * (story ? 1 : scale)))), color: "chart-other" },
+                  { name: "Timeouts", values: varyCounts(sel, svc.name + ":timeouts", story ? errorsTimeout : errorsTimeout.map((v) => Math.round(v * scale * 0.1))), color: "chart-3" },
                 ]} />
             </Panel>
           </div>

@@ -141,6 +141,36 @@ test.describe("the demo app", () => {
     await expect(page.getByText("Showing Commerce only, not its children")).toBeVisible();
     await expect(table.getByText("No runs match")).toBeVisible();
   });
+  test("every top-bar selection changes the numbers, and the same selection shows the same numbers", async ({ page }) => {
+    await page.goto(demo("overview"));
+    const spend = page.locator(".pw-metric").filter({ hasText: "Spend, month to date" }).locator(".pw-metric__v");
+    const value = async () => (await page.locator(".pw-metric").filter({ hasText: "Spend, month to date" }).innerText()).match(/\$[\d.]+k/)?.[0];
+    const traffic = page.locator('[aria-label^="Requests per second"]').first();
+    await expect(spend).toBeVisible();
+    expect(await value()).toBe("$46.5k");
+    await expect(traffic).toHaveAttribute("aria-label", /last hour$/);
+    // Runtime scope: the numbers move, and come back exactly when the selection does.
+    await page.getByRole("button", { name: "Region: region-a" }).click();
+    await page.getByRole("menuitemradio", { name: "region-b" }).click();
+    await expect.poll(value).not.toBe("$46.5k");
+    const regionB = await value();
+    await page.getByRole("button", { name: "Region: region-b" }).click();
+    await page.getByRole("menuitemradio", { name: "region-a" }).click();
+    await expect.poll(value).toBe("$46.5k");
+    await page.getByRole("button", { name: "Region: region-a" }).click();
+    await page.getByRole("menuitemradio", { name: "region-b" }).click();
+    await expect.poll(value).toBe(regionB);
+    // Time range: the traffic chart covers the chosen window.
+    await page.getByRole("button", { name: /^Time range: Last 1 hour/ }).click();
+    await page.getByRole("dialog", { name: "Time range" }).getByRole("radio", { name: "Last 6 hours" }).click();
+    await page.keyboard.press("Escape");
+    await expect(traffic).toHaveAttribute("aria-label", /last 6 hours$/);
+    // Ownership scope: a squad spends less than the whole organisation.
+    await page.goto(demo("overview?scope=sq-ai"));
+    const squad = Number((await value())?.replace(/[$k]/g, ""));
+    expect(squad).toBeGreaterThan(0);
+    expect(squad).toBeLessThan(46.5);
+  });
   test("phone: the explorer's tree opens in a drawer and closes once a node is picked", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(demo("explorer?scope=in-ai"));
