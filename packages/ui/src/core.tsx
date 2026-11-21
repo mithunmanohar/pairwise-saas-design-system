@@ -306,6 +306,26 @@ function searchRank(i: SearchItem, terms: string[]): number {
  * Keep both true to what is on screen so screen readers announce the highlighted option. (Shared with Combobox.)
  * Returns a ref callback for the cmdk list: it attaches whenever the list mounts (also inside a portal).
  */
+/**
+ * Owns cmdk's highlighted item (GlobalSearch, Combobox). cmdk highlights the first result in an effect after each
+ * keystroke; when someone types and presses ↓ quickly, that late reset used to pull the highlight back to the first
+ * result. Here the automatic "first result" is accepted only until the person moves the highlight (arrows,
+ * Home/End, PageUp/PageDown or the pointer); a new query starts over. Pass the keys of the results in order.
+ */
+const NAV_KEYS = ["ArrowDown", "ArrowUp", "Home", "End", "PageDown", "PageUp"];
+export function useCmdkHighlight(keys: string[]) {
+  const [value, setValue] = useState("");
+  const moved = useRef(false), navigating = useRef(false);
+  const valid = keys.includes(value);
+  const mark = () => { navigating.current = true; moved.current = true; queueMicrotask(() => { navigating.current = false; }); };
+  return {
+    value: valid ? value : keys[0] ?? "",
+    onValueChange: (v: string) => { if (navigating.current || !moved.current || !valid) setValue(v); },
+    onKeyDown: (e: React.KeyboardEvent) => { if (NAV_KEYS.includes(e.key)) mark(); },
+    onPointerMoveCapture: () => mark(),
+    onQuery: () => { moved.current = false; },
+  };
+}
 export function useCmdkAria(inputRef: React.RefObject<HTMLInputElement>, open: boolean | null) {
   React.useLayoutEffect(() => { if (open !== null) inputRef.current?.setAttribute("aria-expanded", String(open)); });
   const stop = useRef<(() => void) | undefined>(undefined);
@@ -345,12 +365,14 @@ export function GlobalSearch({ items = [], onSelect, placeholder = "Search repos
   }
   const open = active && (q ? true : results.length > 0);
   const listRef = useCmdkAria(inputRef, open);
-  const setQuery = (v: string) => { setQ(v); onQueryChange && onQueryChange(v); };
+  const hl = useCmdkHighlight(results.map(itemKey));
+  const setQuery = (v: string) => { hl.onQuery(); setQ(v); onQueryChange && onQueryChange(v); };
   const pick = (i: SearchItem) => { i.onRun && i.onRun(); onSelect && onSelect(i); setQuery(""); setActive(false); };
   return (
-    <Command className="pw-search" label={label} shouldFilter={false} loop
+    <Command className="pw-search" label={label} shouldFilter={false} loop value={hl.value} onValueChange={hl.onValueChange} onPointerMoveCapture={hl.onPointerMoveCapture}
       onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setActive(false); }}
       onKeyDown={(e) => {
+        hl.onKeyDown(e);
         if (open) return;
         if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); setActive(true); }
         else if (e.key === "Enter" || e.key === "Home" || e.key === "End") e.preventDefault();

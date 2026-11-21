@@ -27,6 +27,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Chromium for the keyboard, focus and axe tests that `pnpm run ci` runs (packages/ui/test/e2e)
+      - run: pnpm -C packages/ui exec playwright install --with-deps chromium
       - run: pnpm run ci
       - run: node scripts/build-site.mjs _site
       - uses: actions/upload-pages-artifact@v3
