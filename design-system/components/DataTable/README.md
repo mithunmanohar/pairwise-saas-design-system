@@ -21,3 +21,14 @@ The default way to show many things with a status: sessions, runs, checks, appro
 - When filtering leaves fewer pages, the table stays on the last page that exists, never on an empty one.
 - `pin: "start"` keeps the first column in place while a wide table scrolls sideways.
 - No virtualisation or column resizing: page or filter long lists (use `pageSize`), and keep to 4 to 6 columns.
+
+**List and Tree views (2.1).** Pass `getPath(row)`: the row's ownership path *below the current scope*, or `[]` when the scope owns it directly. The table then gets a "List | Tree" switch (`view` / `defaultView` / `onViewChange`; keep the choice in the URL).
+- **List:** one row per item. Under its name is a muted path from the scope down ("Forecasting platform › forecast-models"); rows the scope owns directly read `directLabel`. Paths longer than three levels fold their middle into "…".
+- **Tree:** the same rows grouped by path. Each collapsed row shows its kind, a count (`itemNoun`) and each column's `rollup`:
+  - `'sum'`, shown with the column's `format`;
+  - `'latest'`;
+  - `{status}`, the worst status with how many ("1 failed");
+  - a function;
+  - nothing, which shows "–".
+- "Expand all" opens every level down to the items. Paging applies to List only.
+- Put a `ScopeNote` in `toolbar` to say what the table covers.

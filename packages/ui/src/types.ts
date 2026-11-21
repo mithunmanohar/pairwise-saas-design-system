@@ -44,7 +44,7 @@ export interface ToastProps { tone?: Status; title: string; body?: string; actio
 export interface DrawerProps { open: boolean; title: string; subtitle?: string; onClose: () => void; footer?: React.ReactNode; width?: number; contained?: boolean; children?: React.ReactNode }
 export interface ModalProps { open: boolean; title: string; onClose: () => void; actions?: React.ReactNode; tone?: 'critical'; contained?: boolean; children?: React.ReactNode }
 export interface SparklineProps { points: number[]; width?: number; height?: number; threshold?: number; tone?: Status; label?: string }
-export interface Column<T> { key: string; header: string; sortable?: boolean; sortValue?: (r: T) => SortValue; defaultDir?: 'asc' | 'desc'; align?: 'left' | 'right'; /** identifiers only */ mono?: boolean; /** numbers: tabular, no wrap */ num?: boolean; /** never wrap the cell */ nowrap?: boolean; width?: number; className?: string; render?: (r: T) => React.ReactNode; /** not shown (see also DataTable hiddenColumns) */ hidden?: boolean; /** false keeps it on in ColumnsMenu */ hideable?: boolean; /** "start" keeps the column visible while the table scrolls sideways (first column only) */ pin?: 'start' }
+export interface Column<T> { key: string; header: string; sortable?: boolean; sortValue?: (r: T) => SortValue; defaultDir?: 'asc' | 'desc'; align?: 'left' | 'right'; /** identifiers only */ mono?: boolean; /** numbers: tabular, no wrap */ num?: boolean; /** never wrap the cell */ nowrap?: boolean; width?: number; className?: string; render?: (r: T) => React.ReactNode; /** Tree view: how a collapsed group totals this column (default "–") */ rollup?: ColumnRollup<T>; /** formats a 'sum' rollup, e.g. (n) => `$${n}k` */ format?: (n: number) => React.ReactNode; /** not shown (see also DataTable hiddenColumns) */ hidden?: boolean; /** false keeps it on in ColumnsMenu */ hideable?: boolean; /** "start" keeps the column visible while the table scrolls sideways (first column only) */ pin?: 'start' }
 export type SortValue = string | number | boolean | Date | null | undefined;
 export interface DataTableSort { key: string; dir: 'asc' | 'desc' }
 export interface DataTableProps<T> {
@@ -57,6 +57,11 @@ export interface DataTableProps<T> {
   /** a trailing "⋯" menu per row (none when it returns []) */ rowActions?: (r: T) => ActionMenuEntry[];
   /** how a row is named in labels ("Select run_8f3k2", "Actions for run_8f3k2"); default the rowKey value */ rowLabel?: (r: T) => string;
   /** column keys to hide (see ColumnsMenu) */ hiddenColumns?: string[];
+  /** each row's ownership path BELOW the current scope ([] = owned directly by the scope); turns on List | Tree */ getPath?: (r: T) => PathSegment[];
+  view?: 'list' | 'tree'; defaultView?: 'list' | 'tree'; onViewChange?: (v: 'list' | 'tree') => void;
+  /** List view: the path line for rows owned directly by the scope (default "Owned directly") */ directLabel?: string;
+  /** Tree view: what the rows are, for counts ("3 pipelines"); default ["item", "items"] */ itemNoun?: [string, string];
+  /** content at the left of the table's toolbar, e.g. a ScopeNote */ toolbar?: React.ReactNode;
 }
 export interface PaginationProps { /** 1-based */ page: number; pageSize: number; /** total rows */ total: number; onPageChange?: (page: number) => void; pageSizeOptions?: number[]; onPageSizeChange?: (size: number) => void; /** first/last buttons and "Page x of y" (default true) */ firstLast?: boolean; /** accessible name (default "Pagination") */ label?: string }
 export interface ColumnsMenuProps<T> { columns: Column<T>[]; /** hidden column keys */ hidden: string[]; onChange: (hidden: string[]) => void; /** button text (default "Columns") */ label?: string }
@@ -74,7 +79,7 @@ export interface TimelineProps { events: TimelineEvent[]; onEvent?: (e: Timeline
 export interface NavItem { key: string; label: string; icon: IconName }
 export interface NavGroup { group: string | null; items: NavItem[] }
 export interface SideNavProps { active: string; onNavigate?: (key: string) => void; collapsed?: boolean; badges?: Record<string, { count: number; tone?: 'critical' }>; nav?: NavGroup[]; /** set by AppShell below 1024 px */ overlay?: boolean; onClose?: () => void }
-export interface TopBarProps { scope: Scope; scopeOptions: ScopeOptions; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; /** shown when search is focused and empty */ searchRecent?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** who is signed in; the account button then opens a menu with this header and `items` (switch organization, preferences, sign out) */ account?: TopBarAccount; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
+export interface TopBarProps { /** the ownership scope, shown once (a ScopePicker) */ ownership?: React.ReactNode; /** runtime dimensions; replaces scope / scopeOptions */ runtime?: ScopeDimension[]; scope?: Scope; scopeOptions?: ScopeOptions; onScope?: (s: Scope) => void; time?: string; onTime?: (t: string) => void; refresh?: TimeRangePickerProps['refresh']; onRefresh?: (r: string) => void; searchItems?: SearchItem[]; /** shown when search is focused and empty */ searchRecent?: SearchItem[]; onSearch?: (i: SearchItem) => void; alerts?: number; onAlerts?: () => void; onCopyRange?: () => void; /** avatar initials */ user?: string; /** accessible name of the account button, e.g. "Account: Dev A" (default "Account") */ accountLabel?: string; /** who is signed in; the account button then opens a menu with this header and `items` (switch organization, preferences, sign out) */ account?: TopBarAccount; /** set by AppShell */ onMenu?: () => void; /** set by AppShell from its width */ mode?: ShellMode }
 export type ShellMode = 'full' | 'collapsed' | 'tablet';
 /** The signed-in person, shown at the top of the account menu. */
 export interface TopBarAccount { name: string; email?: string; /** their role in the current organization, e.g. "Owner" */ role?: string; /** the current organization */ org?: string; items?: ActionMenuEntry[] }
@@ -162,3 +167,52 @@ export interface InlineEditProps { value: string; /** may return a promise; a re
 export interface UploadItem { id: string; name: string; /** bytes */ size: number; status: 'queued' | 'uploading' | 'done' | 'error'; /** 0..100; omit for indeterminate */ progress?: number; error?: string }
 export interface FileUploadProps { label: string; hint?: string; error?: string; required?: boolean; /** e.g. ".json,.txt" or "image/*" */ accept?: string; /** bytes */ maxSize?: number; multiple?: boolean; maxFiles?: number; /** your uploads and their state */ files?: UploadItem[]; /** accepted files to upload */ onFiles?: (files: File[]) => void; onRemove?: (id: string) => void; onRetry?: (id: string) => void; disabled?: boolean; id?: string }
 
+/* ---------- Ownership hierarchy (2.1) ---------- */
+/** A node in the ownership tree: an organisation unit, or a group of resources under one. */
+export interface TreeNode {
+  id: string; kind: EntityKind; label: string;
+  /** overrides the kind's icon */ icon?: IconName;
+  /** the worst status at or below this node; healthy and unknown show nothing (healthy is quiet) */ status?: Status;
+  /** how many items have that status, shown beside it */ statusCount?: number;
+  /** read with the status, e.g. "1 critical below" */ statusLabel?: string;
+  /** muted text on the right when there is no status to show, e.g. a resource count */ meta?: React.ReactNode;
+  children?: TreeNode[];
+  /** children exist but load on expand (TreeView loadChildren) */ hasChildren?: boolean;
+  /** shown as greyed context: the person can't open it */ noAccess?: boolean;
+  /** extra words that find it in search */ keywords?: string[];
+}
+export interface TreeViewProps {
+  nodes: TreeNode[]; /** accessible name, e.g. "Organisation" */ label: string;
+  selectedId?: string | null; onSelect?: (node: TreeNode) => void;
+  expandedIds?: string[]; defaultExpandedIds?: string[]; onExpandedChange?: (ids: string[]) => void;
+  /** loads a node's children the first time it expands (for nodes with hasChildren) */ loadChildren?: (node: TreeNode) => Promise<TreeNode[]>;
+  /** keeps matching nodes and their ancestors, expanded */ filter?: string;
+  state?: 'ready' | 'loading' | 'error'; emptyText?: string; className?: string;
+}
+export interface ScopePickerProps {
+  /** the organisation tree (the same nodes as the explorer) */ nodes: TreeNode[];
+  /** the current scope's node id; null is the whole organisation */ value: string | null;
+  onChange?: (id: string | null) => void;
+  /** accessible name (default "Ownership scope") */ label?: string;
+  /** default "Whole organisation" */ wholeLabel?: string;
+  loadChildren?: TreeViewProps['loadChildren'];
+  /** preview only */ forceOpen?: boolean;
+}
+export interface SplitViewProps {
+  /** the tree pane's content (a TreeView, its search, its tools) */ aside: React.ReactNode;
+  /** names the pane and its show/hide buttons, e.g. "Organisation" */ asideLabel: string; asideTitle?: string;
+  children?: React.ReactNode;
+  collapsed?: boolean; defaultCollapsed?: boolean; onCollapsedChange?: (c: boolean) => void;
+  /** preview only: lay out as if this wide */ forceWidth?: number;
+}
+export interface ScopeNoteProps {
+  /** the scope's name */ scope: React.ReactNode;
+  /** how far it reaches, e.g. "and its 2 projects" */ summary?: React.ReactNode;
+  /** the runtime scope, e.g. "prod / region-a" */ runtime?: string;
+  mode?: 'descendants' | 'direct'; onModeChange?: (m: 'descendants' | 'direct') => void;
+  /** extra controls on the line */ children?: React.ReactNode;
+}
+/** A step in a row's ownership path below the current scope. */
+export interface PathSegment { id: string; label: string; kind?: EntityKind }
+/** How a column totals up on a collapsed Tree-view row. */
+export type ColumnRollup<T> = 'sum' | 'latest' | { status: (r: T) => Status; /** words for "1 failed" (default the status name) */ word?: (s: Status) => string } | ((rows: T[]) => React.ReactNode);

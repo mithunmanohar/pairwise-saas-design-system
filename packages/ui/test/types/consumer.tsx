@@ -1,6 +1,6 @@
 // Type-level tests against the built package (dist/*.d.ts), resolved through package.json "exports".
 // Run by `pnpm typecheck` after `pnpm build`. A line marked @ts-expect-error must stay an error.
-import { ScopeSwitcher, Breadcrumbs, PageHeader, entityIcon, entityLabel, type EntityKind, Field, Popover, PopoverClose, iconNames, type IconName, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup, ProgressBar, parseISODate, toISODate, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
+import { TreeView, ScopePicker, SplitView, ScopeNote, indexTree, type TreeNode, type PathSegment, ScopeSwitcher, Breadcrumbs, PageHeader, entityIcon, entityLabel, type EntityKind, Field, Popover, PopoverClose, iconNames, type IconName, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup, ProgressBar, parseISODate, toISODate, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
 import { color, fonts, motion, layer, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
@@ -120,3 +120,22 @@ export const v21 = [
 export const kind: EntityKind = "initiative";
 // @ts-expect-error unknown entity kind
 export const badKind: EntityKind = "tribe";
+
+// 2.1 hierarchy components and DataTable List / Tree.
+const org: TreeNode[] = [{ id: "co", kind: "company", label: "Example Company", children: [{ id: "p", kind: "project", label: "Forecasting platform", hasChildren: true, status: "critical", statusCount: 1 }] }];
+interface Pipe { id: string; cost: number; ok: boolean; path: PathSegment[] }
+const pipes: Pipe[] = [{ id: "forecasting-train", cost: 1.9, ok: false, path: [{ id: "p", label: "Forecasting platform", kind: "project" }] }];
+export const v21b = [
+  <TreeView label="Organisation" nodes={org} selectedId="co" onSelect={(n) => n.kind} loadChildren={async (n) => (n.id ? [] : org)} filter="fore" state="ready" />,
+  <ScopePicker nodes={org} value={null} onChange={(id) => id?.length} />,
+  <SplitView asideLabel="Organisation" aside={<span />} defaultCollapsed>workspace</SplitView>,
+  <ScopeNote scope="AI transformation" summary="and its 2 projects" mode="direct" onModeChange={(m) => m === "direct"} />,
+  <TopBar ownership={<ScopePicker nodes={org} value="co" />} runtime={[{ key: "env", label: "Environment", value: "prod", options: ["prod"] }]} />,
+  <DataTable rows={pipes} getPath={(p) => p.path} view="tree" onViewChange={(v) => v === "list"} itemNoun={["pipeline", "pipelines"]} directLabel="Owned by the initiative"
+    columns={[{ key: "id", header: "Pipeline" }, { key: "cost", header: "Cost", rollup: "sum", format: (n) => "$" + n }, { key: "ok", header: "Status", rollup: { status: (p) => (p.ok ? "healthy" : "critical") } }, { key: "path", header: "Latest", rollup: (rs) => rs.length }]} />,
+];
+export const pathOf = indexTree(org).get("p")?.path.map((n) => n.label);
+// @ts-expect-error the view is list or tree
+export const badView = <DataTable rows={pipes} columns={[]} view="grid" />;
+// @ts-expect-error a rollup is sum, latest, {status}, or a function
+export const badRollup = <DataTable rows={pipes} columns={[{ key: "cost", header: "Cost", rollup: "average" }]} />;

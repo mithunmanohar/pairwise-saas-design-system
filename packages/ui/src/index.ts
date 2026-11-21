@@ -11,3 +11,5 @@ export * from "./types";
 export * as tokens from "./tokens";
 export { KeyValueList, Avatar, AvatarGroup, ProgressBar } from "./display";
 export { RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, toISODate, parseISODate } from "./inputs";
+export { TreeView, ScopePicker, SplitView, ScopeNote, indexTree } from "./hierarchy";
+export type { TreeIndexEntry } from "./hierarchy";

@@ -6,3 +6,6 @@ Global controls, left to right: scope, search, time range, notifications, accoun
 
 - Everything here is global and URL-backed. Page-specific controls never go in the top bar.
 - The count is what needs a person (pending approvals, failed runs you own), not raw events.
+
+**Ownership and runtime scope (2.1).** Pass a `ScopePicker` as `ownership`: the ownership scope, shown once, as a chip with the current node and its kind. Pass `runtime` (dimensions for `ScopeSwitcher`) for where things run. The 1.x `scope` + `scopeOptions` still work. The two groups sit side by side with a divider and change independently.
+

@@ -21,6 +21,32 @@ and Tree views. Every API change is additive. Entries are added as each stage la
 - **PageHeader `kind` (new):** the eyebrow above an entity's title, e.g. "Initiative · owned by ML engineering".
 - **Token:** `explorer-width` (320 px) for the Resource Explorer's tree pane.
 - **New dependency:** `react-aria-components` (Apache-2.0), for trees.
+- **TreeView (new):** the ownership tree, built on React Aria `Tree`.
+  - Kind icon, label, and a worst-descendant status mark with a count; healthy rows stay quiet.
+  - Children load lazily with `loadChildren`, showing a loading row and an error row.
+  - `filter` keeps matches and their ancestors.
+  - Controlled or uncontrolled `selectedId` / `expandedIds`.
+  - Nodes the person can't open show as `noAccess` context.
+  - Arrows move focus; Enter, Space or a click selects.
+- **ScopePicker (new):** the ownership scope chip.
+  - The chip shows the current node only, and the full path appears on hover.
+  - The popover holds a search whose results show their path, "Up to {parent}", "Whole organisation", and a
+    TreeView of the current branch.
+- **SplitView (new):** the explorer layout.
+  - A fixed `explorer-width` aside that collapses to a strip.
+  - Below 1024 px the aside opens in a Drawer.
+- **ScopeNote (new):** one line saying what the page covers ("Showing AI transformation and its 2 projects"), with
+  an optional Direct only / Including descendants switch.
+- **TopBar `ownership` and `runtime` (new):** two labelled groups, the ownership scope first. `scope` and
+  `scopeOptions` are now optional.
+- **DataTable List / Tree views (new):**
+  - `getPath(row)` gives each row's ownership path below the current scope.
+  - Views are controlled with `view`, `defaultView` and `onViewChange`.
+  - **List:** shows each row's path as a muted line, with the middle folded when long.
+  - **Tree:** groups rows by path. Collapsed group rows show column `rollup`s (`'sum'`, `'latest'`,
+    `{status}` worst-first, or a function); other columns show "–". Expand all and Collapse all are available.
+  - New `directLabel`, `itemNoun` and `toolbar` props.
+  - Paging applies to List only.
 
 ## 2.0.0 (2026-11-20)
 

@@ -1,6 +1,6 @@
-import type { IconName, Column, DataTableProps, DataTableSort, PaginationProps, ColumnsMenuProps, SortValue, TimeSeriesChartProps, BarChartProps, RunStripProps, HeatmapProps, StatusGridProps, BulletBarProps, TimelineProps, TimelineEvent, LegendProps, ViewState, Status } from "./types";
-import { Icon } from "./icons";
-import { cx, StateBlock, StatusBadge, Button, Skeleton, MenuSelect } from "./core";
+import type { PathSegment, IconName, Column, DataTableProps, DataTableSort, PaginationProps, ColumnsMenuProps, SortValue, TimeSeriesChartProps, BarChartProps, RunStripProps, HeatmapProps, StatusGridProps, BulletBarProps, TimelineProps, TimelineEvent, LegendProps, ViewState, Status } from "./types";
+import { Icon, entityIcon, entityLabel } from "./icons";
+import { cx, StateBlock, StatusBadge, Button, Skeleton, MenuSelect, SegmentedControl } from "./core";
 import { Checkbox } from "./forms";
 import { ActionMenu } from "./actions";
 import * as DM from "@radix-ui/react-dropdown-menu";
@@ -36,6 +36,52 @@ const compare = (x: SortValue, y: SortValue): number => {
   if (typeof na === "number" && typeof nb === "number") return na > nb ? 1 : na < nb ? -1 : 0;
   return 0;
 };
+
+/* ---------- DataTable: List / Tree helpers ---------- */
+type Group<T> = { key: string; seg: PathSegment; entries: GroupEntry<T>[]; all: T[] };
+type GroupEntry<T> = { type: "group"; group: Group<T> } | { type: "row"; row: T };
+// Groups rows by their path below the scope, keeping the sorted order: a group sits where its first row would.
+function buildGroups<T>(rows: T[], getPath: (r: T) => PathSegment[]): GroupEntry<T>[] {
+  const root: GroupEntry<T>[] = [];
+  const byKey = new Map<string, Group<T>>();
+  for (const r of rows) {
+    let level = root, key = "";
+    for (const seg of getPath(r)) {
+      key += "/" + seg.id;
+      let g = byKey.get(key);
+      if (!g) { g = { key, seg, entries: [], all: [] }; byKey.set(key, g); level.push({ type: "group", group: g }); }
+      g.all.push(r); level = g.entries;
+    }
+    level.push({ type: "row", row: r });
+  }
+  return root;
+}
+const allGroupKeys = <T,>(entries: GroupEntry<T>[]): string[] => entries.flatMap((e) => (e.type === "group" ? [e.group.key, ...allGroupKeys(e.group.entries)] : []));
+const STATUS_ORDER: Status[] = ["critical", "warning", "unknown", "info", "healthy"];
+const STATUS_WORD: Record<Status, string> = { critical: "Critical", warning: "Warning", healthy: "Healthy", unknown: "No data", info: "Running" };
+const numOf = <T,>(c: Column<T>, r: T) => { const v = c.sortValue ? c.sortValue(r) : (r as Record<string, unknown>)[c.key]; return typeof v === "number" ? v : Number(v) || 0; };
+function rollupCell<T>(c: Column<T>, rows: T[]): React.ReactNode {
+  const r = c.rollup;
+  if (!r) return <span className="pw-muted" aria-label="Not totalled">–</span>;
+  if (typeof r === "function") return r(rows);
+  if (r === "sum") { const n = rows.reduce((a, x) => a + numOf(c, x), 0); return c.format ? c.format(n) : n.toLocaleString(); }
+  if (r === "latest") { const top = [...rows].sort((a, b) => numOf(c, b) - numOf(c, a))[0]; return top ? (c.render ? c.render(top) : asNode((top as Record<string, unknown>)[c.key])) : null; }
+  const sts = rows.map(r.status);
+  const worst = STATUS_ORDER.find((s) => sts.includes(s)) ?? "unknown";
+  const word = (s: Status) => (r.word ? r.word(s) : STATUS_WORD[s]).toLowerCase();
+  const n = sts.filter((s) => s === worst).length;
+  return <StatusBadge status={worst} label={worst === "healthy" ? "All " + word("healthy") : n + " " + word(worst)} />;
+}
+// The path line under a row's name in List view: the levels below the scope, folded in the middle when long.
+function PathLine({ path, direct }: { path: PathSegment[]; direct: string }) {
+  if (!path.length) return <span className="pw-path">{direct}</span>;
+  const parts = path.length > 3 ? [path[0]!.label, "…", ...path.slice(-2).map((p) => p.label)] : path.map((p) => p.label);
+  return (
+    <span className="pw-path" title={path.map((p) => p.label).join(" › ")}>
+      {parts.map((p, i) => <Fragment key={i}>{i ? <span className="pw-path__sep" aria-hidden="true">›</span> : null}<span>{p}</span></Fragment>)}
+    </span>
+  );
+}
 
 /* ---------- Pagination ---------- */
 // Pages are 1-based. The range ("26–50 of 312") is a polite live region, so a page change is announced.
@@ -86,7 +132,12 @@ export function ColumnsMenu<T>({ columns, hidden, onChange, label = "Columns" }:
 // when only some are selected) and, with `bulkActions`, a bar of actions for the selected rows.
 export function DataTable<T extends object>(props: DataTableProps<T>) {
   const { columns: allColumns, rows, rowKey = "id", defaultSort, renderExpanded, pageSize: pageSizeProp = 0, onRowClick, rowTone, state = "ready", emptyTitle, emptyBody, errorDetail, onRetry, caption, density, selectedKey, stickyHeader,
-    sort: sortProp, onSortChange, manual, page: pageProp, onPageChange, totalRows, pageSizeOptions, onPageSizeChange, selection, selectedKeys, defaultSelectedKeys, onSelectionChange, bulkActions, rowActions, rowLabel, hiddenColumns = [] } = props;
+    sort: sortProp, onSortChange, manual, page: pageProp, onPageChange, totalRows, pageSizeOptions, onPageSizeChange, selection, selectedKeys, defaultSelectedKeys, onSelectionChange, bulkActions, rowActions, rowLabel, hiddenColumns = [],
+    getPath, view: viewProp, defaultView = "list", onViewChange, directLabel = "Owned directly", itemNoun = ["item", "items"], toolbar } = props;
+  const [viewInner, setViewInner] = useState<"list" | "tree">(defaultView);
+  const mode = getPath ? viewProp ?? viewInner : "list";
+  const setMode = (v: "list" | "tree") => { setViewInner(v); onViewChange && onViewChange(v); };
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const columns = allColumns.filter((c) => !c.hidden && !hiddenColumns.includes(c.key));
   const [sortInner, setSortInner] = useState<DataTableSort | null>(defaultSort || null);
   const sort = sortProp !== undefined ? sortProp : sortInner;
@@ -111,7 +162,9 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
   // Clamp: when filtering shrinks the rows, stay on the last page that exists instead of showing an empty one.
   const page = Math.min(pageProp ?? pageInner, pages);
   const setPage = (p: number) => { setPageInner(p); onPageChange && onPageChange(p); };
-  const view = pageSize && !manual ? sorted.slice((page - 1) * pageSize, page * pageSize) : sorted;
+  const isTree = mode === "tree";
+  const view = pageSize && !manual && !isTree ? sorted.slice((page - 1) * pageSize, page * pageSize) : sorted;
+  const tree = useMemo(() => (isTree && getPath ? buildGroups(sorted, getPath) : null), [isTree, sorted, getPath]);
   const viewKeys = view.map(keyOf);
   const selectedHere = viewKeys.filter((k) => sel.includes(k)).length;
   const ncol = columns.length + (renderExpanded ? 1 : 0) + (selection ? 1 : 0) + (rowActions ? 1 : 0);
@@ -120,9 +173,79 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
     const next: DataTableSort = !sort || sort.key !== c.key ? { key: c.key, dir: c.defaultDir || "desc" } : { key: c.key, dir: sort.dir === "asc" ? "desc" : "asc" };
     setSortInner(next); onSortChange && onSortChange(next);
   };
-  const showPager = !!pageSize && state === "ready" && (total > pageSize || !!pageSizeOptions);
+  const showPager = !isTree && !!pageSize && state === "ready" && (total > pageSize || !!pageSizeOptions);
+  const noun = (n: number) => n + " " + (n === 1 ? itemNoun[0] : itemNoun[1]);
+  const first = columns[0]?.key;
+  const cellBody = (c: Column<T>, r: T) => (c.render ? c.render(r) : asNode(field(r, c.key)));
+  // One leaf row. In List view the first column carries the path below the scope; in Tree view it is indented.
+  const renderRow = (r: T, level: number | null) => {
+    const id = field(r, rowKey); const k = String(id); const isOpen = !!open[k]; const tone = rowTone ? rowTone(r) : null; const picked = sel.includes(k);
+    const firstCell = (c: Column<T>) => {
+      if (level != null) return <span className="pw-treecell" style={{ ["--lvl" as string]: level }}><span className="pw-treecell__leaf" />{cellBody(c, r)}</span>;
+      if (!getPath) return cellBody(c, r);
+      return <span className="pw-pathcell"><span>{cellBody(c, r)}</span><PathLine path={getPath(r)} direct={directLabel} /></span>;
+    };
+    return (
+      <Fragment key={k}>
+        <tr className={cx(tone && "is-" + tone, onRowClick && "is-click", (selectedKey === id || picked) && "is-selected")} tabIndex={onRowClick ? 0 : undefined}
+          onClick={onRowClick ? () => onRowClick(r) : undefined} onKeyDown={onRowClick ? (e: React.KeyboardEvent<HTMLTableRowElement>) => { if (e.key === "Enter" && e.target === e.currentTarget) onRowClick(r); } : undefined}>
+          {selection ? (
+            <td className="pw-table__sel" onClick={(e) => e.stopPropagation()}>
+              <Checkbox label={"Select " + nameOf(r)} hideLabel checked={picked} onChange={(on) => setSel(on ? [...sel, k] : sel.filter((x) => x !== k))} />
+            </td>
+          ) : null}
+          {renderExpanded ? (
+            <td className="pw-table__x"><button type="button" className="pw-xbtn" aria-expanded={isOpen} aria-label={(isOpen ? "Collapse " : "Expand ") + nameOf(r)}
+              onClick={(e) => { e.stopPropagation(); setOpen({ ...open, [k]: !isOpen }); }}><Icon name={isOpen ? "chevron-down" : "chevron-right"} size={14} /></button></td>
+          ) : null}
+          {columns.map((c) => <td key={c.key} style={{ textAlign: c.align }} className={cx(c.mono && "pw-mono", c.num && "is-nowrap", c.nowrap && "is-nowrap", c.pin === "start" && "is-pinned", c.className)}>{c.key === first ? firstCell(c) : cellBody(c, r)}</td>)}
+          {rowActions ? <td className="pw-table__acts" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>{(() => { const acts = rowActions(r); return acts.length ? <ActionMenu label={"Actions for " + nameOf(r)} items={acts} /> : null; })()}</td> : null}
+        </tr>
+        {renderExpanded && isOpen ? <tr className="pw-table__exp">{selection ? <td /> : null}<td /><td colSpan={columns.length + (rowActions ? 1 : 0)}>{renderExpanded(r)}</td></tr> : null}
+      </Fragment>
+    );
+  };
+  // Tree view: groups (one per path segment) with rollups, then their rows and sub-groups, in sorted order.
+  const renderLevel = (entries: GroupEntry<T>[], level: number): React.ReactNode[] => entries.flatMap((e) => {
+    if (e.type === "row") return [renderRow(e.row, level)];
+    const g = e.group, isOpen = openGroups.has(g.key);
+    const toggle = () => { const n = new Set(openGroups); if (isOpen) n.delete(g.key); else n.add(g.key); setOpenGroups(n); };
+    const row = (
+      <tr key={"g:" + g.key} className="is-group">
+        {selection ? <td /> : null}
+        {renderExpanded ? <td /> : null}
+        {columns.map((c) => (
+          <td key={c.key} style={{ textAlign: c.align }} className={cx(c.num && "is-nowrap", c.nowrap && "is-nowrap", c.pin === "start" && "is-pinned")}>
+            {c.key === first ? (
+              <span className="pw-treecell" style={{ ["--lvl" as string]: level }}>
+                <button type="button" className="pw-xbtn" aria-expanded={isOpen} aria-label={(isOpen ? "Collapse " : "Expand ") + g.seg.label + ", " + noun(g.all.length)} onClick={toggle}>
+                  <Icon name={isOpen ? "chevron-down" : "chevron-right"} size={14} />
+                </button>
+                {g.seg.kind ? <Icon name={entityIcon[g.seg.kind]} className="pw-treecell__kind" /> : null}
+                <span className="pw-treecell__txt"><span className="pw-treecell__name">{g.seg.label}</span><span className="pw-caption pw-muted">{(g.seg.kind ? entityLabel[g.seg.kind] + " · " : "") + noun(g.all.length)}</span></span>
+              </span>
+            ) : rollupCell(c, g.all)}
+          </td>
+        ))}
+        {rowActions ? <td /> : null}
+      </tr>
+    );
+    return isOpen ? [row, ...renderLevel(g.entries, level + 1)] : [row];
+  });
   return (
     <div className={cx("pw-table-box", density && "is-" + density)}>
+      {getPath || toolbar ? (
+        <div className="pw-tabletools">
+          <div className="pw-tabletools__start">{toolbar}</div>
+          <div className="pw-tabletools__end">
+            {isTree && tree ? <>
+              <Button size="sm" variant="ghost" onClick={() => setOpenGroups(new Set(allGroupKeys(tree)))}>Expand all</Button>
+              <Button size="sm" variant="ghost" onClick={() => setOpenGroups(new Set())}>Collapse all</Button>
+            </> : null}
+            {getPath ? <SegmentedControl label="View" size="sm" value={mode} onChange={(v) => setMode(v === "tree" ? "tree" : "list")} options={[{ value: "list", label: "List" }, { value: "tree", label: "Tree" }]} /> : null}
+          </div>
+        </div>
+      ) : null}
       {selection && bulkActions && sel.length ? (
         <div className="pw-bulk" aria-label="Bulk actions" role="group">
           <span className="pw-body-strong pw-num" role="status">{sel.length} selected</span>
@@ -161,28 +284,7 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
               <tr><td colSpan={ncol} className="pw-table__state"><StateBlock kind="error" inline title="Couldn’t load rows" body="The data source didn’t respond. Other panels on this page are unaffected." detail={errorDetail} action={onRetry ? "Retry" : undefined} onAction={onRetry} /></td></tr>
             ) : !view.length || state === "empty" ? (
               <tr><td colSpan={ncol} className="pw-table__state"><StateBlock kind="empty" inline title={emptyTitle || "No rows match"} body={emptyBody || "Clear filters or widen the time range."} /></td></tr>
-            ) : view.map((r) => {
-              const id = field(r, rowKey); const k = String(id); const isOpen = !!open[k]; const tone = rowTone ? rowTone(r) : null; const picked = sel.includes(k);
-              return (
-                <Fragment key={k}>
-                  <tr className={cx(tone && "is-" + tone, onRowClick && "is-click", (selectedKey === id || picked) && "is-selected")} tabIndex={onRowClick ? 0 : undefined}
-                    onClick={onRowClick ? () => onRowClick(r) : undefined} onKeyDown={onRowClick ? (e: React.KeyboardEvent<HTMLTableRowElement>) => { if (e.key === "Enter" && e.target === e.currentTarget) onRowClick(r); } : undefined}>
-                    {selection ? (
-                      <td className="pw-table__sel" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox label={"Select " + nameOf(r)} hideLabel checked={picked} onChange={(on) => setSel(on ? [...sel, k] : sel.filter((x) => x !== k))} />
-                      </td>
-                    ) : null}
-                    {renderExpanded ? (
-                      <td className="pw-table__x"><button type="button" className="pw-xbtn" aria-expanded={isOpen} aria-label={(isOpen ? "Collapse " : "Expand ") + nameOf(r)}
-                        onClick={(e) => { e.stopPropagation(); setOpen({ ...open, [k]: !isOpen }); }}><Icon name={isOpen ? "chevron-down" : "chevron-right"} size={14} /></button></td>
-                    ) : null}
-                    {columns.map((c) => <td key={c.key} style={{ textAlign: c.align }} className={cx(c.mono && "pw-mono", c.num && "is-nowrap", c.nowrap && "is-nowrap", c.pin === "start" && "is-pinned", c.className)}>{c.render ? c.render(r) : asNode(field(r, c.key))}</td>)}
-                    {rowActions ? <td className="pw-table__acts" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>{(() => { const acts = rowActions(r); return acts.length ? <ActionMenu label={"Actions for " + nameOf(r)} items={acts} /> : null; })()}</td> : null}
-                  </tr>
-                  {renderExpanded && isOpen ? <tr className="pw-table__exp">{selection ? <td /> : null}<td /><td colSpan={columns.length + (rowActions ? 1 : 0)}>{renderExpanded(r)}</td></tr> : null}
-                </Fragment>
-              );
-            })}
+            ) : isTree && tree ? renderLevel(tree, 0) : view.map((r) => renderRow(r, null))}
           </tbody>
         </table>
       </div>
