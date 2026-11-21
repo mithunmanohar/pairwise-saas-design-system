@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 // Assembles the GitHub Pages site into <outDir> (default _site). Run after `pnpm -r build`.
+//   --preview "<label>"  builds a pull-request preview (pr-preview.yml): every page gets noindex, and the landing page
+//                        a banner naming the preview and linking to the live site.
 //   /             landing page, styled with the design system's own CSS
 //   /demo/        the live demo app (examples/dist/demo.*): every nav page working, routed
 //   /catalogue/   every component, live (design-system/catalogue.html and the preview kit it loads)
 //   /images/      README screenshots used by the landing page
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname;
-const OUT = resolve(process.argv[2] || join(ROOT, "_site"));
+const args = process.argv.slice(2);
+const pi = args.indexOf("--preview");
+const PREVIEW = pi >= 0 ? args.splice(pi, 2)[1] || "a pull request" : null;
+const OUT = resolve(args[0] || join(ROOT, "_site"));
+const LIVE = "https://mithunmanohar.github.io/pairwise-saas-design-system/";
+const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const NOINDEX = PREVIEW ? '<meta name="robots" content="noindex">' : "";
 const need = ["examples/dist/demo.html", "design-system/catalogue.html", "docs/images/screens/overview-dark.png"];
 for (const f of need) if (!existsSync(join(ROOT, f))) throw new Error(`${f} is missing: run \`pnpm -r build\` (and the screenshots) first`);
 
@@ -22,12 +30,16 @@ for (const f of readdirSync(join(ROOT, "examples", "dist"))) {
   if (f === "fonts" || f.startsWith("demo.")) cpSync(join(ROOT, "examples", "dist", f), join(demo, f === "demo.html" ? "index.html" : f), { recursive: true });
 }
 
+// Previews are never indexed.
+if (PREVIEW) for (const f of [join(demo, "index.html")]) writeFileSync(f, readFileSync(f, "utf8").replace("</title>", "</title>" + NOINDEX));
+
 // Catalogue + the preview kit it loads (tokens.css, components/**)
 const cat = join(OUT, "catalogue");
 mkdirSync(cat);
 cpSync(join(ROOT, "design-system", "catalogue.html"), join(cat, "index.html"));
 cpSync(join(ROOT, "design-system", "tokens.css"), join(cat, "tokens.css"));
 cpSync(join(ROOT, "design-system", "components"), join(cat, "components"), { recursive: true, filter: (src) => !src.endsWith("README.md") });
+if (PREVIEW) { const f = join(cat, "index.html"); writeFileSync(f, readFileSync(f, "utf8").replace("</title>", "</title>" + NOINDEX)); }
 
 // Images
 const img = join(OUT, "images");
@@ -47,7 +59,7 @@ const card = (route, img, title, body) => `
 
 writeFileSync(join(OUT, "index.html"), `<!doctype html>
 <html lang="en" data-theme="dark" data-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pairwise: a production-grade design system for AI applications and multi-tenant SaaS</title>
+<title>${PREVIEW ? "Preview: " : ""}Pairwise: a production-grade design system for AI applications and multi-tenant SaaS</title>${NOINDEX}
 <meta name="description" content="Design tokens and 59 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
 <link rel="stylesheet" href="catalogue/tokens.css"><link rel="stylesheet" href="catalogue/components/bundle.css">
 <style>
@@ -72,10 +84,13 @@ body { margin: 0; }
 .lp-points b { display: block; margin-bottom: var(--space-1); }
 .lp-phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); max-width: 760px; }
 .lp-phones img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.lp-preview { margin: 0 calc(var(--space-5) * -1); padding: var(--space-2) var(--space-5); background: var(--surface-sunken); border-bottom: 1px solid var(--border); }
+.lp-preview a { color: var(--ink); }
 .lp-foot { margin: var(--space-12) 0 0; padding: var(--space-5) 0 var(--space-8); border-top: 1px solid var(--border); color: var(--ink-muted); }
 @media (max-width: 860px) { .lp-cards, .lp-points { grid-template-columns: 1fr; } .lp-phones { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); } .lp-hero h1 { font-size: 32px; line-height: 40px; } }
 </style></head>
-<body><div class="lp">
+<body><div class="lp">${PREVIEW ? `
+  <p class="lp-preview pw-caption" role="note">Preview of ${esc(PREVIEW)}, built from its branch. The live site is at <a href="${LIVE}">${LIVE.replace("https://", "")}</a>.</p>` : ""}
   <header class="lp-top">
     <strong class="pw-subheading">Pairwise</strong>
     <nav aria-label="Site"><a href="demo/">Live demo</a><a href="catalogue/">Components</a><a href="https://github.com/mithunmanohar/pairwise-saas-design-system">GitHub</a></nav>
@@ -110,4 +125,4 @@ body { margin: 0; }
   <footer class="lp-foot pw-caption">Every screen on this site is built only from <code class="pw-mono">@pairwise/ui</code>. All data is fictional. Source, rules and build reports are on GitHub.</footer>
 </div></body></html>
 `);
-console.log(`site: / , /demo/, /catalogue/ → ${OUT}`);
+console.log(`site${PREVIEW ? ` (preview: ${PREVIEW})` : ""}: / , /demo/, /catalogue/ → ${OUT}`);

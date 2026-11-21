@@ -1,46 +1,53 @@
 name: Pages
 
-# Publishes the live demo, the component catalogue and a landing page to GitHub Pages on every push to main.
-# One-time setup: repo Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Publishes the live demo, the component catalogue and a landing page to the gh-pages branch on every push to main;
+# GitHub Pages serves that branch. Pull-request previews live beside the site under pr-preview/ (pr-preview.yml) and
+# are kept when the site is republished.
+# One-time setup: repo Settings → Pages → Build and deployment → Source: "Deploy from a branch", gh-pages / (root).
+# A manual run publishes `ref` (default main) with this workflow's own scripts, e.g. to fill the branch the first time.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to publish as the live site
+        default: main
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
+# Shared with pr-preview.yml, so publishes to gh-pages never overlap.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: gh-pages
+  cancel-in-progress: false
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
+      # This workflow's scripts (publish-pages.mjs) ...
       - uses: actions/checkout@v4
+      # ... and the commit to publish.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          path: site-src
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: site-src/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: site-src/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+        working-directory: site-src
       # Chromium for the keyboard, focus and axe tests that `pnpm run ci` runs (packages/ui/test/e2e)
       - run: pnpm -C packages/ui exec playwright install --with-deps chromium
+        working-directory: site-src
       - run: pnpm run ci
-      - run: node scripts/build-site.mjs _site
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+        working-directory: site-src
+      - run: node scripts/build-site.mjs ../_site
+        working-directory: site-src
+      - run: node scripts/publish-pages.mjs --dir _site --to . --keep pr-preview --message "Publish the site from $(git -C site-src rev-parse --short HEAD)"
