@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pairwise: a production-grade design system for AI applications and multi-tenant SaaS</title>
+<meta name="description" content="Design tokens and 59 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
+<link rel="stylesheet" href="catalogue/tokens.css"><link rel="stylesheet" href="catalogue/components/bundle.css">
+<style>
+body { margin: 0; }
+.lp { max-width: 1160px; margin: 0 auto; padding: 0 var(--space-5); }
+.lp-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); height: 64px; border-bottom: 1px solid var(--border); }
+.lp-top nav { display: flex; gap: var(--space-4); }
+.lp-top a { color: var(--ink); text-decoration: none; }
+.lp-top a:hover { text-decoration: underline; }
+.lp-hero { padding: var(--space-12) 0 var(--space-8); display: grid; gap: var(--space-4); max-width: 760px; }
+.lp-hero h1 { margin: 0; font-size: 40px; line-height: 48px; font-weight: 600; letter-spacing: -0.01em; }
+.lp-hero p { margin: 0; font-size: 18px; line-height: 28px; color: var(--ink-muted); }
+.lp-cta { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+.lp-cta a { text-decoration: none; }
+.lp-shot { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.lp-h2 { margin: var(--space-12) 0 var(--space-5); }
+.lp-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
+.lp-card { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--ink); text-decoration: none; }
+.lp-card:hover { border-color: var(--border-strong); }
+.lp-card img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: var(--space-2); }
+.lp-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5) var(--space-6); margin: 0; padding: 0; list-style: none; }
+.lp-points b { display: block; margin-bottom: var(--space-1); }
+.lp-phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); max-width: 760px; }
+.lp-phones img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.lp-preview { margin: 0 calc(var(--space-5) * -1); padding: var(--space-2) var(--space-5); background: var(--surface-sunken); border-bottom: 1px solid var(--border); }
+.lp-preview a { color: var(--ink); }
+.lp-foot { margin: var(--space-12) 0 0; padding: var(--space-5) 0 var(--space-8); border-top: 1px solid var(--border); color: var(--ink-muted); }
+@media (max-width: 860px) { .lp-cards, .lp-points { grid-template-columns: 1fr; } .lp-phones { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); } .lp-hero h1 { font-size: 32px; line-height: 40px; } }
+</style></head>
+<body><div class="lp">
+  <header class="lp-top">
+    <strong class="pw-subheading">Pairwise</strong>
+    <nav aria-label="Site"><a href="demo/">Live demo</a><a href="catalogue/">Components</a><a href="https://github.com/mithunmanohar/pairwise-saas-design-system">GitHub</a></nav>
+  </header>
+  <main>
+    <section class="lp-hero">
+      <h1>A production-grade design system for AI applications and multi-tenant SaaS</h1>
+      <p>Design tokens and 59 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.</p>
+      <div class="lp-cta">
+        <a class="pw-btn pw-btn--primary" href="demo/"><span>Open the live demo</span></a>
+        <a class="pw-btn pw-btn--secondary" href="catalogue/"><span>Browse all components</span></a>
+      </div>
+    </section>
+    <img class="lp-shot" src="images/overview-dark.png" alt="The overview page of the demo app built with Pairwise, in the dark theme">
+    <h2 class="pw-heading lp-h2">A complete app, built only from the package</h2>
+    <div class="lp-cards">
+      <a class="lp-card" href="demo/#/overview">
+        <img src="images/overview-dark.png" alt="Overview screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Overview</span>
+        <span class="pw-muted">The whole estate at a glance: one open incident stands out, healthy services stay quiet.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/services/checkout-api">
+        <img src="images/service-health-dark.png" alt="Service health screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Service health</span>
+        <span class="pw-muted">Observability: metrics with context, latency against the SLO, errors by type, endpoints worst first. Updates live.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/incidents/INC-2041">
+        <img src="images/incident-dark.png" alt="Incident screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Incident</span>
+        <span class="pw-muted">Severity, customer impact, the latency regression marked on the chart, responders and a live timeline.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/deploys">
+        <img src="images/deployments-dark.png" alt="Deployments screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Deployments</span>
+        <span class="pw-muted">Delivery metrics, deploys by outcome, a canary in progress, and every rollout with a rollback one click away.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/runs/run_8f3k2">
+        <img src="images/run-detail-dark.png" alt="CI run detail screen, dark theme" loading="lazy">
+        <span class="pw-subheading">CI run detail</span>
+        <span class="pw-muted">Developer platform: a checks matrix shows new versus flaky failures, the failing log, run history and steps.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/usage">
+        <img src="images/usage-dark.png" alt="Usage and cost screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Usage and cost</span>
+        <span class="pw-muted">Spend against budget, cost by category or team, model tokens by hour, and workspaces near their limit.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/access">
+        <img src="images/access-dark.png" alt="Access screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Access</span>
+        <span class="pw-muted">Members with inline role changes, an invite form with validation, API tokens and the audit log.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/repos/sample-repo">
+        <img src="images/settings-dark.png" alt="Repository settings screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Repository settings</span>
+        <span class="pw-muted">Everyday SaaS: validation that says how to fix it, toggles, toasts, and a type-to-confirm delete.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+      <a class="lp-card" href="demo/#/services">
+        <img src="images/services-dark.png" alt="Services screen, dark theme" loading="lazy">
+        <span class="pw-subheading">Services</span>
+        <span class="pw-muted">A filterable, sortable list of services with status and error budget, worst first.</span>
+        <span class="pw-linkbtn">Open in the live demo</span>
+      </a>
+    </div>
+    <h2 class="pw-heading lp-h2">Responsive down to a phone</h2>
+    <div class="lp-phones">
+      <img src="images/phone-overview-dark.png" alt="Overview on a phone" loading="lazy"><img src="images/phone-incident-dark.png" alt="Incident on a phone" loading="lazy"><img src="images/phone-run-detail-dark.png" alt="CI run on a phone" loading="lazy">
+    </div>
+    <h2 class="pw-heading lp-h2">How it stays consistent</h2>
+    <ul class="lp-points">
+      <li><b>One source of truth</b><span class="pw-muted">Every colour, space and type style lives in tokens.json, generated into CSS variables and typed names.</span></li>
+      <li><b>Signal, not decoration</b><span class="pw-muted">Neutral chrome. Critical is the only colour that asks for action. Status is always icon, label and colour.</span></li>
+      <li><b>Accessible by test</b><span class="pw-muted">Contrast floors and a colour-blind-safe chart palette are unit tests. Radix provides focus and keyboard behaviour.</span></li>
+      <li><b>Typed end to end</b><span class="pw-muted">Strict TypeScript with zero any. Tables infer your row type; type tests run against the built package.</span></li>
+      <li><b>Refactors proven pixel-identical</b><span class="pw-muted">Every component is screenshotted in both themes and densities and diffed before a change merges.</span></li>
+      <li><b>Built for AI agents</b><span class="pw-muted">Agents in every project read one generated COMPONENTS.md and use the system instead of inventing UI.</span></li>
+    </ul>
+  </main>
+  <footer class="lp-foot pw-caption">Every screen on this site is built only from <code class="pw-mono">@pairwise/ui</code>. All data is fictional. Source, rules and build reports are on GitHub.</footer>
+</div></body></html>

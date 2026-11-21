@@ -1,0 +1,23 @@
+<!-- @dsCard group="Inputs & navigation" height=150 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SegmentedControl</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){ var v=useState('list'), r=useState('1m');
+  return row(
+    cell('View mode', h(C.SegmentedControl,{label:'View',value:v[0],onChange:v[1],options:[{value:'list',label:'List'},{value:'board',label:'Board'},{value:'timeline',label:'Timeline',disabled:true}]})),
+    cell('Auto-refresh (sm)', h(C.SegmentedControl,{label:'Auto-refresh',size:'sm',value:r[0],onChange:r[1],options:[{value:'off',label:'Off'},{value:'30s',label:'30 s'},{value:'1m',label:'1 min'},{value:'5m',label:'5 min'}]})),
+    cell('Disabled', h(C.SegmentedControl,{label:'Range',disabled:true,defaultValue:'7d',options:['24h','7d','30d']})));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>
