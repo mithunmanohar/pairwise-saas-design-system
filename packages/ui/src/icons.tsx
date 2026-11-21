@@ -1,5 +1,5 @@
 import type * as React from "react";
-import type { IconProps } from "./types";
+import type { IconProps, EntityKind } from "./types";
 
 // One icon set: 16px grid, 1.5 stroke, square-ish terminals. Drawn for this system.
 const P = {
@@ -55,6 +55,14 @@ const P = {
   calendar: <g><rect x="2.5" y="3.5" width="11" height="10"/><path d="M2.5 6.75h11M5.5 2v3M10.5 2v3"/></g>,
   plus: <path d="M8 3.5v9M3.5 8h9"/>,
   file: <g><path d="M3.75 1.75h5.5l3 3v9.5h-8.5z"/><path d="M9.25 1.75v3h3"/></g>,
+  building: <g><path d="M3 14V2.75h7V14M10 6.25h3.25V14M1.75 14h12.5"/><path d="M5.25 5h2.5M5.25 7.75h2.5M5.25 10.5h2.5"/></g>,
+  briefcase: <g><rect x="2" y="5" width="12" height="8.25"/><path d="M5.75 5V3h4.5v2M2 8.75h12"/></g>,
+  users: <g><circle cx="6" cy="5.5" r="2.25"/><path d="M1.75 13.25c.5-2.2 2.1-3.5 4.25-3.5s3.75 1.3 4.25 3.5"/><path d="M10.25 3.5a2.25 2.25 0 0 1 0 4.25M11.75 9.9c1.35.45 2.2 1.6 2.5 3.35"/></g>,
+  flag: <g><path d="M3.5 14.25V2"/><path d="M3.5 2.75h8.75l-1.75 3 1.75 3H3.5"/></g>,
+  folder: <path d="M2 3.25h4.25l1.5 1.75h6.25v7.75H2z"/>,
+  "git-repo": <g><path d="M4 2.25h8.75v9.5H4.75a1.5 1.5 0 0 0-1.5 1.5V3A.75.75 0 0 1 4 2.25z"/><path d="M3.25 13.25a1.5 1.5 0 0 0 1.5 1.5h1.5M8 12.25v2.5l1-.75 1 .75v-2.5"/></g>,
+  globe: <g><circle cx="8" cy="8" r="5.75"/><path d="M2.25 8h11.5M8 2.25c1.6 1.6 2.4 3.5 2.4 5.75S9.6 12.15 8 13.75C6.4 12.15 5.6 10.25 5.6 8S6.4 3.85 8 2.25z"/></g>,
+  "level-up": <path d="M5 6.5 8 3.5l3 3M8 3.5v9"/>,
   columns: <g><rect x="2.5" y="2.75" width="11" height="10.5"/><path d="M6.25 2.75v10.5M9.75 2.75v10.5"/></g>,
 } satisfies Record<string, React.ReactElement>;
 
@@ -83,3 +91,18 @@ export function Icon({ name, size = 16, title, className }: IconProps) {
 }
 /** The line icons (status glyphs excluded), for pickers and docs. */
 export const iconNames = Object.keys(P) as Array<keyof typeof P>;
+
+/**
+ * The icon and word for each kind of owned thing. Kinds are told apart by icon and label, never by colour (Signal keeps
+ * colour for status). Use these everywhere an entity is named: trees, the scope picker, table rows, page headers.
+ */
+export const entityIcon: Record<EntityKind, IconName> = {
+  company: "building", function: "briefcase", squad: "users", initiative: "flag", project: "folder",
+  repository: "git-repo", pipeline: "pipeline", webapp: "globe", infrastructure: "server", dataset: "database",
+  model: "chip", resources: "layers",
+};
+export const entityLabel: Record<EntityKind, string> = {
+  company: "Company", function: "Business function", squad: "Squad", initiative: "Initiative", project: "Project",
+  repository: "Repository", pipeline: "Pipeline", webapp: "Web app", infrastructure: "Infrastructure", dataset: "Dataset",
+  model: "Model", resources: "Resources",
+};

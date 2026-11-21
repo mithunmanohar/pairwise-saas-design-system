@@ -799,3 +799,12 @@ a.pw-btn { text-decoration: none; }
   .pw-range { flex-direction: column; }
   .pw-range__presets { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 0 var(--space-3); border-right: 0; border-bottom: 1px solid var(--border); }
 }
+
+/* ---------- Hierarchy (2.1): breadcrumb folding, entity kind eyebrow ---------- */
+.pw-crumbs__item { display: inline-flex; align-items: center; gap: 4px; }
+.pw-crumbs__more { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink-muted); font: inherit; cursor: pointer; }
+.pw-crumbs__more:hover, .pw-crumbs__more[data-state="open"] { background: var(--surface-hover); color: var(--ink); }
+.pw-kind { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink-muted); font-size: 12px; line-height: 16px; }
+.pw-kind__label { letter-spacing: .04em; text-transform: uppercase; }
+.pw-kind__detail { margin-left: -2px; }
+.pw-kind__detail b { color: var(--ink); font-weight: 600; }

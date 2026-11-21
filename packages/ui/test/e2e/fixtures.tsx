@@ -5,7 +5,7 @@ import {
   ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
   Switch, Tabs, TabPanel, TextInput, Toaster, toast, Tooltip, TimeRangePicker, SegmentedControl, StatusGrid, BarChart, Heatmap,
   Pagination, ColumnsMenu, FilterBar, RadioGroup, Combobox, DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup,
-  ProgressBar, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
+  ProgressBar, Breadcrumbs, PageHeader, ScopeSwitcher, entityIcon, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
 } from "../../src/index";
 
 const { useState } = React;
@@ -340,9 +340,32 @@ function IntegrationFixture() {
   );
 }
 
+function HierarchyBasicsFixture() {
+  const [went, setWent] = useState("none");
+  const [dims, setDims] = useState({ env: "prod", region: "region-a", cluster: "cluster-1", ns: "forecasting" });
+  const path = [
+    { label: "Example Company", href: "#/explorer/company", icon: entityIcon.company },
+    { label: "Data and analytics", href: "#/explorer/fn", icon: entityIcon.function },
+    { label: "ML engineering", href: "#/explorer/squad", icon: entityIcon.squad },
+    { label: "AI transformation", href: "#/explorer/ai", icon: entityIcon.initiative },
+    { label: "Forecasting platform", icon: entityIcon.project },
+  ];
+  return (
+    <div style={{ display: "grid", gap: 24 }}>
+      <PageHeader title="Forecasting platform" kind={{ label: "Project", icon: entityIcon.project, detail: <>owned by <b>AI transformation</b></> }}
+        crumbs={<Breadcrumbs items={path} maxItems={3} onNavigate={(i) => setWent(i.label)} />} />
+      <ScopeSwitcher dimensions={(["env", "region", "cluster", "ns"] as const).map((k) => ({
+        key: k, label: { env: "Environment", region: "Region", cluster: "Cluster", ns: "Namespace" }[k], value: dims[k],
+        options: { env: ["prod", "staging"], region: ["region-a", "region-b"], cluster: ["cluster-1", "cluster-2"], ns: ["forecasting", "reco"] }[k],
+        onChange: (v: string) => setDims({ ...dims, [k]: v }) }))} />
+      <output data-testid="state">{went + "|" + Object.values(dims).join("/")}</output>
+    </div>
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
   foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
-  "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
+  "hierarchy-basics": HierarchyBasicsFixture, "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
 };

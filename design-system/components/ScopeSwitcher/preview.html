@@ -1,4 +1,4 @@
-<!-- @dsCard group="Inputs & navigation" height=110 -->
+<!-- @dsCard group="Inputs & navigation" height=190 -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>ScopeSwitcher</title>
 <style>
@@ -14,9 +14,14 @@ var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState =
 function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
 function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
 
+function Dims(){ var d=useState({env:'prod',region:'region-a',cluster:'cluster-1',ns:'forecasting'}), v=d[0];
+  var opts={env:['prod','staging'],region:['region-a','region-b'],cluster:['cluster-1','cluster-2'],ns:['forecasting','reco']}, lab={env:'Environment',region:'Region',cluster:'Cluster',ns:'Namespace'};
+  return h(C.ScopeSwitcher,{dimensions:['env','region','cluster','ns'].map(function(k){return {key:k,label:lab[k],value:v[k],options:opts[k],onChange:function(x){var n=Object.assign({},v);n[k]=x;d[1](n);}};})});
+}
 function Demo(){ var s=useState({env:'prod',cloud:'cloud-a',cluster:'cluster-prod-1'});
   var o={env:['prod','staging','dev'],cloud:['cloud-a','cloud-b (planned)','cloud-c (planned)'],cluster:['cluster-prod-1','cluster-prod-2','cluster-stg-1','All clusters']};
-  return h(F,null,row(cell('Full (1440 px)',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1]})),cell('Compact (1280 px and tablet): cluster moves into page filters',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1],compact:true}))));
+  return h(F,null,row(cell('Full (1440 px)',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1]})),cell('Compact (1280 px and tablet): cluster moves into page filters',h(C.ScopeSwitcher,{scope:s[0],options:o,onChange:s[1],compact:true}))),
+    row(cell('Any runtime dimensions (dimensions)',h(Dims))));
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));

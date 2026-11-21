@@ -1,4 +1,4 @@
-export { Icon, iconNames } from "./icons";
+export { Icon, iconNames, entityIcon, entityLabel } from "./icons";
 export { cx, Button, StatusBadge, StatusDot, SeverityMark, Trend, Tooltip, TooltipProvider, SegmentedControl, TabPanel, MenuSelect, TIME_RANGES, TimeRangePicker, ScopeSwitcher, GlobalSearch, FilterBar, Breadcrumbs, Tabs, Panel, Metric, Skeleton, StateBlock, AlertBanner, Toast, ToastRegion, Drawer, Modal, Sparkline, Popover, PopoverClose } from "./core";
 export { DataTable, Pagination, ColumnsMenu, TimeSeriesChart, Legend, BarChart, RunStrip, Heatmap, StatusGrid, BulletBar, Timeline } from "./data";
 export { NAV, SideNav, TopBar, AppShell, PageHeader } from "./shell";

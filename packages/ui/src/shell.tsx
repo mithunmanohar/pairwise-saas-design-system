@@ -107,7 +107,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
 }
 
 const isFields = (m: PageHeaderProps["meta"]): m is PageHeaderField[] => Array.isArray(m);
-export function PageHeader({ crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
+export function PageHeader({ kind, crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
   // meta: a short sentence, or structured fields [{label, value, mono?}] (preferred over dot-joined strings)
   const metaEl = isFields(meta)
     ? <KeyValueList layout="inline" items={meta} />
@@ -117,6 +117,7 @@ export function PageHeader({ crumbs, title, titleMono, status, meta, actions, ta
       {crumbs || back ? <div className="pw-pagehead__nav">{back}{crumbs}</div> : null}
       <div className="pw-pagehead__row">
         <div className="pw-pagehead__t">
+          {kind ? <span className="pw-kind">{kind.icon ? <Icon name={kind.icon} size={14} /> : null}<span className="pw-kind__label">{kind.label}</span>{kind.detail ? <span className="pw-kind__detail"> · {kind.detail}</span> : null}</span> : null}
           <div className="pw-pagehead__tl"><h1 className={cx("pw-title", titleMono && "pw-title--mono")}>{title}</h1>{status}</div>
           {metaEl}
         </div>

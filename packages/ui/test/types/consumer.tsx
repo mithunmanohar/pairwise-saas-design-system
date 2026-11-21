@@ -1,6 +1,6 @@
 // Type-level tests against the built package (dist/*.d.ts), resolved through package.json "exports".
 // Run by `pnpm typecheck` after `pnpm build`. A line marked @ts-expect-error must stay an error.
-import { Field, Popover, PopoverClose, iconNames, type IconName, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup, ProgressBar, parseISODate, toISODate, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
+import { ScopeSwitcher, Breadcrumbs, PageHeader, entityIcon, entityLabel, type EntityKind, Field, Popover, PopoverClose, iconNames, type IconName, SegmentedControl, Pagination, ColumnsMenu, RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup, ProgressBar, parseISODate, toISODate, DataTable, MenuSelect, TopBar, TimeSeriesChart, SideNav, NAV, Icon, Legend, TextInput, Textarea, Select, Checkbox, Switch, ActionMenu, CopyButton, Tag, CodeBlock, Toaster, toast, Button, type Column } from "@pairwise/ui";
 import { createRef } from "react";
 import { createFormatter } from "@pairwise/ui/format";
 import { color, fonts, motion, layer, type ColorToken, type FontPreset } from "@pairwise/ui/tokens";
@@ -109,3 +109,14 @@ export const badSingle = <Combobox label="Owner" value={["a"]} options={[]} />;
 export const badUpload = <FileUpload label="Files" files={[{ id: "1", name: "a", size: 1, status: "failed" }]} />;
 // @ts-expect-error avatar sizes are 20 | 28 | 32 | 36
 export const badAvatar = <Avatar name="Dev A" size={30} />;
+
+// 2.1: entity kinds, runtime dimensions, folding breadcrumbs, PageHeader kind.
+export const v21 = [
+  <ScopeSwitcher dimensions={[{ key: "ns", label: "Namespace", value: "a", options: ["a", "b"], onChange: (v) => v.trim() }]} compact label="Runtime" />,
+  <ScopeSwitcher scope={{ env: "prod", cloud: "a", cluster: "b" }} options={{ env: [], cloud: [], cluster: [] }} onChange={(s) => s.env} />,
+  <Breadcrumbs maxItems={3} items={[{ label: "Example Company", icon: entityIcon.company, href: "#/c" }, { label: "AI transformation" }]} onNavigate={(i) => i.icon} />,
+  <PageHeader title="AI transformation" kind={{ label: entityLabel.initiative, icon: entityIcon.initiative, detail: "owned by ML engineering" }} />,
+];
+export const kind: EntityKind = "initiative";
+// @ts-expect-error unknown entity kind
+export const badKind: EntityKind = "tribe";

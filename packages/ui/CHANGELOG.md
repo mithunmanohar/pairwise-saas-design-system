@@ -3,6 +3,25 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
+## 2.1.0 (unreleased)
+
+Ownership hierarchy and scope: a Resource Explorer, one ownership scope carried across pages, and tables with List
+and Tree views. Every API change is additive. Entries are added as each stage lands.
+
+- **Entity kinds (new):**
+  - `EntityKind` (company, function, squad, initiative, project, repository, pipeline, webapp, infrastructure,
+    dataset, model, resources).
+  - `entityIcon` and `entityLabel` maps.
+  - New icons `building`, `briefcase`, `users`, `flag`, `folder`, `git-repo`, `globe`, `level-up`.
+  - Kinds are told apart by icon and word, never by colour.
+- **ScopeSwitcher `dimensions` (new):** any runtime dimensions (environment, region, cluster, namespace…), plus a
+  `label` for the group. The 1.x `scope` + `options` props still work. `ScopeOptions` and `ScopeDimension` types.
+- **Breadcrumbs `maxItems` (new):** the levels above fold into a "…" menu (Radix DropdownMenu) and the current page
+  always shows. Items take an `icon`.
+- **PageHeader `kind` (new):** the eyebrow above an entity's title, e.g. "Initiative · owned by ML engineering".
+- **Token:** `explorer-width` (320 px) for the Resource Explorer's tree pane.
+- **New dependency:** `react-aria-components` (Apache-2.0), for trees.
+
 ## 2.0.0 (2026-11-20)
 
 Pairwise 2.0 keeps the same Signal look, with sturdier interaction, accessibility and coverage.
