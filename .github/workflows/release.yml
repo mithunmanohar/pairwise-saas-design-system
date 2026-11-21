@@ -2,40 +2,69 @@ name: Release
 
 # Push a tag like v1.2.0 (matching packages/ui/package.json) to release. The built package is pushed to the
 # tag ui-v1.2.0, which projects install with:  pnpm add github:<owner>/<repo>#ui-v1.2.0
+# To (re)release a tag that already exists, e.g. after a failed run: Actions → Release → Run workflow, with the tag.
+# The run builds exactly the tagged commit, using this workflow file.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The existing release tag to build and publish, e.g. v2.1.0
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Chromium for the keyboard, focus and axe tests that `pnpm run ci` runs (packages/ui/test/e2e)
+      - run: pnpm -C packages/ui exec playwright install --with-deps chromium
       - run: pnpm run ci
       - name: Tag must match the package version
-        run: test "v$(node -p "require('./packages/ui/package.json').version")" = "$GITHUB_REF_NAME"
-      - run: node scripts/pack-release.mjs "$RUNNER_TEMP/pkg"
-      - name: Push the built package to ui-${{ github.ref_name }}
+        run: |
+          test "v$(node -p "require('./packages/ui/package.json').version")" = "$TAG"
+      - run: |
+          node scripts/pack-release.mjs "$RUNNER_TEMP/pkg"
+      - name: Push the built package to ui-${{ env.TAG }}
         working-directory: ${{ runner.temp }}/pkg
         run: |
+          URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --tags "$URL" "refs/tags/ui-$TAG" > /dev/null; then
+            echo "ui-$TAG already exists; leaving it as it is"
+            exit 0
+          fi
           git init -q -b release
           git add -A
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -q -m "@pairwise/ui ${GITHUB_REF_NAME#v}"
-          git tag "ui-$GITHUB_REF_NAME"
-          git push "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "ui-$GITHUB_REF_NAME"
-      - name: GitHub release
+            commit -q -m "@pairwise/ui ${TAG#v}"
+          git tag "ui-$TAG"
+          git push "$URL" "ui-$TAG"
+      - name: GitHub release, with this version's CHANGELOG section as notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --title "@pairwise/ui ${GITHUB_REF_NAME#v}" \
-            --notes "Install or update: \`pnpm add github:${{ github.repository }}#ui-$GITHUB_REF_NAME\`. What changed: packages/ui/CHANGELOG.md."
+          VERSION="${TAG#v}"
+          {
+            printf 'Install or update: `pnpm add github:%s#ui-%s`\n\n' "$GITHUB_REPOSITORY" "$TAG"
+            awk -v v="$VERSION" 'index($0, "## " v " ") == 1 || $0 == "## " v { p = 1; next } p && /^## / { exit } p' packages/ui/CHANGELOG.md
+          } > "$RUNNER_TEMP/notes.md"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "@pairwise/ui $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "@pairwise/ui $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
+          fi
