@@ -111,10 +111,49 @@ These checks are unit tests on `tokens.json`; a token change that fails them fai
   a still, half-tone bar.
 - **No raw durations or z-index values** in component CSS: the lint fails on them.
 
+## Ownership, scope and hierarchy
+
+For apps whose content is owned in a hierarchy (company → business function → squad → initiative → project, with
+repositories, pipelines, services and other resources at any level). **Organise by ownership, navigate by scope,
+operate by capability.**
+
+1. **Three independent contexts**, all in the top bar and the URL, kept on every page:
+   - **ownership scope:** a node in the hierarchy (`ScopePicker`);
+   - **runtime scope:** environment, region, cluster (`ScopeSwitcher` with `dimensions`);
+   - **time range** (`TimeRangePicker`).
+   Ownership and runtime never mix in one tree or one picker.
+2. **The full hierarchy appears in two places only:** the Resource Explorer (`SplitView` + `TreeView`) and the
+   scope picker's popover. Everywhere else shows the current node once (icon, name and kind), with the full path on
+   hover. Don't repeat the levels above the scope on every page.
+3. **The side nav lists capabilities, never entities:** Explore, Build, Operate, Finance, Manage. Every capability
+   page reads the ownership scope. A page that stays organisation-wide (a landing overview) says so in its header.
+4. **Say what a page covers.** A `ScopeNote` ("Showing AI transformation and its 2 projects, in prod / region-a")
+   sits above the scoped table. A figure that stays organisation-wide on a scoped page says so ("whole
+   organisation").
+5. **Aggregate up, detail down.**
+   - Higher levels show rollups; lower levels show the resources.
+   - Every count says whether it is direct or includes descendants ("0 direct · 7 with everything below").
+   - Scoped pages include descendants by default, with Direct only one click away.
+6. **Status rolls up worst-first** with a count ("1 failing below") that leads to the cause; healthy stays quiet.
+   It is the status grammar applied to the tree.
+7. **Tables of owned items offer List and Tree** (`DataTable getPath`).
+   - **List:** each row's path *below the scope* as a muted line; rows the scope owns read "Owned by …".
+   - **Tree:** grouped by that path, with rollups on collapsed rows ("–" where a column doesn't add up).
+8. **The tree shows ownership only.** Relationships between resources (a repository's pipelines, a service's
+   infrastructure) are "Related" lists on the resource's page, not tree edges.
+9. **Resources never become tree leaves one by one.** A node ends in "Resources" groups by type (Services 2,
+   Repositories 1), loaded when opened.
+10. **Kinds are told apart by icon and word, never by colour** (`entityIcon`, `entityLabel`). Signal has no accent
+    hue, and the hierarchy doesn't get one.
+11. **Access:** people see the nodes they can open. A parent they can't open shows as greyed context with a lock,
+    so the shape of the organisation still reads.
+12. **Narrow screens:** below 1024 px the tree opens in a drawer that closes once a node is picked; the workspace's
+    child list and its breadcrumb drill down from there.
+
 ## Principles
 
 1. **Exceptions first; healthy is quiet.** Problems get filled colour and sort to the top.
-2. **One time range, one scope, everywhere.** They live in the top bar and the URL, travel through every drill-down, and survive back navigation and shared links.
+2. **One time range, one scope, everywhere.** The time range, the ownership scope and the runtime scope live in the top bar and the URL, travel through every drill-down, and survive back navigation and shared links.
 3. **Every chart shows what changed.** Change markers appear on every time series by default.
 4. **Status is word + shape + colour.** Badges are icon + label, charts use decals, and severity uses bar count.
 5. **No dead ends.** Every number links to the list behind it. Every object links to its parent, its changes and its problems.

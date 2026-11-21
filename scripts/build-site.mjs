@@ -48,7 +48,7 @@ const card = (route, img, title, body) => `
 writeFileSync(join(OUT, "index.html"), `<!doctype html>
 <html lang="en" data-theme="dark" data-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pairwise: a production-grade design system for AI applications and multi-tenant SaaS</title>
-<meta name="description" content="Design tokens and 42 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
+<meta name="description" content="Design tokens and 59 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
 <link rel="stylesheet" href="catalogue/tokens.css"><link rel="stylesheet" href="catalogue/components/bundle.css">
 <style>
 body { margin: 0; }
@@ -83,7 +83,7 @@ body { margin: 0; }
   <main>
     <section class="lp-hero">
       <h1>A production-grade design system for AI applications and multi-tenant SaaS</h1>
-      <p>Design tokens and 42 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.</p>
+      <p>Design tokens and 59 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.</p>
       <div class="lp-cta">
         <a class="pw-btn pw-btn--primary" href="demo/"><span>Open the live demo</span></a>
         <a class="pw-btn pw-btn--secondary" href="catalogue/"><span>Browse all components</span></a>

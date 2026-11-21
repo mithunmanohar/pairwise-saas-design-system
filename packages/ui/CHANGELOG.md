@@ -3,10 +3,12 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
-## 2.1.0 (unreleased)
+## 2.1.0 (2026-11-21)
 
 Ownership hierarchy and scope: a Resource Explorer, one ownership scope carried across pages, and tables with List
-and Tree views. Every API change is additive. Entries are added as each stage lands.
+and Tree views. Every API change is additive, so 2.0 code builds unchanged. The rules are in GUIDELINES "Ownership,
+scope and hierarchy" and DECISIONS #25–28. The demo has a Resource Explorer (`#/explorer`), the scope in the URL
+(`?scope=`), and every list page filtered by it.
 
 - **Entity kinds (new):**
   - `EntityKind` (company, function, squad, initiative, project, repository, pipeline, webapp, infrastructure,

@@ -793,4 +793,5 @@ a.pw-btn { text-decoration: none; }
   .pw-tabletools { padding: var(--space-3) var(--space-4); }
   .pw-scopechip { max-width: 200px; }
   .pw-scopechip__kind { display: none; }
+  .pw-topbar__divider { display: none; }
 }

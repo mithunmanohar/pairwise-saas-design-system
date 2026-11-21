@@ -51,7 +51,8 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 ## Layout
 
 - One shell (`AppShell`): `SideNav` + `TopBar` + page. The rail is expanded at ≥ 1360 px, collapsed to icons at 1024–1359 px, and behind a menu below 1024 px. At phone width (≤ 640 px) the top bar takes two rows and page headers stack.
-- Scope (organisation / repository / branch) and time range are global. They live in the URL and travel through every drill-down. Back navigation restores them, along with page filters.
+- Three contexts are global: the **ownership scope** (a team, initiative or project, `ScopePicker`), the **runtime scope** (environment / region / cluster, `ScopeSwitcher`) and the **time range**. They live in the URL and travel through every drill-down. Back navigation restores them, along with page filters. The ownership hierarchy is shown in full only in the Resource Explorer and the scope picker (see "Ownership, scope and hierarchy" in [`GUIDELINES.md`](GUIDELINES.md)).
+- The side nav lists capabilities (Explore, Build, Operate, Finance, Manage), never entities.
 - **One focal section per page**, full width or in the wide column: the thing the person came for (what needs review, the failing check, the run's diff). Context goes in a narrower right column. Use three to five panels per page and no rows of equal tiles.
 - Lists sort worst-first. Every number links to the filtered list behind it. Every time series shows change markers.
 - Design all five non-happy states for every panel: loading (skeleton), empty (why + next step), error (which source; the rest still works), degraded (stale values, greyed, with their age), and no access (owner + request path).
@@ -59,12 +60,12 @@ See also: [`GUIDELINES.md`](GUIDELINES.md) (status grammar, overload rules, char
 ## Iconography
 
 - One 16 px line set drawn for this system (`Icon`, see `iconNames`), with a 1.5 stroke and square terminals. Five filled status glyphs.
-- Icons only where they aid scanning: nav, status, trace event kinds, and icon-only buttons (with `aria-label`). Never decorate headings.
+- Icons only where they aid scanning: nav, status, trace event kinds, entity kinds (`entityIcon`: building, briefcase, users, flag, folder, git-repo…, always beside the kind's word), and icon-only buttons (with `aria-label`). Never decorate headings.
 
 ## Using the components
 
 Apps install `@pairwise/ui` (ESM + types); see `packages/ui/README.md`. The preview cards here load the same code as a generated `components/bundle.js` (`window.Pairwise`).
 
-Charts are lightweight SVG and the table is our own; both are enough for operational dashboards. Every overlay, menu, tab, toast and form primitive is Radix; search, commands and comboboxes are cmdk; calendars are react-day-picker. All are styled with the `pw-` classes and tokens, never their own styles. Runtime dependencies are MIT or OFL; axe-core (MPL-2.0) is a dev-only test tool (DECISIONS #19).
+Charts are lightweight SVG and the table is our own; both are enough for operational dashboards. Every overlay, menu, tab, toast and form primitive is Radix; search, commands and comboboxes are cmdk; calendars are react-day-picker; trees are React Aria Components. All are styled with the `pw-` classes and tokens, never their own styles. Runtime dependencies are MIT, Apache-2.0 or OFL; axe-core (MPL-2.0) is a dev-only test tool (DECISIONS #19).
 
 Forms, overlays and motion each have rules in [`GUIDELINES.md`](GUIDELINES.md).

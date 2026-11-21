@@ -64,13 +64,14 @@ export function App() {
 
 - **Actions and status:** Button (`asChild` for links), ActionMenu, CopyButton, StatusBadge, StatusDot, SeverityMark, Trend, Tag, Icon (typed `IconName`), Avatar, AvatarGroup
 - **Forms:** Field, TextInput, Textarea, Select, Checkbox (indeterminate), Switch, RadioGroup, Combobox (single, multiple, creatable), DatePicker, DateRangePicker, InlineEdit, FileUpload, SegmentedControl, MenuSelect (compact filter menu), FilterBar, TimeRangePicker
-- **Navigation and layout:** AppShell, SideNav, TopBar, PageHeader, Breadcrumbs, Tabs (+ TabPanel), Panel, GlobalSearch (search and commands), ScopeSwitcher
+- **Navigation and layout:** AppShell, SideNav, TopBar, PageHeader, Breadcrumbs, Tabs (+ TabPanel), Panel, GlobalSearch (search and commands), ScopeSwitcher (runtime dimensions)
+- **Ownership hierarchy:** TreeView, ScopePicker, SplitView (explorer layout), ScopeNote, `entityIcon` / `entityLabel` for entity kinds; TopBar `ownership`; DataTable `getPath` for List and Tree views with column rollups
 - **Feedback and overlays:** AlertBanner, `toast()` + Toaster, Toast, StateBlock, Skeleton, ProgressBar, Tooltip (+ TooltipProvider), Popover, Modal, Drawer
 - **Data:** DataTable (sorting, paging, selection, bulk and row actions, column visibility, server mode), Pagination, ColumnsMenu, KeyValueList, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
 - **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend (every chart has a table view)
 - **Helpers:** `cx`, `toISODate` / `parseISODate`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values, including `motion` and `layer` (`@pairwise/ui/tokens`)
 
-Behaviour comes from Radix, cmdk and react-day-picker, styled only with Pairwise tokens. Every component is checked
+Behaviour comes from Radix, cmdk, react-day-picker and React Aria (trees), styled only with Pairwise tokens. Every component is checked
 with keyboard tests and axe in light and dark (`packages/ui/test/e2e`).
 
 Browse them all, live: open `design-system/catalogue.html` from the repo in a browser. Every component's usage notes and
