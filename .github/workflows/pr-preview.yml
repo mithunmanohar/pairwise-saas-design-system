@@ -50,7 +50,9 @@ jobs:
 
       - if: github.event.action == 'closed'
         name: Remove the preview
-        run: node scripts/publish-pages.mjs --to "pr-preview/pr-$PR" --remove --message "Remove the preview of pull request #$PR"
+        # A block, not a one-line value: in YAML " #" starts a comment and would cut the command short.
+        run: |
+          node scripts/publish-pages.mjs --to "pr-preview/pr-$PR" --remove --message "Remove the preview of pull request #$PR"
 
       - name: Link the preview on the pull request
         run: |
