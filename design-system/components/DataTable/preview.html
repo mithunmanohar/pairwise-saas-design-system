@@ -1,4 +1,4 @@
-<!-- @dsCard group="Data display" height=900 -->
+<!-- @dsCard group="Data display" height=1260 -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>DataTable</title>
 <style>
@@ -25,8 +25,18 @@ function Selectable(){ var sel=useState([runs[0].id,runs[2].id,runs[3].id]), hid
       bulkActions:function(keys){return h(F,null,h(C.Button,{size:'sm',icon:'refresh'},'Re-run '+keys.length),h(C.Button,{size:'sm',variant:'danger'},'Cancel runs'));},
       rowActions:function(r){return [{label:'Copy run id',icon:'copy'},{label:'Open in CI provider',icon:'external'},'separator',{label:'Cancel run',tone:'critical'}];}}));
 }
+var FC={id:'pr-fc',label:'Forecasting platform',kind:'project'}, REC={id:'pr-rec',label:'Recommendation engine',kind:'project'};
+var PIPES=[{id:'forecasting-train',st:'critical',cost:1.9,path:[FC,{id:'r1',label:'forecast-models',kind:'repository'}]},{id:'feature-backfill',st:'warning',cost:2.6,path:[FC,{id:'r2',label:'feature-jobs',kind:'repository'}]},{id:'forecasting-eval',st:'healthy',cost:0.4,path:[FC,{id:'r1',label:'forecast-models',kind:'repository'}]},{id:'reco-train',st:'healthy',cost:1.2,path:[REC,{id:'r3',label:'reco-models',kind:'repository'}]},{id:'data-quality',st:'healthy',cost:0.1,path:[]}];
+var W={critical:'Failed',warning:'Retried',healthy:'Passed'};
+function ListTree(){ var v=useState('tree');
+  return h(C.DataTable,{caption:'Pipelines',rows:PIPES,view:v[0],onViewChange:v[1],getPath:function(p){return p.path;},itemNoun:['pipeline','pipelines'],directLabel:'Owned by the initiative',
+    toolbar:h(C.ScopeNote,{scope:'AI transformation',summary:'and its 2 projects'}),
+    columns:[{key:'id',header:'Pipeline',mono:true},{key:'st',header:'Status',render:function(p){return h(C.StatusBadge,{status:p.st,label:W[p.st]});},rollup:{status:function(p){return p.st;},word:function(s){return {critical:'failed',warning:'retried',healthy:'passed'}[s]||s;}}},
+      {key:'cost',header:'Cost, MTD',align:'right',num:true,render:function(p){return '$'+p.cost.toFixed(1)+'k';},rollup:'sum',format:function(n){return '$'+n.toFixed(1)+'k';}}]});
+}
 function Demo(){ return h(F,null,
   cell('Default: worst status first, row expand, critical row tint, sortable', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols,rows:rows,defaultSort:{key:'status',dir:'asc'},rowTone:function(r){return r.status==='critical'?'critical':null;},onRowClick:function(){},pageSize:4,renderExpanded:function(r){return h('div',{className:'pw-mono'},r.id+'-6f8b9d7c4-k2x9q ,  Back-off restarting failed container (exit 137, OOMKilled)');}}))),
+  cell('List | Tree views: path below the scope, rollups on collapsed rows (try Tree)', h('div',{style:{width:'100%',border:'1px solid var(--border)',background:'var(--surface-raised)'}},h(ListTree))),
   cell('Selection, bulk actions, row actions, page size, pinned first column', h('div',{style:{width:'100%',border:'1px solid var(--border)',background:'var(--surface-raised)'}},h(Selectable))),
   h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}},
     cell('Loading', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'loading'}))),

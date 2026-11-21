@@ -1,4 +1,4 @@
-import type { IconName, PopoverProps, ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, SegmentedControlProps, MenuSelectProps, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
+import type { IconName, PopoverProps, ButtonProps, StatusBadgeProps, StatusDotProps, SeverityMarkProps, TrendProps, TooltipProps, SegmentedControlProps, MenuSelectProps, ScopeDimension, BreadcrumbItem, TimeRangePickerProps, ScopeSwitcherProps, GlobalSearchProps, FilterBarProps, BreadcrumbsProps, TabsProps, PanelProps, MetricProps, StateBlockProps, AlertBannerProps, ToastProps, DrawerProps, ModalProps, SparklineProps, SkeletonProps, ToastRegionProps, Option, Scope, SearchItem, Status } from "./types";
 import { createFormatter } from "./format";
 const timeZoneLabel = () => createFormatter({ locale: navigator.language, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, currency: "USD" }).timeZoneLabel();
 import { Icon } from "./icons";
@@ -262,15 +262,23 @@ export function TimeRangePicker({ value = "1h", refresh = "30s", onChange, onRef
 }
 
 /* ---------- Scope switcher ---------- */
-export function ScopeSwitcher({ scope, options, onChange, compact }: ScopeSwitcherProps) {
-  // scope: {env, cloud, cluster}; options: {env:[], cloud:[], cluster:[]}
-  const set = (k: keyof Scope) => (v: string) => onChange && onChange({ ...scope, [k]: v });
+export function ScopeSwitcher({ scope, options, onChange, compact, dimensions, label = "Environment" }: ScopeSwitcherProps) {
+  // Runtime scope: where things run. `dimensions` takes any set; the 1.x scope/options pair is environment / cloud / cluster.
+  const set = (k: keyof Scope) => (v: string) => { if (scope) onChange && onChange({ ...scope, [k]: v }); };
+  const dims: ScopeDimension[] = dimensions ?? (scope && options ? [
+    { key: "env", label: "Environment", value: scope.env, options: options.env, onChange: set("env") },
+    { key: "cloud", label: "Cloud", value: scope.cloud, options: options.cloud, onChange: set("cloud") },
+    { key: "cluster", label: "Cluster", value: scope.cluster, options: options.cluster, onChange: set("cluster") },
+  ] : []);
+  const shown = compact ? dims.slice(0, 2) : dims;
   return (
-    <div className={cx("pw-scope", compact && "is-compact")} role="group" aria-label="Scope">
-      <MenuSelect quiet label="Environment" value={scope.env} options={options.env} onChange={set("env")} />
-      <span className="pw-scope__sep" aria-hidden="true">/</span>
-      <MenuSelect quiet label="Cloud" value={scope.cloud} options={options.cloud} onChange={set("cloud")} />
-      {!compact ? <Fragment><span className="pw-scope__sep" aria-hidden="true">/</span><MenuSelect quiet label="Cluster" value={scope.cluster} options={options.cluster} onChange={set("cluster")} /></Fragment> : null}
+    <div className={cx("pw-scope", compact && "is-compact")} role="group" aria-label={label}>
+      {shown.map((d, i) => (
+        <Fragment key={d.key}>
+          {i ? <span className="pw-scope__sep" aria-hidden="true">/</span> : null}
+          <MenuSelect quiet label={d.label} value={d.value} options={d.options} onChange={d.onChange} />
+        </Fragment>
+      ))}
     </div>
   );
 }
@@ -423,16 +431,44 @@ export function FilterBar({ filters = [], values = {}, onChange, query, onQuery,
 }
 
 /* ---------- Breadcrumbs ---------- */
-export function Breadcrumbs({ items = [], onNavigate }: BreadcrumbsProps) {
+// With maxItems, the earlier levels fold into a "…" menu (Radix DropdownMenu) so a deep path never repeats the levels
+// above the current scope; the current page always shows.
+export function Breadcrumbs({ items = [], onNavigate, maxItems }: BreadcrumbsProps) {
+  const fold = maxItems && maxItems >= 2 && items.length > maxItems ? items.length - (maxItems - 1) : 0;
+  const hidden = items.slice(0, fold), shown = items.slice(fold);
+  const go = (it: BreadcrumbItem) => { if (onNavigate) onNavigate(it); else if (it.href) window.location.href = it.href; };
+  const crumb = (it: BreadcrumbItem, last: boolean) => {
+    const body = <>{it.icon ? <Icon name={it.icon} size={14} /> : null}<span>{it.label}</span></>;
+    return last ? <span aria-current="page" className={cx("pw-crumbs__item", it.mono && "pw-mono")}>{body}</span>
+      : <a href={it.href || "#"} className={cx("pw-crumbs__item", it.mono && "pw-mono")} onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate(it); } }}>{body}</a>;
+  };
   return (
     <nav aria-label="Breadcrumb" className="pw-crumbs">
       <ol>
-        {items.map((it, i) => {
-          const last = i === items.length - 1;
+        {hidden.length ? (
+          <li>
+            <DM.Root>
+              <DM.Trigger asChild>
+                <button type="button" className="pw-crumbs__more" aria-label={`Show ${hidden.length} more level${hidden.length === 1 ? "" : "s"}`}>…</button>
+              </DM.Trigger>
+              <DM.Portal>
+                <DM.Content className="pw-menu" align="start" sideOffset={4} loop>
+                  {hidden.map((it, i) => (
+                    <DM.Item key={i} className="pw-list__item" onSelect={() => go(it)}>
+                      <span className="pw-list__check">{it.icon ? <Icon name={it.icon} size={14} /> : null}</span><span className={cx(it.mono && "pw-mono")}>{it.label}</span>
+                    </DM.Item>
+                  ))}
+                </DM.Content>
+              </DM.Portal>
+            </DM.Root>
+            <span className="pw-crumbs__sep" aria-hidden="true">/</span>
+          </li>
+        ) : null}
+        {shown.map((it, i) => {
+          const last = i === shown.length - 1;
           return (
-            <li key={i}>
-              {last ? <span aria-current="page" className={cx(it.mono && "pw-mono")}>{it.label}</span>
-                : <a href={it.href || "#"} className={cx(it.mono && "pw-mono")} onClick={(e) => { if (onNavigate) { e.preventDefault(); onNavigate(it); } }}>{it.label}</a>}
+            <li key={fold + i}>
+              {crumb(it, last)}
               {!last ? <span className="pw-crumbs__sep" aria-hidden="true">/</span> : null}
             </li>
           );

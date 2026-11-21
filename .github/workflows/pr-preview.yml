@@ -1,0 +1,75 @@
+name: PR preview
+
+# Builds the demo app and the component catalogue from a pull request's branch and publishes them on GitHub Pages at
+# /pr-preview/pr-<number>/, beside the live site, which doesn't change. One comment on the pull request links to the
+# preview and is updated on every push; closing the pull request removes the preview.
+# Same-repository pull requests only (forks get no write token). ci.yml does the testing; this only builds.
+# Needs the Pages source set to the gh-pages branch (see pages.yml).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      SHA: ${{ github.event.pull_request.head.sha }}
+      URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}/
+      GH_TOKEN: ${{ github.token }}
+      MARKER: "<!-- pairwise-pr-preview -->"
+    steps:
+      # The branch's head to build it; on close, the base branch for the scripts.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.action == 'closed' && github.event.pull_request.base.ref || github.event.pull_request.head.sha }}
+
+      - if: github.event.action != 'closed'
+        uses: pnpm/action-setup@v4
+      - if: github.event.action != 'closed'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: github.event.action != 'closed'
+        name: Build and publish the preview
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          node scripts/build-site.mjs _site --preview "pull request #$PR (${SHA::7})"
+          node scripts/publish-pages.mjs --dir _site --to "pr-preview/pr-$PR" --message "Preview pull request #$PR at ${SHA::7}"
+
+      - if: github.event.action == 'closed'
+        name: Remove the preview
+        run: node scripts/publish-pages.mjs --to "pr-preview/pr-$PR" --remove --message "Remove the preview of pull request #$PR"
+
+      - name: Link the preview on the pull request
+        run: |
+          if [ "${{ github.event.action }}" = "closed" ]; then
+            BODY="$MARKER
+          The preview of this pull request was removed when it closed."
+          else
+            BODY="$MARKER
+          **Preview of this pull request** at \`${SHA::7}\`, built from its branch. The live site doesn't change.
+
+          - [Landing page](${URL})
+          - [Demo app](${URL}demo/)
+          - [Component catalogue](${URL}catalogue/)
+
+          GitHub Pages takes a minute or two to update after each push. The preview is removed when the pull request closes."
+          fi
+          ID=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$MARKER\")) | .id" | head -n 1)
+          if [ -n "$ID" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$ID" -f body="$BODY" > /dev/null
+          elif [ "${{ github.event.action }}" != "closed" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$BODY" > /dev/null
+          fi

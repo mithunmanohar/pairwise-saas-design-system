@@ -1,6 +1,6 @@
 # Pairwise: a production-grade design system for AI applications and multi-tenant SaaS
 
-**One set of design tokens and 42 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
+**One set of design tokens and 59 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
 
 **[Live demo](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/)** · **[Component catalogue](https://mithunmanohar.github.io/pairwise-saas-design-system/catalogue/)** · [Site](https://mithunmanohar.github.io/pairwise-saas-design-system/)
 
@@ -34,6 +34,31 @@ The whole estate on one page. The single open SEV2 is the only thing in red; hea
 <details><summary>Light theme</summary>
 
 ![Overview page, light theme](docs/images/screens/overview-light.png)
+</details>
+
+### Ownership: one hierarchy, one scope
+Everything is owned somewhere in a hierarchy: company, business function, squad, initiative, project, and the
+repositories, services and cost workspaces under them. The **Resource explorer** is the only page that shows the whole
+tree. The tree shows each node's worst status with a count (healthy stays quiet), a no-access function stays greyed
+for context, and resources load in groups by type. The workspace has the same tabs for every node (overview,
+resources, delivery, observability, infrastructure, financials), and every count says what it includes ("0 direct · 7
+with everything below").
+
+![Resource explorer with the AI transformation initiative selected, dark theme](docs/images/screens/explorer-dark.png)
+
+The chosen node becomes the **ownership scope** in the top bar. It sits beside the runtime scope (environment / region
+/ cluster), not inside it, and is kept in the URL (`#/runs?scope=fn-commerce`). Every list page then filters by it,
+says what it covers in one line, and shows each row's path *below* the scope, never the levels above it. A switch
+turns any of these tables into a **Tree** grouped by owner, with rollups on collapsed rows: worst status with a count,
+sums, the latest time.
+
+![CI runs scoped to the Commerce function, dark theme](docs/images/screens/runs-scoped-dark.png)
+
+<details><summary>Light theme, the resources tab, and on a phone</summary>
+
+![Resource explorer, light theme](docs/images/screens/explorer-light.png)
+![Resources owned below the AI platform squad, with paths below the scope](docs/images/screens/explorer-resources-dark.png)
+<img src="docs/images/screens/phone-explorer-dark.png" alt="Resource explorer on a phone: the tree opens from a button" width="300">
 </details>
 
 ### Observability: service health
@@ -112,15 +137,15 @@ An app picks its default font with one attribute (`data-font` on `<html>`), and 
 ### Responsive down to a phone
 The side nav collapses to icons below 1360 px and moves behind a menu below 1024 px. Below 640 px the top bar takes two rows, page headers stack, tabs scroll sideways, panels go full width and tables scroll inside their panel. The page itself never scrolls sideways (checked at 1440, 1024, 800, 390 and 360 px).
 
-| Overview | Incident | CI run | Service (light) |
-|---|---|---|---|
-| ![Overview on a phone](docs/images/screens/phone-overview-dark.png) | ![Incident on a phone](docs/images/screens/phone-incident-dark.png) | ![CI run on a phone](docs/images/screens/phone-run-detail-dark.png) | ![Service health on a phone, light theme](docs/images/screens/phone-service-health-light.png) |
+| Overview | Incident | CI run | Service (light) | Explorer |
+|---|---|---|---|---|
+| ![Overview on a phone](docs/images/screens/phone-overview-dark.png) | ![Incident on a phone](docs/images/screens/phone-incident-dark.png) | ![CI run on a phone](docs/images/screens/phone-run-detail-dark.png) | ![Service health on a phone, light theme](docs/images/screens/phone-service-health-light.png) | ![Resource explorer on a phone](docs/images/screens/phone-explorer-dark.png) |
 
 ---
 
 ## Every component, one visual language
 
-55 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
+59 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
 
 <table>
 <tr><td width="50%"><b>Buttons</b><br><img src="docs/images/components/Button.png" alt="Button variants and states"></td><td width="50%"><b>Status: icon + label + colour</b><br><img src="docs/images/components/StatusBadge.png" alt="Status badges and trends"></td></tr>
@@ -150,7 +175,7 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 | **One source of truth** | Every colour, space, radius and type style lives in [`tokens.json`](design-system/tokens.json): 31 colour tokens × 2 themes, 8 spacing steps, 8 type styles. | A small generator emits CSS variables and typed TypeScript names (`ColorToken`), so a typo in a colour name is a compile error. |
 | **Contrast with margin** | Text ≥ 4.8:1 and UI ≥ 3:1 on every surface, both themes. That's above the AA minimum, so rendering differences can't fail it. | Unit tests compute WCAG contrast for every token pair on every run. |
 | **Colour-blind-safe charts** | Five categorical colours whose worst adjacent pair stays ≥ 11 ΔE2000 under normal, protan, deutan and tritan vision (worst case: 14.9 light, 16.2 dark). | Unit tests simulate colour-vision deficiency and fail the build below 11. |
-| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox) and react-day-picker (calendars), styled with our own classes. | 67 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions. axe-core finds no WCAG 2.2 A/AA violations on any of the 55 cards or 9 demo pages, in either theme. |
+| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 84 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions, the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 59 cards or 14 demo routes, in either theme. |
 | **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. Every card is captured and axe-checked in both themes. |
 | **Calm, optional motion** | Menus and popovers fade 4 px from their trigger; dialogs fade in, drawers slide in. Nothing decorative. | Durations and layers are tokens; the lint rejects raw durations and z-index values. `prefers-reduced-motion` sets every duration to 0 ms, which a test checks. |
 | **Writing is design** | Sentence case, verb + object buttons ("Roll back to v2.14.0", never "OK"), errors that say how to fix it, no emoji. | [Guidelines](design-system/GUIDELINES.md) plus every component's README. AI agents read them via `COMPONENTS.md`. |
@@ -168,7 +193,8 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 - **One package, versioned.** `@pairwise/ui` ships ESM, generated `.d.ts`, `tokens.css`, `styles.css` and self-hosted fonts. Releases follow semver with a [CHANGELOG](packages/ui/CHANGELOG.md).
 - **Quality gates on every PR** ([`ci.yml`](.github/workflows/ci.yml)): build, typecheck (package + examples + type tests), the tokens-only lint (colours, layers, durations), unit tests (contrast, colour-vision separation, generators), and Playwright behaviour + axe accessibility tests in Chromium. It also fails if generated files weren't committed.
 - **Refactors proven pixel-identical.** A capture harness ([`scripts/capture-previews.mjs`](scripts/capture-previews.mjs)) screenshots every component in both themes and both densities and diffs them pixel by pixel. Rebuilding the preview kit from the package changed **0 of 180** captures (fonts aside). Moving Modal and Drawer onto Radix (with five new form controls) changed **0 of 132**, and the next five components changed **0 of 152** existing ones. For 2.0, every visible change to an existing card was reviewed in a before/after diff across 2 themes × 2 densities.
-- **Live site on every merge** ([`pages.yml`](.github/workflows/pages.yml)): CI runs, then the demo, catalogue and landing page deploy to GitHub Pages.
+- **Live site on every merge** ([`pages.yml`](.github/workflows/pages.yml)): CI runs, then the demo, catalogue and landing page are published to the `gh-pages` branch, which GitHub Pages serves.
+- **A preview for every pull request** ([`pr-preview.yml`](.github/workflows/pr-preview.yml)): the demo and catalogue built from the PR's branch, at `/pr-preview/pr-<number>/` beside the live site, linked from a comment on the PR and removed when it closes. The live site doesn't change until the merge.
 - **Release pipeline** ([`release.yml`](.github/workflows/release.yml)): push `v1.2.0` and CI builds and verifies the package, then publishes it to a `ui-v1.2.0` git tag. Projects install with one command: no registry, no tokens.
 - **Docs that can't drift.** The catalogue and `COMPONENTS.md` are generated from the same cards and READMEs the components are tested with.
 - **Permissive licences only:** MIT, Apache-2.0 and OFL.
@@ -178,7 +204,7 @@ flowchart LR
   T["tokens.json<br/>(single source of truth)"] --> G["generators"]
   G --> CSS["tokens.css<br/>light/dark × compact/comfortable"]
   G --> TS["typed token names"]
-  CSS --> P["@pairwise/ui<br/>55 components · Radix + cmdk behaviour"]
+  CSS --> P["@pairwise/ui<br/>59 components · Radix, cmdk and React Aria behaviour"]
   TS --> P
   P --> D["catalogue.html + COMPONENTS.md"]
   P --> A1["Ops dashboard"]

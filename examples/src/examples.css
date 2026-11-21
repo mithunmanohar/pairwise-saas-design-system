@@ -70,3 +70,8 @@ html, body, #root, .ex-demo { height: 100%; margin: 0; }
   .ex-metrics { grid-template-columns: minmax(0, 1fr); }
 }
 .ex-period { width: 250px; }
+
+/* Resource explorer (2.1) */
+.ex-kind { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
+.ex-tree { display: grid; gap: var(--space-2); }
+.ex-tree__tools { display: flex; gap: var(--space-1); }

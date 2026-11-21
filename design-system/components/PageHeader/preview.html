@@ -1,4 +1,4 @@
-<!-- @dsCard group="Shell" height=170 width=1100 -->
+<!-- @dsCard group="Shell" height=360 width=1100 -->
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>PageHeader</title>
 <style>
@@ -14,7 +14,7 @@ var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState =
 function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
 function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
 
-function Demo(){ return h('div',{className:'pv-frame'}, h(C.PageHeader,{crumbs:h(C.Breadcrumbs,{items:[{label:'Services & APIs'},{label:'sample-api',mono:true}]}),back:h(C.Button,{variant:'ghost',size:'sm',icon:'arrow-left'},'Platform overview'),title:'sample-api',titleMono:true,status:h(C.StatusBadge,{status:'critical',label:'SLO breach'}),meta:'example-team, Deployment, v2.14.1, owner @example-team-oncall',actions:h(F,null,h(C.Button,{variant:'secondary',icon:'external'},'Dashboards'),h(C.Button,{variant:'primary'},'Open incident')),tabs:h(C.Tabs,{value:'overview',tabs:[{value:'overview',label:'Overview'},{value:'pods',label:'Pods',count:'2 failing',tone:'critical'},{value:'metrics',label:'Metrics'},{value:'logs',label:'Logs'},{value:'changes',label:'Changes',count:3},{value:'cost',label:'Cost'},{value:'config',label:'Config'}]})}));}
+function Demo(){ return h(F,null, h('div',{className:'pv-frame'}, h(C.PageHeader,{crumbs:h(C.Breadcrumbs,{items:[{label:'Services & APIs'},{label:'sample-api',mono:true}]}),back:h(C.Button,{variant:'ghost',size:'sm',icon:'arrow-left'},'Platform overview'),title:'sample-api',titleMono:true,status:h(C.StatusBadge,{status:'critical',label:'SLO breach'}),meta:'example-team, Deployment, v2.14.1, owner @example-team-oncall',actions:h(F,null,h(C.Button,{variant:'secondary',icon:'external'},'Dashboards'),h(C.Button,{variant:'primary'},'Open incident')),tabs:h(C.Tabs,{value:'overview',tabs:[{value:'overview',label:'Overview'},{value:'pods',label:'Pods',count:'2 failing',tone:'critical'},{value:'metrics',label:'Metrics'},{value:'logs',label:'Logs'},{value:'changes',label:'Changes',count:3},{value:'cost',label:'Cost'},{value:'config',label:'Config'}]})})), h('div',{className:'pv-frame',style:{marginTop:16}}, h(C.PageHeader,{kind:{label:'Initiative',icon:C.entityIcon.initiative,detail:h(F,null,'owned by ',h('b',null,'ML engineering'))},crumbs:h(C.Breadcrumbs,{maxItems:3,items:[{label:'Example Company',href:'#'},{label:'Data and analytics',href:'#'},{label:'ML engineering',href:'#'},{label:'AI transformation'}]}),title:'AI transformation',status:h(C.StatusBadge,{status:'critical',label:'1 critical'}),meta:[{label:'Owner',value:'Dev A'},{label:'Budget',value:'$15k / month'},{label:'Resources',value:'6 direct · 38 with projects'}],actions:h(C.Button,{icon:'target'},'Open in Monitoring')})));}
 
 ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
 </script>

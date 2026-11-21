@@ -168,7 +168,7 @@ kbd.pw-kbd { font-size: 11px; padding: 0 5px; border: 1px solid var(--border); b
 .pw-tabs--sm .pw-tab { height: 32px; font-size: 13px; }
 .pw-tab__count { min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--surface-sunken); font-size: 12px; line-height: 18px; font-weight: 600; color: var(--ink-muted); text-align: center; font-variant-numeric: tabular-nums; }
 .pw-tab__count.pw-tone--critical { background: var(--status-critical-surface); color: var(--status-critical); }
-.pw-pagehead { display: grid; gap: var(--space-3); padding: var(--space-6) var(--space-8) 0; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
+.pw-pagehead { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-6) var(--space-8) 0; background: var(--surface-raised); border-bottom: 1px solid var(--border); }
 .pw-pagehead__nav { display: flex; align-items: center; gap: var(--space-3); min-height: 20px; }
 .pw-pagehead__row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-6); padding-bottom: var(--space-5); }
 .pw-pagehead__t { display: grid; gap: var(--space-2); min-width: 0; }
@@ -717,4 +717,81 @@ a.pw-btn { text-decoration: none; }
 @media (max-width: 640px) {
   .pw-range { flex-direction: column; }
   .pw-range__presets { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 0 var(--space-3); border-right: 0; border-bottom: 1px solid var(--border); }
+}
+
+/* ---------- Hierarchy (2.1): breadcrumb folding, entity kind eyebrow ---------- */
+.pw-crumbs__item { display: inline-flex; align-items: center; gap: 4px; }
+.pw-crumbs__more { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink-muted); font: inherit; cursor: pointer; }
+.pw-crumbs__more:hover, .pw-crumbs__more[data-state="open"] { background: var(--surface-hover); color: var(--ink); }
+.pw-kind { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink-muted); font-size: 12px; line-height: 16px; }
+.pw-kind__label { letter-spacing: .04em; text-transform: uppercase; }
+.pw-kind__detail { margin-left: -2px; }
+.pw-kind__detail b { color: var(--ink); font-weight: 600; }
+
+/* ---------- Ownership scope (2.1): ScopePicker chip, top bar groups ---------- */
+.pw-scopechip { display: inline-flex; align-items: center; gap: 6px; height: var(--pw-ctl); max-width: 320px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--ink); font: inherit; white-space: nowrap; cursor: pointer; }
+.pw-scopechip:hover { background: var(--surface-hover); }
+.pw-scopechip.is-open, .pw-scopechip[data-state="open"] { background: var(--surface-selected); }
+.pw-scopechip__name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pw-scopechip__kind { color: var(--ink-muted); font-size: 12px; }
+.pw-topbar__group { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.pw-topbar__divider { flex: none; width: 1px; height: 20px; background: var(--border); }
+.pw-popover.pw-scopepick { width: 400px; max-width: calc(100vw - 16px); max-height: min(560px, var(--radix-popover-content-available-height)); overflow: auto; padding: var(--space-1); }
+.pw-scopepick__results { max-height: 320px; overflow: auto; }
+.pw-scopepick__results [cmdk-item] { outline: none; min-height: 44px; white-space: normal; }
+.pw-scopepick__results [cmdk-item][data-selected="true"] { background: var(--surface-hover); }
+.pw-scopepick__acts { display: flex; flex-wrap: wrap; gap: var(--space-1); padding: var(--space-1) 0; border-bottom: 1px solid var(--border); margin-bottom: var(--space-1); }
+.pw-scopepick__acts:empty { display: none; }
+
+/* ---------- TreeView (React Aria Tree) ---------- */
+.pw-tree-wrap { min-width: 0; }
+.pw-tree { display: grid; gap: 1px; outline: none; }
+.pw-tree__item { outline: none; border-radius: var(--radius-sm); cursor: default; }
+.pw-tree__row { --lvl: 0; display: flex; align-items: center; gap: 6px; height: var(--pw-row); padding: 0 8px 0 calc(4px + var(--lvl) * 16px); border-radius: var(--radius-sm); color: var(--ink); white-space: nowrap; }
+.pw-tree__item[data-hovered] .pw-tree__row, .pw-tree__item:hover .pw-tree__row { background: var(--surface-hover); }
+.pw-tree__item[data-selected] .pw-tree__row { background: var(--surface-selected); font-weight: 600; }
+.pw-tree__item[data-focus-visible] .pw-tree__row { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.pw-tree__item[data-disabled] .pw-tree__row { color: var(--ink-disabled); }
+.pw-tree__chev { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: var(--ink-muted); cursor: pointer; }
+.pw-tree__chev:hover { background: var(--surface-selected); color: var(--ink); }
+.pw-tree__kind { flex: none; display: inline-flex; color: var(--ink-muted); }
+.pw-tree__item[data-selected] .pw-tree__kind { color: var(--ink); }
+.pw-tree__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pw-tree__meta { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 400; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.pw-tree__meta .pw-sdot { vertical-align: 0; }
+.pw-tree__row.is-group { color: var(--ink-muted); }
+.pw-tree__loading { display: flex; align-items: center; gap: 8px; height: var(--pw-row); padding-left: 44px; color: var(--ink-muted); font-size: 13px; }
+.pw-tree__msg { display: flex; align-items: center; gap: 6px; padding: var(--space-2); color: var(--ink-muted); font-size: 13px; }
+
+/* ---------- SplitView (Resource Explorer) ---------- */
+.pw-split { display: flex; min-height: 100%; min-width: 0; }
+.pw-split__aside { flex: none; width: var(--explorer-width); display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-right: 1px solid var(--border); background: var(--surface-raised); min-height: 0; overflow: auto; }
+.pw-split__head { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-1); }
+.pw-split__strip { flex: none; display: flex; justify-content: center; width: 40px; padding-top: var(--space-3); border-right: 1px solid var(--border); background: var(--surface-raised); }
+.pw-split__main { flex: 1; min-width: 0; }
+.pw-split.is-narrow { flex-direction: column; }
+.pw-split__bar { display: flex; padding: var(--space-3) var(--space-4) 0; }
+
+/* ---------- ScopeNote ---------- */
+.pw-scopenote { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); color: var(--ink-muted); }
+.pw-scopenote b { color: var(--ink); font-weight: 600; }
+
+/* ---------- DataTable: List | Tree ---------- */
+.pw-tabletools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border); }
+.pw-tabletools__start { min-width: 0; flex: 1 1 auto; }
+.pw-tabletools__end { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-left: auto; }
+.pw-pathcell { display: grid; gap: 2px; min-width: 0; }
+.pw-path { display: inline-flex; flex-wrap: nowrap; white-space: nowrap; align-items: center; gap: 2px 4px; font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; color: var(--ink-muted); }
+.pw-path__sep { color: var(--ink-disabled); }
+.pw-treecell { --lvl: 0; display: flex; align-items: center; gap: 6px; padding-left: calc(var(--lvl) * 22px); min-width: 0; }
+.pw-treecell__leaf { flex: none; width: 24px; }
+.pw-treecell__kind { flex: none; color: var(--ink-muted); }
+.pw-treecell__txt { display: grid; gap: 2px; min-width: 0; font-family: var(--font-sans); }
+.pw-treecell__name { font-weight: 600; }
+.pw-table tr.is-group > td { background: var(--surface-raised); }
+@media (max-width: 640px) {
+  .pw-tabletools { padding: var(--space-3) var(--space-4); }
+  .pw-scopechip { max-width: 200px; }
+  .pw-scopechip__kind { display: none; }
+  .pw-topbar__divider { display: none; }
 }

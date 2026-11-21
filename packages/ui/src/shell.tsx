@@ -51,11 +51,12 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
-      <ScopeSwitcher scope={scope} options={scopeOptions} onChange={onScope} compact={mode !== "full"} />
+      {ownership ? <><div className="pw-topbar__group">{ownership}</div><span className="pw-topbar__divider" aria-hidden="true" /></> : null}
+      {runtime || (scope && scopeOptions) ? <ScopeSwitcher dimensions={runtime} scope={scope} options={scopeOptions} onChange={onScope} compact={mode !== "full"} /> : null}
       <div className="pw-topbar__search"><GlobalSearch items={searchItems} recent={searchRecent} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
       <div className="pw-topbar__end">
         <TimeRangePicker value={time} onChange={onTime} refresh={refresh} onRefreshChange={onRefresh} onCopy={onCopyRange} />
@@ -107,7 +108,7 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
 }
 
 const isFields = (m: PageHeaderProps["meta"]): m is PageHeaderField[] => Array.isArray(m);
-export function PageHeader({ crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
+export function PageHeader({ kind, crumbs, title, titleMono, status, meta, actions, tabs, back }: PageHeaderProps) {
   // meta: a short sentence, or structured fields [{label, value, mono?}] (preferred over dot-joined strings)
   const metaEl = isFields(meta)
     ? <KeyValueList layout="inline" items={meta} />
@@ -117,6 +118,7 @@ export function PageHeader({ crumbs, title, titleMono, status, meta, actions, ta
       {crumbs || back ? <div className="pw-pagehead__nav">{back}{crumbs}</div> : null}
       <div className="pw-pagehead__row">
         <div className="pw-pagehead__t">
+          {kind ? <span className="pw-kind">{kind.icon ? <Icon name={kind.icon} size={14} /> : null}<span className="pw-kind__label">{kind.label}</span>{kind.detail ? <span className="pw-kind__detail"> · {kind.detail}</span> : null}</span> : null}
           <div className="pw-pagehead__tl"><h1 className={cx("pw-title", titleMono && "pw-title--mono")}>{title}</h1>{status}</div>
           {metaEl}
         </div>

@@ -4,8 +4,23 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 2.0.0, committed but not yet tagged or released (interaction on Radix and cmdk, 13 new
-components, keyboard and axe tests in CI). What it contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+Status: `@pairwise/ui` 2.1.0, committed but not yet tagged or released (the ownership hierarchy: TreeView,
+ScopePicker, SplitView, ScopeNote, DataTable List / Tree views). What it contains:
+[`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+
+## Done in 2.1.0
+- **Why:** an ML platform organises everything by ownership (company → business function → squad → initiative →
+  project → repositories and other resources). That made it the second project that needed a tree (DECISIONS #24).
+- **Rules:** GUIDELINES "Ownership, scope and hierarchy"; DECISIONS #25–28 (ownership vs runtime scope, React Aria for
+  trees, the hierarchy in full only in two places, direct vs rolled-up numbers).
+- **Foundations:** entity kinds and icons, ScopeSwitcher `dimensions`, Breadcrumbs `maxItems`, PageHeader `kind`, the
+  `explorer-width` token, `react-aria-components` (Apache-2.0).
+- **New components:** TreeView, ScopePicker, SplitView, ScopeNote; TopBar `ownership` / `runtime`; DataTable
+  `getPath` with List and Tree views and column rollups.
+- **The demo:** a Resource Explorer, the ownership scope in the top bar and the URL, every list page scoped (with
+  Direct only and List / Tree), and the side nav grouped by capability.
+- **Tests:** keyboard and lazy loading for the tree, the picker, List / Tree, scope across demo pages, the phone
+  drawer, and axe on 14 demo routes.
 
 ## Done in 2.0.0
 - **Tests:**
@@ -28,7 +43,9 @@ components, keyboard and axe tests in CI). What it contains: [`packages/ui/CHANG
   period, and a command palette.
 
 ## Later, only when a project asks
-- TreeView, NotificationCenter, Stepper, FilterBuilder, WorkspaceSwitcher (the account menu covers switching orgs).
+- NotificationCenter, Stepper, FilterBuilder, WorkspaceSwitcher (the account menu covers switching orgs).
+- A dependency graph between resources (repository → pipeline → service → infrastructure); "Related" lists cover it.
+- A phone drill-down list for the explorer (today the tree opens in a drawer).
 - DataTable virtualisation, column resizing and pinning beyond the first column.
 - Agentic-coding components (DiffView, LogStream, …).
 - A charting or table library (DECISIONS #10, #11).

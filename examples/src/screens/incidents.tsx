@@ -1,8 +1,9 @@
 // Incidents: open ones first, then the recent history. A row opens the incident.
 import { useState } from "react";
 import { PageHeader, Panel, Tabs, DataTable, SeverityMark, StatusBadge, Metric, Button, Modal, TextInput, Select, Textarea, toast, type Column } from "@pairwise/ui";
-import { Frame, useNav, demoState } from "../frame";
-import { incidents, isOpen, services, type Incident } from "../data";
+import { Frame, OwnershipNote, useNav, useOrgWide, useOwnership, demoState } from "../frame";
+import { incidents as allIncidents, isOpen, services, type Incident } from "../data";
+import { serviceOwner } from "../org";
 
 export const stateBadge = (i: Incident) => (
   <StatusBadge size="sm" status={i.state === "Resolved" ? "healthy" : i.state === "Investigating" ? "critical" : i.state === "Monitoring" ? "info" : "warning"} label={i.state} />
@@ -13,7 +14,8 @@ const columns: Column<Incident>[] = [
   { key: "id", header: "Incident", mono: true },
   { key: "title", header: "Title", render: (i) => <span className="pw-body-strong">{i.title}</span> },
   { key: "service", header: "Service", mono: true },
-  { key: "state", header: "State", sortable: true, sortValue: (i) => ["Investigating", "Acknowledged", "Monitoring", "Resolved"].indexOf(i.state), render: stateBadge },
+  { key: "state", header: "State", sortable: true, sortValue: (i) => ["Investigating", "Acknowledged", "Monitoring", "Resolved"].indexOf(i.state), render: stateBadge,
+    rollup: (rs) => { const n = rs.filter(isOpen).length; return n ? <StatusBadge size="sm" status="critical" label={`${n} open`} /> : <StatusBadge size="sm" status="healthy" label="All resolved" />; } },
   { key: "commander", header: "Commander", nowrap: true },
   { key: "started", header: "Started", nowrap: true },
   { key: "duration", header: "Duration", align: "right", num: true },
@@ -25,11 +27,14 @@ export function Incidents() {
   const [declare, setDeclare] = useState(demoState === "declare");
   const [title, setTitle] = useState("");
   const [tried, setTried] = useState(false);
+  const own = useOwnership();
+  const orgWide = useOrgWide();
+  const incidents = allIncidents.filter((i) => own.has(serviceOwner(i.service)));
   const rows = tab === "open" ? incidents.filter(isOpen) : tab === "resolved" ? incidents.filter((i) => !isOpen(i)) : incidents;
   const close = () => { setDeclare(false); setTitle(""); setTried(false); };
   return (
     <Frame active="incidents">
-      <PageHeader title="Incidents" meta="Declared incidents across every service. Severity 1 is the most urgent."
+      <PageHeader title="Incidents" meta="Declared incidents for every service in scope. Severity 1 is the most urgent."
         actions={<Button variant="primary" icon="siren" onClick={() => setDeclare(true)}>Declare incident</Button>}
         tabs={<Tabs value={tab} onChange={setTab} tabs={[
           { value: "open", label: "Open", count: incidents.filter(isOpen).length, tone: "critical" },
@@ -38,13 +43,15 @@ export function Incidents() {
         ]} />} />
       <div className="pw-page">
         <div className="ex-metrics">
-          <Metric label="Open" scope="now" value={String(incidents.filter(isOpen).length)} status="critical" statusLabel="1 SEV2" />
-          <Metric label="Time to acknowledge" scope="median, 30 days" value="6" unit="min" target="Target 10 min" delta={{ value: 12, unit: " %", polarity: "up-bad", window: "last month" }} />
-          <Metric label="Time to resolve" scope="median, 30 days" value="47" unit="min" delta={{ value: -18, unit: " %", polarity: "up-bad", window: "last month" }} />
-          <Metric label="Incidents" scope="30 days" value="9" delta={{ value: -3, unit: "", polarity: "up-bad", window: "previous 30 days", threshold: 1 }} spark={{ points: [2, 1, 3, 2, 0, 1, 2, 3, 1, 2, 1, 0, 2, 1] }} />
+          <Metric label="Open" scope="in scope, now" value={String(incidents.filter(isOpen).length)}
+            {...(incidents.some(isOpen) ? { status: "critical" as const, statusLabel: incidents.filter(isOpen).map((i) => "SEV" + i.sev).join(", ") } : {})} />
+          <Metric label="Time to acknowledge" scope={orgWide("median, 30 days")} value="6" unit="min" target="Target 10 min" delta={{ value: 12, unit: " %", polarity: "up-bad", window: "last month" }} />
+          <Metric label="Time to resolve" scope={orgWide("median, 30 days")} value="47" unit="min" delta={{ value: -18, unit: " %", polarity: "up-bad", window: "last month" }} />
+          <Metric label="Incidents" scope={orgWide("30 days")} value="9" delta={{ value: -3, unit: "", polarity: "up-bad", window: "previous 30 days", threshold: 1 }} spark={{ points: [2, 1, 3, 2, 0, 1, 2, 3, 1, 2, 1, 0, 2, 1] }} />
         </div>
         <Panel flush title={tab === "open" ? "Open incidents" : tab === "resolved" ? "Resolved incidents" : "All incidents"} meta="most urgent first">
-          <DataTable columns={columns} rows={rows} defaultSort={{ key: "sev", dir: "asc" }} caption="Incidents" onRowClick={(i) => go("incidents/" + i.id)}
+          <DataTable columns={columns} rows={rows} rowKey="id" defaultSort={{ key: "sev", dir: "asc" }} caption="Incidents" onRowClick={(i) => go("incidents/" + i.id)}
+            getPath={(i) => own.path(serviceOwner(i.service))} directLabel={own.directLabel} itemNoun={["incident", "incidents"]} toolbar={<OwnershipNote />}
             emptyTitle="No open incidents" emptyBody="Everything is running within its objectives." />
         </Panel>
       </div>

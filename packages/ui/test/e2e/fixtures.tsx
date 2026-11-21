@@ -5,7 +5,7 @@ import {
   ActionMenu, Button, Checkbox, DataTable, Drawer, Field, GlobalSearch, MenuSelect, Modal, Popover, PopoverClose, Select,
   Switch, Tabs, TabPanel, TextInput, Toaster, toast, Tooltip, TimeRangePicker, SegmentedControl, StatusGrid, BarChart, Heatmap,
   Pagination, ColumnsMenu, FilterBar, RadioGroup, Combobox, DatePicker, DateRangePicker, InlineEdit, FileUpload, KeyValueList, Avatar, AvatarGroup,
-  ProgressBar, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
+  ProgressBar, Breadcrumbs, PageHeader, ScopeSwitcher, entityIcon, TreeView, ScopePicker, SplitView, ScopeNote, StatusBadge, type TreeNode, type PathSegment, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
 } from "../../src/index";
 
 const { useState } = React;
@@ -340,9 +340,105 @@ function IntegrationFixture() {
   );
 }
 
+function HierarchyBasicsFixture() {
+  const [went, setWent] = useState("none");
+  const [dims, setDims] = useState({ env: "prod", region: "region-a", cluster: "cluster-1", ns: "forecasting" });
+  const path = [
+    { label: "Example Company", href: "#/explorer/company", icon: entityIcon.company },
+    { label: "Data and analytics", href: "#/explorer/fn", icon: entityIcon.function },
+    { label: "ML engineering", href: "#/explorer/squad", icon: entityIcon.squad },
+    { label: "AI transformation", href: "#/explorer/ai", icon: entityIcon.initiative },
+    { label: "Forecasting platform", icon: entityIcon.project },
+  ];
+  return (
+    <div style={{ display: "grid", gap: 24 }}>
+      <PageHeader title="Forecasting platform" kind={{ label: "Project", icon: entityIcon.project, detail: <>owned by <b>AI transformation</b></> }}
+        crumbs={<Breadcrumbs items={path} maxItems={3} onNavigate={(i) => setWent(i.label)} />} />
+      <ScopeSwitcher dimensions={(["env", "region", "cluster", "ns"] as const).map((k) => ({
+        key: k, label: { env: "Environment", region: "Region", cluster: "Cluster", ns: "Namespace" }[k], value: dims[k],
+        options: { env: ["prod", "staging"], region: ["region-a", "region-b"], cluster: ["cluster-1", "cluster-2"], ns: ["forecasting", "reco"] }[k],
+        onChange: (v: string) => setDims({ ...dims, [k]: v }) }))} />
+      <output data-testid="state">{went + "|" + Object.values(dims).join("/")}</output>
+    </div>
+  );
+}
+
+// A fictional organisation for the hierarchy fixtures. "Forecasting platform" loads its resources on expand.
+const ORG: TreeNode[] = [{ id: "co", kind: "company", label: "Example Company", status: "critical", statusCount: 1, children: [
+  { id: "fn-data", kind: "function", label: "Data and analytics", status: "critical", statusCount: 1, children: [
+    { id: "sq-ml", kind: "squad", label: "ML engineering", status: "critical", statusCount: 1, children: [
+      { id: "in-ai", kind: "initiative", label: "AI transformation", status: "critical", statusCount: 1, children: [
+        { id: "pr-fc", kind: "project", label: "Forecasting platform", status: "critical", statusCount: 1, hasChildren: true },
+        { id: "pr-rec", kind: "project", label: "Recommendation engine", meta: 11, children: [{ id: "rg-rec-repos", kind: "resources", label: "Repositories", meta: 2 }] },
+      ] },
+      { id: "in-fraud", kind: "initiative", label: "Fraud detection", status: "warning", statusCount: 1, keywords: ["risk"], children: [{ id: "pr-ff", kind: "project", label: "Fraud features" }] },
+    ] },
+    { id: "sq-dp", kind: "squad", label: "Data platform" },
+  ] },
+  { id: "fn-fin", kind: "function", label: "Finance and risk", noAccess: true },
+  { id: "fn-cx", kind: "function", label: "Customer experience" },
+] }];
+const loadOrg = (n: TreeNode) => new Promise<TreeNode[]>((ok) => setTimeout(() => ok(n.id === "pr-fc"
+  ? [{ id: "rg-fc-repos", kind: "resources", label: "Repositories", meta: 2 }, { id: "rg-fc-pipes", kind: "resources", label: "Pipelines", meta: 3, status: "critical", statusCount: 1 }] : []), 150));
+
+function ExplorerFixture() {
+  const [sel, setSel] = useState<string | null>("in-ai");
+  const [q, setQ] = useState("");
+  const [exp, setExp] = useState<string[]>(["co", "fn-data", "sq-ml", "in-ai"]);
+  const [narrow, setNarrow] = useState(false);
+  const aside = (
+    <div style={{ display: "grid", gap: 8 }}>
+      <TextInput label="Search organisation" hideLabel placeholder="Search organisation" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div style={{ display: "flex", gap: 4 }}><Button size="sm" variant="ghost" onClick={() => setExp(["co", "fn-data", "sq-ml", "in-ai", "in-fraud", "pr-rec"])}>Expand all</Button><Button size="sm" variant="ghost" onClick={() => setExp([])}>Collapse all</Button></div>
+      <TreeView label="Organisation" nodes={ORG} selectedId={sel} onSelect={(n) => setSel(n.id)} expandedIds={exp} onExpandedChange={setExp} loadChildren={loadOrg} filter={q} />
+    </div>
+  );
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <ScopePicker nodes={ORG} value={sel} onChange={setSel} />
+        <Button size="sm" onClick={() => setNarrow(!narrow)}>Toggle narrow</Button>
+      </div>
+      <div style={{ border: "1px solid var(--border)", height: 520 }}>
+        <SplitView asideLabel="Organisation" aside={aside} forceWidth={narrow ? 800 : 1200}>
+          <div style={{ padding: 16 }}><output data-testid="scope">{sel ?? "org"}</output></div>
+        </SplitView>
+      </div>
+    </div>
+  );
+}
+
+interface Pipe { id: string; status: "critical" | "warning" | "healthy"; costK: number; minutes: number; path: PathSegment[] }
+const FC: PathSegment = { id: "pr-fc", label: "Forecasting platform", kind: "project" };
+const REC: PathSegment = { id: "pr-rec", label: "Recommendation engine", kind: "project" };
+const PIPES: Pipe[] = [
+  { id: "forecasting-train", status: "critical", costK: 1.9, minutes: 18, path: [FC, { id: "r-fm", label: "forecast-models", kind: "repository" }] },
+  { id: "forecasting-eval", status: "healthy", costK: 0.4, minutes: 6, path: [FC, { id: "r-fm", label: "forecast-models", kind: "repository" }] },
+  { id: "feature-backfill", status: "warning", costK: 2.6, minutes: 41, path: [FC, { id: "r-fj", label: "feature-jobs", kind: "repository" }] },
+  { id: "reco-train", status: "healthy", costK: 1.2, minutes: 24, path: [REC, { id: "r-rm", label: "reco-models", kind: "repository" }] },
+  { id: "reco-index", status: "healthy", costK: 0.3, minutes: 9, path: [REC, { id: "r-rs", label: "reco-serving", kind: "repository" }] },
+  { id: "data-quality", status: "healthy", costK: 0.1, minutes: 3, path: [] },
+];
+const WORD = { critical: "Failed", warning: "Retried", healthy: "Passed", unknown: "Skipped", info: "Running" } as const;
+function TreeTableFixture() {
+  const [mode, setMode] = useState<"descendants" | "direct">("descendants");
+  const rows = mode === "direct" ? PIPES.filter((p) => !p.path.length) : PIPES;
+  const cols: Column<Pipe>[] = [
+    { key: "id", header: "Pipeline", mono: true },
+    { key: "status", header: "Status", sortable: true, sortValue: (p) => ["critical", "warning", "healthy"].indexOf(p.status), defaultDir: "asc",
+      render: (p) => <StatusBadge status={p.status} label={WORD[p.status]} />, rollup: { status: (p) => p.status, word: (s) => (s === "healthy" ? "passed" : s === "critical" ? "failed" : s === "warning" ? "retried" : WORD[s]) } },
+    { key: "minutes", header: "Duration", align: "right", num: true, render: (p) => p.minutes + " min" },
+    { key: "costK", header: "Cost, MTD", align: "right", num: true, render: (p) => "$" + p.costK.toFixed(1) + "k", rollup: "sum", format: (n) => "$" + n.toFixed(1) + "k" },
+  ];
+  return (
+    <DataTable caption="Pipelines" columns={cols} rows={rows} defaultSort={{ key: "status", dir: "asc" }} getPath={(p) => p.path} itemNoun={["pipeline", "pipelines"]} directLabel="Owned by the initiative"
+      toolbar={<ScopeNote scope="AI transformation" summary="and its 2 projects" mode={mode} onModeChange={setMode} />} />
+  );
+}
+
 export const fixtures: Record<string, () => React.ReactElement> = {
   modal: ModalFixture, drawer: DrawerFixture, "action-menu": ActionMenuFixture, form: FormFixture, tabs: TabsFixture,
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
   foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
-  "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
+  "hierarchy-basics": HierarchyBasicsFixture, explorer: ExplorerFixture, "tree-table": TreeTableFixture, "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
 };

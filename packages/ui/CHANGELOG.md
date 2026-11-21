@@ -3,6 +3,56 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
+## 2.1.0 (2026-11-21)
+
+Ownership hierarchy and scope: a Resource Explorer, one ownership scope carried across pages, and tables with List
+and Tree views. Every API change is additive, so 2.0 code builds unchanged. The rules are in GUIDELINES "Ownership,
+scope and hierarchy" and DECISIONS #25–28. The demo has a Resource Explorer (`#/explorer`), the scope in the URL
+(`?scope=`), and every list page filtered by it.
+
+- **Entity kinds (new):**
+  - `EntityKind` (company, function, squad, initiative, project, repository, pipeline, webapp, infrastructure,
+    dataset, model, resources).
+  - `entityIcon` and `entityLabel` maps.
+  - New icons `building`, `briefcase`, `users`, `flag`, `folder`, `git-repo`, `globe`, `level-up`.
+  - Kinds are told apart by icon and word, never by colour.
+- **ScopeSwitcher `dimensions` (new):** any runtime dimensions (environment, region, cluster, namespace…), plus a
+  `label` for the group. The 1.x `scope` + `options` props still work. `ScopeOptions` and `ScopeDimension` types.
+- **Breadcrumbs `maxItems` (new):** the levels above fold into a "…" menu (Radix DropdownMenu) and the current page
+  always shows. Items take an `icon`.
+- **PageHeader `kind` (new):** the eyebrow above an entity's title, e.g. "Initiative · owned by ML engineering".
+- **Token:** `explorer-width` (320 px) for the Resource Explorer's tree pane.
+- **New dependency:** `react-aria-components` (Apache-2.0), for trees.
+- **TreeView (new):** the ownership tree, built on React Aria `Tree`.
+  - Kind icon, label, and a worst-descendant status mark with a count; healthy rows stay quiet.
+  - Children load lazily with `loadChildren`, showing a loading row and an error row.
+  - `filter` keeps matches and their ancestors.
+  - Controlled or uncontrolled `selectedId` / `expandedIds`.
+  - Nodes the person can't open show as `noAccess` context.
+  - Arrows move focus; Enter, Space or a click selects.
+- **ScopePicker (new):** the ownership scope chip.
+  - The chip shows the current node only, and the full path appears on hover.
+  - The popover holds a search whose results show their path, "Up to {parent}", "Whole organisation", and a
+    TreeView of the current branch.
+- **SplitView (new):** the explorer layout.
+  - A fixed `explorer-width` aside that collapses to a strip.
+  - Below 1024 px the aside opens in a Drawer; `drawerOpen` / `onDrawerOpenChange` close it once a node is picked.
+- **ScopeNote (new):** one line saying what the page covers ("Showing AI transformation and its 2 projects"), with
+  an optional Direct only / Including descendants switch.
+- **TopBar `ownership` and `runtime` (new):** two labelled groups, the ownership scope first. `scope` and
+  `scopeOptions` are now optional.
+- **DataTable List / Tree views (new):**
+  - `getPath(row)` gives each row's ownership path below the current scope.
+  - Views are controlled with `view`, `defaultView` and `onViewChange`.
+  - **List:** shows each row's path as a muted line, with the middle folded when long.
+  - **Tree:** groups rows by path. Collapsed group rows show column `rollup`s (`'sum'`, `'latest'`,
+    `{status}` worst-first, or a function); other columns show "–". Expand all and Collapse all are available.
+  - New `directLabel`, `itemNoun` and `toolbar` props.
+  - The path and group label go in the row's name column, the first column without a `rollup`, so a leading
+    Status column keeps its rollup.
+  - Paging applies to List only.
+- **Fix:** PageHeader no longer widens the page on phones when its breadcrumb, kind or fields are long; they wrap.
+
 ## 2.0.0 (2026-11-20)
 
 Pairwise 2.0 keeps the same Signal look, with sturdier interaction, accessibility and coverage.
