@@ -175,7 +175,9 @@ export function DataTable<T extends object>(props: DataTableProps<T>) {
   };
   const showPager = !isTree && !!pageSize && state === "ready" && (total > pageSize || !!pageSizeOptions);
   const noun = (n: number) => n + " " + (n === 1 ? itemNoun[0] : itemNoun[1]);
-  const first = columns[0]?.key;
+  // The row's name column: it carries the path (List) and the group label (Tree). With paths, that is the first column
+  // without a rollup, so a leading Status column keeps its worst-first rollup on group rows.
+  const first = (getPath ? columns.find((c) => !c.rollup) ?? columns[0] : columns[0])?.key;
   const cellBody = (c: Column<T>, r: T) => (c.render ? c.render(r) : asNode(field(r, c.key)));
   // One leaf row. In List view the first column carries the path below the scope; in Tree view it is indented.
   const renderRow = (r: T, level: number | null) => {

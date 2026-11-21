@@ -30,5 +30,6 @@ The default way to show many things with a status: sessions, runs, checks, appro
   - `{status}`, the worst status with how many ("1 failed");
   - a function;
   - nothing, which shows "–".
+- The path and the group label go in the row's name column: the first column without a `rollup`. A leading Status column keeps its rollup.
 - "Expand all" opens every level down to the items. Paging applies to List only.
 - Put a `ScopeNote` in `toolbar` to say what the table covers.

@@ -173,11 +173,13 @@ export function ScopePicker({ nodes, value, onChange, label = "Ownership scope",
 // The Resource Explorer layout: a fixed explorer-width pane (the tree) beside the workspace. The pane collapses to a
 // strip; below 1024 px of available width it moves into a Drawer opened from a button, and the workspace's own
 // child list and "up" link act as the drill-down on phones.
-export function SplitView({ aside, asideLabel, asideTitle, children, collapsed: collapsedProp, defaultCollapsed = false, onCollapsedChange, forceWidth }: SplitViewProps) {
+export function SplitView({ aside, asideLabel, asideTitle, children, collapsed: collapsedProp, defaultCollapsed = false, onCollapsedChange, drawerOpen, onDrawerOpenChange, forceWidth }: SplitViewProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(forceWidth || 1200);
   const [inner, setInner] = useState(defaultCollapsed);
-  const [drawer, setDrawer] = useState(false);
+  const [drawerInner, setDrawerInner] = useState(false);
+  const drawer = drawerOpen ?? drawerInner;
+  const setDrawer = (o: boolean) => { setDrawerInner(o); onDrawerOpenChange && onDrawerOpenChange(o); };
   const collapsed = collapsedProp ?? inner;
   const setCollapsed = (c: boolean) => { setInner(c); onCollapsedChange && onCollapsedChange(c); };
   useEffect(() => {

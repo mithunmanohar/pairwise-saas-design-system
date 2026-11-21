@@ -103,6 +103,54 @@ test.describe("the demo app", () => {
     await page.getByRole("button", { name: "Retry" }).click();
     await expect(page.locator(".pw-toast").getByText("fail-once.txt uploaded")).toBeVisible({ timeout: 5000 });
   });
+  test("the ownership scope set in the explorer carries to every page, in the URL", async ({ page }) => {
+    await page.goto(demo("explorer"));
+    const tree = page.getByRole("treegrid", { name: "Organisation" });
+    await tree.getByRole("button", { name: "Expand Data and AI" }).click();
+    await tree.getByRole("button", { name: "Expand AI platform" }).click();
+    await tree.getByRole("row", { name: /^AI transformation/ }).click();
+    await expect(page).toHaveURL(/#\/explorer\/overview\?scope=in-ai$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI transformation");
+    await expect(page.getByRole("button", { name: /^Ownership scope: AI transformation/ })).toBeVisible();
+    // A capability page reads the scope: only the initiative's services, each with its path below the scope.
+    await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: /^Services/ }).click();
+    await expect(page).toHaveURL(/#\/services\?scope=in-ai$/);
+    await expect(page.getByText("Showing AI transformation and its 2 projects")).toBeVisible();
+    const table = page.getByRole("table", { name: "Services" });
+    await expect(table.locator("tbody tr")).toHaveCount(3);
+    await expect(table.getByText("checkout-api")).toHaveCount(0);
+    await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: /^Incidents/ }).click();
+    await expect(page.getByRole("table", { name: "Incidents" }).locator("tbody tr")).toHaveText([/INC-2040/]);
+    // The picker widens it again; the whole organisation leaves the URL clean.
+    await page.getByRole("button", { name: /^Ownership scope: AI transformation/ }).click();
+    await page.getByRole("dialog", { name: "Ownership scope" }).getByRole("button", { name: "Whole organisation" }).click();
+    await expect(page).toHaveURL(/#\/incidents$/);
+    await expect(page.getByRole("table", { name: "Incidents" }).locator("tbody tr")).toHaveCount(2);
+  });
+  test("a scoped table switches to Tree, rolls up by owner, and Direct only narrows it", async ({ page }) => {
+    await page.goto(demo("runs?scope=fn-commerce"));
+    const table = page.getByRole("table", { name: "CI runs" });
+    await expect(table.locator("tbody tr").first()).toContainText(/Payments\s*›\s*Checkout reliability\s*›\s*Checkout/);
+    await page.getByRole("radio", { name: "Tree" }).click();
+    const payments = table.getByRole("button", { name: "Expand Payments, 3 runs" });
+    await expect(payments).toBeVisible();
+    await expect(table.getByRole("row", { name: /Payments/ }).first()).toContainText("1 failed");
+    await payments.click();
+    await expect(table.getByRole("button", { name: "Expand Checkout reliability, 3 runs" })).toBeVisible();
+    await page.getByRole("radio", { name: "Direct only" }).click();
+    await expect(page.getByText("Showing Commerce only, not its children")).toBeVisible();
+    await expect(table.getByText("No runs match")).toBeVisible();
+  });
+  test("phone: the explorer's tree opens in a drawer and closes once a node is picked", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(demo("explorer?scope=in-ai"));
+    await page.getByRole("button", { name: "Show organisation" }).click();
+    const drawer = page.getByRole("dialog", { name: "Organisation" });
+    await drawer.getByRole("row", { name: /^Model gateway/ }).click();
+    await expect(drawer).toBeHidden();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Model gateway");
+    expect(await page.evaluate(() => document.getElementById("main")!.scrollWidth)).toBeLessThanOrEqual(390);
+  });
   test("Deployments: a release note is edited in place from the drawer", async ({ page }) => {
     await page.goto(demo("deploys"));
     await page.getByRole("cell", { name: "v2.14.1", exact: true }).first().click();
@@ -115,10 +163,11 @@ test.describe("the demo app", () => {
 });
 
 test("the demo has no axe violations on its main pages (dark and light)", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const { axe } = await import("./helpers");
   const found: string[] = [];
-  for (const theme of ["dark", "light"]) for (const route of ["overview", "services/checkout-api", "incidents/INC-2041", "deploys", "runs/run_8f3k2", "repos/sample-repo", "usage", "access", "admin"]) {
+  for (const theme of ["dark", "light"]) for (const route of ["overview", "services/checkout-api", "incidents/INC-2041", "deploys", "runs/run_8f3k2", "repos/sample-repo", "usage", "access", "admin",
+    "explorer?scope=in-ai", "explorer/resources?scope=sq-ai", "explorer/financials?scope=fn-data", "services?scope=in-ai", "runs?scope=fn-commerce"]) {
     await page.goto(`/examples/dist/demo.html?frozen=1&theme=${theme}#/${route}`);
     await page.waitForTimeout(300);
     for (const v of await axe(page)) found.push(`${theme} ${route}: ${v.id} → ${v.nodes.slice(0, 2).map((n) => n.target.join(" ")).join(", ")}`);

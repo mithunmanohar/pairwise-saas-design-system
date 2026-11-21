@@ -1,7 +1,8 @@
 // Usage and cost: spend against budget, where it goes, and when model tokens are used. Over-budget rows stand out.
 import { useState } from "react";
 import { PageHeader, Panel, Metric, BarChart, Heatmap, DataTable, BulletBar, Trend, Tabs, Button, ActionMenu, DateRangePicker, toast, type Column, type DateRangeValue } from "@pairwise/ui";
-import { Frame } from "../frame";
+import { Frame, OwnershipNote, useOrgWide, useOwnership } from "../frame";
+import { workspaceOwner } from "../org";
 import { months, costCompute, costModels, costStorage, costNetwork, costOther, days, hours, tokenHeat, workspaces, type Workspace } from "../data";
 
 /** Thousands of USD, e.g. $46.5k. */
@@ -9,13 +10,16 @@ const money = (k: number) => `$${k.toFixed(1)}k`;
 
 export function Usage() {
   const [view, setView] = useState("category");
+  const own = useOwnership();
+  const orgWide = useOrgWide();
+  const scopedWorkspaces = workspaces.filter((w) => own.has(workspaceOwner(w.name)));
   const [period, setPeriod] = useState<DateRangeValue | null>({ from: "2026-11-01", to: "2026-11-30" });
   const columns: Column<Workspace>[] = [
     { key: "name", header: "Workspace", mono: true },
     { key: "team", header: "Team", nowrap: true, sortable: true, defaultDir: "asc" },
-    { key: "spend", header: "Spend, MTD", align: "right", num: true, sortable: true, render: (w) => money(w.spend) },
+    { key: "spend", header: "Spend, MTD", align: "right", num: true, sortable: true, rollup: "sum", format: money, render: (w) => money(w.spend) },
     { key: "budget", header: "Of budget", width: 190, sortable: true, sortValue: (w) => w.spend / w.budget, render: (w) => <BulletBar used={w.spend} requested={w.spend} limit={w.budget} label={`${w.name} spend against budget`} /> },
-    { key: "tokens", header: "Model tokens", align: "right", num: true, sortable: true, render: (w) => (w.tokens ? `${w.tokens} M` : "–") },
+    { key: "tokens", header: "Model tokens", align: "right", num: true, sortable: true, rollup: "sum", format: (n) => (n ? `${n} M` : "–"), render: (w) => (w.tokens ? `${w.tokens} M` : "–") },
     { key: "change", header: "vs last month", align: "right", sortable: true, render: (w) => <Trend value={w.change} unit=" %" threshold={2} /> },
   ];
   const byTeam = [
@@ -36,13 +40,13 @@ export function Usage() {
         </>} />
       <div className="pw-page">
         <div className="ex-metrics">
-          <Metric label="Spend" scope="month to date" value={money(46.5)} target="Budget $52k" delta={{ value: 9.4, unit: " %", window: "same day last month" }} spark={{ points: [38, 39, 40.5, 41.7, 43.3, 46.5] }} />
-          <Metric label="Forecast" scope="end of month" value={money(54.8)} status="warning" statusLabel="Over budget by $2.8k" delta={{ value: 12.1, unit: " %", window: "October" }} />
-          <Metric label="Model tokens" scope="month to date" value="539" unit="M" delta={{ value: 31, unit: " %", polarity: "neutral", window: "same day last month" }} spark={{ points: [210, 260, 300, 350, 420, 539] }} />
-          <Metric label="Cost per 1k requests" scope="month to date" value="$0.41" delta={{ value: -4.2, unit: " %", window: "October" }} target="Target $0.45" />
+          <Metric label="Spend" scope={orgWide("month to date")} value={money(46.5)} target="Budget $52k" delta={{ value: 9.4, unit: " %", window: "same day last month" }} spark={{ points: [38, 39, 40.5, 41.7, 43.3, 46.5] }} />
+          <Metric label="Forecast" scope={orgWide("end of month")} value={money(54.8)} status="warning" statusLabel="Over budget by $2.8k" delta={{ value: 12.1, unit: " %", window: "October" }} />
+          <Metric label="Model tokens" scope={orgWide("month to date")} value="539" unit="M" delta={{ value: 31, unit: " %", polarity: "neutral", window: "same day last month" }} spark={{ points: [210, 260, 300, 350, 420, 539] }} />
+          <Metric label="Cost per 1k requests" scope={orgWide("month to date")} value="$0.41" delta={{ value: -4.2, unit: " %", window: "October" }} target="Target $0.45" />
         </div>
         <div className="ex-row ex-2">
-          <Panel title="Monthly spend" meta={view === "category" ? "by category, thousands of USD" : "by team, thousands of USD"}
+          <Panel title="Monthly spend" meta={orgWide(view === "category" ? "by category, thousands of USD" : "by team, thousands of USD")}
             actions={<Tabs size="sm" value={view} onChange={setView} tabs={[{ value: "category", label: "Category" }, { value: "team", label: "Team" }]} />}>
             <BarChart ariaLabel={`Monthly spend by ${view}`} categories={months} height={240} stacked unit="k"
               series={view === "category" ? [
@@ -53,7 +57,7 @@ export function Usage() {
                 { name: "Other", values: costOther, color: "chart-other" },
               ] : byTeam} />
           </Panel>
-          <Panel title="Budgets" meta="month to date">
+          <Panel title="Budgets" meta={orgWide("month to date")}>
             <div className="ex-budgets">
               {[{ n: "Compute", u: 22.6 * 0.66, l: 24 }, { n: "Model APIs", u: 15.2 * 0.66, l: 12 }, { n: "Storage", u: 4.7 * 0.66, l: 6 }, { n: "Network", u: 2.8 * 0.66, l: 4 }].map((b) => (
                 <div key={b.n} className="ex-budget">
@@ -65,11 +69,13 @@ export function Usage() {
             </div>
           </Panel>
         </div>
-        <Panel title="Model tokens by hour" meta="millions, this week (UTC)">
+        <Panel title="Model tokens by hour" meta={orgWide("millions, this week (UTC)")}>
           <Heatmap ariaLabel="Model tokens by day and hour, this week" rows={days} cols={hours} values={tokenHeat} unit="M tokens" />
         </Panel>
         <Panel title="Workspaces" meta="highest spend first" flush>
-          <DataTable columns={columns} rows={workspaces} defaultSort={{ key: "spend", dir: "desc" }} caption="Spend by workspace" rowTone={(w) => (w.spend / w.budget >= 0.92 ? "critical" : null)} />
+          <DataTable columns={columns} rows={scopedWorkspaces} rowKey="id" defaultSort={{ key: "spend", dir: "desc" }} caption="Spend by workspace" rowTone={(w) => (w.spend / w.budget >= 0.92 ? "critical" : null)}
+            getPath={(w) => own.path(workspaceOwner(w.name))} directLabel={own.directLabel} itemNoun={["workspace", "workspaces"]} toolbar={<OwnershipNote />}
+            emptyTitle="No cost workspaces in scope" emptyBody="Choose a wider ownership scope in the top bar." />
         </Panel>
       </div>
     </Frame>

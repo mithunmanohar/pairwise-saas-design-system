@@ -8,8 +8,9 @@ import "@pairwise/ui/styles.css";
 import "./examples.css";
 import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { AppShell, SideNav, TopBar, PairwiseProvider, Toaster, Drawer, Select, Button, toast, tokens, type BreadcrumbsProps, type FontPreset, type NavGroup, type Scope, type SearchItem } from "@pairwise/ui";
+import { AppShell, SideNav, TopBar, PairwiseProvider, Toaster, Drawer, Select, Button, ScopePicker, ScopeNote, toast, tokens, type BreadcrumbsProps, type FontPreset, type NavGroup, type Scope, type ScopeDimension, type SearchItem } from "@pairwise/ui";
 import { incidents, isOpen, repos, runs, services } from "./data";
+import { ROOT, SCOPE_TREE, UNITS, inScope, pathBelow, rollup, scopeSummary, unitById, type ScopeMode } from "./org";
 
 export const params = new URLSearchParams(location.search);
 export const demoState = params.get("state") ?? "";
@@ -67,6 +68,68 @@ export function setPrefs(patch: Partial<Prefs>) {
 }
 export const usePrefs = () => useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => prefs);
 
+/* ---------- Ownership scope (2.1) ---------- */
+// One ownership scope for the whole app, kept in the URL (#/services?scope=in-ai) so links and reloads keep it. The
+// whole organisation is the default and leaves the URL clean. "Direct only" and the runtime scope are kept for the
+// visit, shared by every page.
+const hashQuery = () => new URLSearchParams(location.hash.split("?")[1] ?? "");
+export const hashPath = () => decodeURIComponent(location.hash.replace(/^#\/?/, "").split("?")[0] ?? "");
+export function getScope(): string | null {
+  const id = hashQuery().get("scope");
+  const u = id ? unitById(id) : undefined;
+  return u && u.id !== ROOT && !u.noAccess ? u.id : null;
+}
+/** A demo path with the current scope carried along. */
+export const withScope = (path: string) => { const s = getScope(); return s ? `${path}?scope=${s}` : path; };
+export function setScope(id: string | null) {
+  const q = hashQuery();
+  if (id && id !== ROOT) q.set("scope", id); else q.delete("scope");
+  const qs = q.toString();
+  location.hash = "/" + (hashPath() || "overview") + (qs ? "?" + qs : "");
+}
+const onHash = (f: () => void) => { window.addEventListener("hashchange", f); return () => window.removeEventListener("hashchange", f); };
+export const useScope = () => useSyncExternalStore(onHash, getScope);
+
+let scopeMode: ScopeMode = "descendants";
+let runtime: Scope = { env: "prod", cloud: "region-a", cluster: "cluster-1" };
+const ctxSubs = new Set<() => void>();
+const emit = () => ctxSubs.forEach((f) => f());
+const onCtx = (f: () => void) => { ctxSubs.add(f); return () => { ctxSubs.delete(f); }; };
+export const setScopeMode = (m: ScopeMode) => { scopeMode = m; emit(); };
+const setRuntime = (r: Scope) => { runtime = r; emit(); };
+const useMode = () => useSyncExternalStore(onCtx, () => scopeMode);
+const useRuntime = () => useSyncExternalStore(onCtx, () => runtime);
+
+/** What a capability page needs: the scope, whether it reaches descendants, and helpers to filter and label rows. */
+export function useOwnership() {
+  const scope = useScope();
+  const mode = useMode();
+  return {
+    scope, mode,
+    /** is something owned by `owner` in scope */ has: (owner: string) => inScope(owner, scope, mode),
+    /** its ownership path below the scope, for DataTable getPath */ path: (owner: string) => pathBelow(owner, scope),
+    directLabel: `Owned by ${scope ? unitById(scope)?.label ?? "this scope" : "the company"}`,
+  };
+}
+
+/** Labels an organisation-wide figure on a scoped page, so a chart never reads as the scope's own numbers. */
+export function useOrgWide() {
+  const scope = useScope();
+  return (label: string) => (scope ? `${label}, whole organisation` : label);
+}
+
+/** "Showing AI transformation and its 2 projects, in prod / region-a" with Direct only / Including descendants. */
+export function OwnershipNote() {
+  const scope = useScope();
+  const mode = useMode();
+  const rt = useRuntime();
+  const u = scope ? unitById(scope) : undefined;
+  return (
+    <ScopeNote scope={u ? u.label : "the whole organisation"} summary={mode === "direct" ? (u ? "only, not its children" : "only, not its business functions") : scopeSummary(scope)}
+      runtime={`${rt.env} / ${rt.cloud}`} mode={mode} onModeChange={setScopeMode} />
+  );
+}
+
 /** The account menu's preferences drawer. The font preview renders in the chosen face via data-font. */
 function PreferencesDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const p = usePrefs();
@@ -103,18 +166,23 @@ export function useCrumbNav(): NonNullable<BreadcrumbsProps["onNavigate"]> {
 }
 
 export const NAV: NavGroup[] = [
-  { group: null, items: [{ key: "overview", label: "Overview", icon: "home" }] },
+  { group: "Explore", items: [
+    { key: "overview", label: "Overview", icon: "home" },
+    { key: "explorer", label: "Resource explorer", icon: "layers" },
+  ] },
+  { group: "Build", items: [
+    { key: "runs", label: "CI runs", icon: "pipeline" },
+    { key: "repos", label: "Repositories", icon: "git-repo" },
+  ] },
   { group: "Operate", items: [
     { key: "services", label: "Services", icon: "server" },
     { key: "incidents", label: "Incidents", icon: "siren" },
     { key: "deploys", label: "Deployments", icon: "changes" },
   ] },
-  { group: "Build", items: [
-    { key: "runs", label: "CI runs", icon: "pipeline" },
-    { key: "repos", label: "Repositories", icon: "layers" },
+  { group: "Finance", items: [
+    { key: "usage", label: "Usage and cost", icon: "coins" },
   ] },
   { group: "Manage", items: [
-    { key: "usage", label: "Usage and cost", icon: "coins" },
     { key: "access", label: "Access", icon: "shield" },
   ] },
 ];
@@ -127,6 +195,7 @@ const SEARCH: (SearchItem & { path: string })[] = [
   ...runs.map((r) => ({ label: r.id, kind: "CI run", group: "CI runs", status: r.status === "critical" ? "critical" as const : undefined, path: "runs/" + r.id })),
   ...repos.map((r) => ({ label: r.name, kind: "Repository", group: "Repositories", path: "repos/" + r.name })),
   { label: "feature/add-retry", kind: "Branch", group: "Branches", path: "runs/run_8f3k2" },
+  ...UNITS.filter((u) => u.id !== ROOT && !u.noAccess).map((u) => ({ label: u.label, kind: "Scope", group: "Teams and projects", description: "Open in the resource explorer", path: `explorer?scope=${u.id}` })),
 ];
 const RECENT = ["checkout-api", "INC-2041", "run_8f3k2"].map((l) => SEARCH.find((s) => s.label === l)).filter((s): s is (typeof SEARCH)[number] => !!s);
 function commands(go: (path: string) => void, openPrefs: () => void): SearchItem[] {
@@ -137,13 +206,20 @@ function commands(go: (path: string) => void, openPrefs: () => void): SearchItem
     { id: "cmd:prefs", label: "Open your preferences", group: "Commands", icon: "user", description: "Font, theme and density", keywords: ["settings", "font", "density"], onRun: openPrefs },
   ];
 }
-const openIncidents = incidents.filter(isOpen).length;
+const RUNTIME_OPTIONS = { env: ["prod", "staging"], cloud: ["region-a", "region-b"], cluster: ["cluster-1", "cluster-2"] };
+const RUNTIME_LABEL = { env: "Environment", cloud: "Region", cluster: "Cluster" };
 
 export function Frame({ active, children }: { active: string; children: ReactNode }) {
   const go = useNav();
   const p = usePrefs();
   const org = ORGS.find((o) => o.id === p.org) ?? ORGS[0];
-  const [scope, setScope] = useState<Scope>({ env: "prod", cloud: "region-a", cluster: "cluster-1" });
+  const scope = useScope();
+  const rt = useRuntime();
+  const openIncidents = rollup(scope).openIncidents.length;
+  const runtimeDims: ScopeDimension[] = (["env", "cloud", "cluster"] as const).map((k) => ({
+    key: k, label: RUNTIME_LABEL[k], value: rt[k], options: RUNTIME_OPTIONS[k],
+    onChange: (v) => { const next = { ...rt, [k]: v }; setRuntime(next); toast(`Showing ${next.env} / ${next.cloud}`); },
+  }));
   const [time, setTime] = useState("1h");
   const [refresh, setRefresh] = useState<"off" | "30s" | "1m" | "5m">("30s");
   const [prefsOpen, setPrefsOpen] = useState(demoState === "prefs");
@@ -152,8 +228,8 @@ export function Frame({ active, children }: { active: string; children: ReactNod
       nav={<SideNav active={active} nav={NAV} onNavigate={go} badges={{ incidents: { count: openIncidents, tone: "critical" }, runs: { count: 1 } }} />}
       top={
         <TopBar
-          scope={scope} onScope={(s) => { setScope(s); toast(`Showing ${s.env} / ${s.cloud}`); }}
-          scopeOptions={{ env: [{ value: "prod" }, { value: "staging" }], cloud: [{ value: "region-a" }, { value: "region-b" }], cluster: [{ value: "cluster-1" }, { value: "cluster-2" }] }}
+          ownership={<ScopePicker nodes={SCOPE_TREE} value={scope} onChange={setScope} wholeLabel="Whole organisation" />}
+          runtime={runtimeDims}
           time={time} onTime={setTime} refresh={refresh} onRefresh={(r) => setRefresh(r as typeof refresh)}
           alerts={openIncidents} onAlerts={() => go("incidents")} user="DA" accountLabel="Account: Dev A"
           account={{
@@ -169,7 +245,7 @@ export function Frame({ active, children }: { active: string; children: ReactNod
               { label: "Sign out", icon: "external", onSelect: () => toast({ title: "This is a demo", body: "You stay signed in as Dev A." }) },
             ],
           }}
-          searchItems={[...commands(go, () => setPrefsOpen(true)), ...SEARCH]} searchRecent={RECENT} onSearch={(i) => { if (i.onRun) return; const hit = SEARCH.find((s) => s.label === i.label); if (hit) go(hit.path); }}
+          searchItems={[...commands(go, () => setPrefsOpen(true)), ...SEARCH]} searchRecent={RECENT} onSearch={(i) => { if (i.onRun) return; const hit = SEARCH.find((s) => s.label === i.label); if (!hit) return; if (hit.path.startsWith("explorer?scope=")) { location.hash = "/" + hit.path; return; } go(hit.path); }}
           onCopyRange={() => toast("Time range copied")}
         />
       }>

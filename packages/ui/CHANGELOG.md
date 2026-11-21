@@ -34,7 +34,7 @@ and Tree views. Every API change is additive. Entries are added as each stage la
     TreeView of the current branch.
 - **SplitView (new):** the explorer layout.
   - A fixed `explorer-width` aside that collapses to a strip.
-  - Below 1024 px the aside opens in a Drawer.
+  - Below 1024 px the aside opens in a Drawer; `drawerOpen` / `onDrawerOpenChange` close it once a node is picked.
 - **ScopeNote (new):** one line saying what the page covers ("Showing AI transformation and its 2 projects"), with
   an optional Direct only / Including descendants switch.
 - **TopBar `ownership` and `runtime` (new):** two labelled groups, the ownership scope first. `scope` and
@@ -46,7 +46,10 @@ and Tree views. Every API change is additive. Entries are added as each stage la
   - **Tree:** groups rows by path. Collapsed group rows show column `rollup`s (`'sum'`, `'latest'`,
     `{status}` worst-first, or a function); other columns show "–". Expand all and Collapse all are available.
   - New `directLabel`, `itemNoun` and `toolbar` props.
+  - The path and group label go in the row's name column, the first column without a `rollup`, so a leading
+    Status column keeps its rollup.
   - Paging applies to List only.
+- **Fix:** PageHeader no longer widens the page on phones when its breadcrumb, kind or fields are long; they wrap.
 
 ## 2.0.0 (2026-11-20)
 

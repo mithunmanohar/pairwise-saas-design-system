@@ -203,6 +203,7 @@ export interface SplitViewProps {
   /** names the pane and its show/hide buttons, e.g. "Organisation" */ asideLabel: string; asideTitle?: string;
   children?: React.ReactNode;
   collapsed?: boolean; defaultCollapsed?: boolean; onCollapsedChange?: (c: boolean) => void;
+  /** below 1024 px: whether the aside's drawer is open, e.g. to close it once a node is picked */ drawerOpen?: boolean; onDrawerOpenChange?: (open: boolean) => void;
   /** preview only: lay out as if this wide */ forceWidth?: number;
 }
 export interface ScopeNoteProps {

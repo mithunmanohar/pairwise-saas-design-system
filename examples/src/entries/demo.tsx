@@ -1,10 +1,13 @@
 // The live demo (GitHub Pages): one routed app built only from @pairwise/ui. Every nav item is a working page, and list
 // rows open detail pages (#/services/checkout-api, #/incidents/INC-2041, #/runs/run_8f3k2, #/repos/sample-repo).
+// The ownership scope rides along in the query (#/services?scope=in-ai) and every page reads it; the Resource
+// Explorer (#/explorer, #/explorer/financials) is the one page that shows the whole hierarchy.
 // A floating control switches theme, density and font (hidden with ?controls=0, which the screenshot script uses); the
 // account button opens the same preferences in a drawer.
 import { useEffect, useState } from "react";
 import { PageHeader, Panel, StateBlock, Switch, MenuSelect, tokens } from "@pairwise/ui";
-import { mount, Frame, NavProvider, useNav, showControls, usePrefs, setPrefs, isFont } from "../frame";
+import { mount, Frame, NavProvider, useNav, showControls, usePrefs, setPrefs, isFont, hashPath, withScope } from "../frame";
+import { Explorer } from "../screens/explorer";
 import { Overview } from "../screens/overview";
 import { Services } from "../screens/services";
 import { ServiceHealth } from "../screens/service-health";
@@ -20,7 +23,8 @@ import { Access } from "../screens/access";
 import { Admin } from "../screens/admin";
 
 const parse = () => {
-  const [section = "", id] = decodeURIComponent(location.hash.replace(/^#\/?/, "")).split("/");
+  // The query after the path (?scope=) is the ownership scope; it doesn't change the page.
+  const [section = "", id] = hashPath().split("/");
   return { section: section || "overview", id };
 };
 
@@ -42,6 +46,7 @@ function NotFound({ section }: { section: string }) {
 function Page({ section, id }: { section: string; id: string | undefined }) {
   switch (section) {
     case "overview": return <Overview />;
+    case "explorer": return <Explorer tab={id} />;
     case "services": return id ? <ServiceHealth name={id} /> : <Services />;
     case "incidents": return id ? <IncidentDetail id={id} /> : <Incidents />;
     case "deploys": return <Deployments />;
@@ -72,15 +77,17 @@ function Display() {
 function Demo() {
   const [route, setRoute] = useState(parse);
   useEffect(() => {
+    let last = hashPath();
     const f = () => {
       setRoute(parse());
-      // A new page starts at the top, like a real navigation.
-      document.getElementById("main")?.scrollTo({ top: 0 });
+      // A new page starts at the top, like a real navigation; a new scope on the same page keeps the place.
+      if (hashPath() !== last) document.getElementById("main")?.scrollTo({ top: 0 });
+      last = hashPath();
     };
     window.addEventListener("hashchange", f);
     return () => window.removeEventListener("hashchange", f);
   }, []);
-  const go = (path: string) => { location.hash = "/" + path; };
+  const go = (path: string) => { location.hash = "/" + withScope(path); };
   return (
     <NavProvider value={go}>
       <div className={showControls ? "ex-demo has-controls" : "ex-demo"}>
