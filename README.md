@@ -1,5 +1,7 @@
 # Pairwise: a production-grade design system for AI applications and multi-tenant SaaS
 
+[![CI](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml?query=branch%3Amain)
+
 **One set of design tokens and 59 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
 
 **[Live demo](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/)** · **[Component catalogue](https://mithunmanohar.github.io/pairwise-saas-design-system/catalogue/)** · [Site](https://mithunmanohar.github.io/pairwise-saas-design-system/)
