@@ -1,9 +1,10 @@
 // Incidents: open ones first, then the recent history. A row opens the incident.
 import { useState } from "react";
 import { PageHeader, Panel, Tabs, DataTable, SeverityMark, StatusBadge, Metric, Button, Modal, TextInput, Select, Textarea, toast, type Column } from "@pairwise/ui";
-import { Frame, OwnershipNote, useNav, useOrgWide, useOwnership, demoState } from "../frame";
+import { Frame, OwnershipNote, useNav, useOwnership, useSelection, demoState } from "../frame";
 import { incidents as allIncidents, isOpen, services, type Incident } from "../data";
 import { serviceOwner } from "../org";
+import { share, varyCounts, varyInt } from "../vary";
 
 export const stateBadge = (i: Incident) => (
   <StatusBadge size="sm" status={i.state === "Resolved" ? "healthy" : i.state === "Investigating" ? "critical" : i.state === "Monitoring" ? "info" : "warning"} label={i.state} />
@@ -28,7 +29,8 @@ export function Incidents() {
   const [title, setTitle] = useState("");
   const [tried, setTried] = useState(false);
   const own = useOwnership();
-  const orgWide = useOrgWide();
+  const sel = useSelection();
+  const part = share(sel);
   const incidents = allIncidents.filter((i) => own.has(serviceOwner(i.service)));
   const rows = tab === "open" ? incidents.filter(isOpen) : tab === "resolved" ? incidents.filter((i) => !isOpen(i)) : incidents;
   const close = () => { setDeclare(false); setTitle(""); setTried(false); };
@@ -45,9 +47,9 @@ export function Incidents() {
         <div className="ex-metrics">
           <Metric label="Open" scope="in scope, now" value={String(incidents.filter(isOpen).length)}
             {...(incidents.some(isOpen) ? { status: "critical" as const, statusLabel: incidents.filter(isOpen).map((i) => "SEV" + i.sev).join(", ") } : {})} />
-          <Metric label="Time to acknowledge" scope={orgWide("median, 30 days")} value="6" unit="min" target="Target 10 min" delta={{ value: 12, unit: " %", polarity: "up-bad", window: "last month" }} />
-          <Metric label="Time to resolve" scope={orgWide("median, 30 days")} value="47" unit="min" delta={{ value: -18, unit: " %", polarity: "up-bad", window: "last month" }} />
-          <Metric label="Incidents" scope={orgWide("30 days")} value="9" delta={{ value: -3, unit: "", polarity: "up-bad", window: "previous 30 days", threshold: 1 }} spark={{ points: [2, 1, 3, 2, 0, 1, 2, 3, 1, 2, 1, 0, 2, 1] }} />
+          <Metric label="Time to acknowledge" scope="median, 30 days" value={String(varyInt(sel, "tta", 6))} unit="min" target="Target 10 min" delta={{ value: varyInt(sel, "tta-delta", 12, 0.8), unit: " %", polarity: "up-bad", window: "last month" }} />
+          <Metric label="Time to resolve" scope="median, 30 days" value={String(varyInt(sel, "ttr", 47))} unit="min" delta={{ value: -varyInt(sel, "ttr-delta", 18, 0.8), unit: " %", polarity: "up-bad", window: "last month" }} />
+          <Metric label="Incidents" scope="30 days" value={String(varyInt(sel, "count", Math.max(1, Math.round(9 * part))))} delta={{ value: -varyInt(sel, "count-delta", 3, 0.8), unit: "", polarity: "up-bad", window: "previous 30 days", threshold: 1 }} spark={{ points: varyCounts(sel, "count-spark", [2, 1, 3, 2, 0, 1, 2, 3, 1, 2, 1, 0, 2, 1], part) }} />
         </div>
         <Panel flush title={tab === "open" ? "Open incidents" : tab === "resolved" ? "Resolved incidents" : "All incidents"} meta="most urgent first">
           <DataTable columns={columns} rows={rows} rowKey="id" defaultSort={{ key: "sev", dir: "asc" }} caption="Incidents" onRowClick={(i) => go("incidents/" + i.id)}

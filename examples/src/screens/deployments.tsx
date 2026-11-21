@@ -1,8 +1,9 @@
 // Deployments: what shipped today, how delivery is trending (DORA-style), and a rollback one click away.
 import { useState } from "react";
-import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, FilterBar, Button, Drawer, Timeline, CopyButton, KeyValueList, InlineEdit, ProgressBar, toast, type Column } from "@pairwise/ui";
-import { Frame, OwnershipNote, useNav, useOrgWide, useOwnership } from "../frame";
+import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, StateBlock, FilterBar, Button, Drawer, Timeline, CopyButton, KeyValueList, InlineEdit, ProgressBar, toast, type Column } from "@pairwise/ui";
+import { Frame, OwnershipNote, useNav, useOwnership, useSelection } from "../frame";
 import { serviceOwner } from "../org";
+import { share, varyCounts, varyInt, varyRound } from "../vary";
 import { deploys as allDeploys, deployDays, deploysOk, deploysFailed, deploysRolledBack, type Deploy } from "../data";
 
 export function Deployments() {
@@ -11,7 +12,11 @@ export function Deployments() {
   const [f, setF] = useState<Record<string, string>>({});
   const [peek, setPeek] = useState<Deploy | null>(null);
   const own = useOwnership();
-  const orgWide = useOrgWide();
+  const sel = useSelection();
+  const part = share(sel);
+  const ok = varyCounts(sel, "ok", deploysOk, part), failed = varyCounts(sel, "failed", deploysFailed, part), rolledBack = varyCounts(sel, "rolled-back", deploysRolledBack, part);
+  const cfr = varyRound(sel, "cfr", 9.1, 1, 0.6);
+  const canary = own.has(serviceOwner("ranker-model"));
   const deploys = allDeploys.filter((d) => own.has(serviceOwner(d.service)));
   const [notes, setNotes] = useState<Record<string, string>>({ dep_9a1: "Adds retry with backoff to the payment provider client." });
   const rows = deploys.filter((d) => (!q || d.service.includes(q.toLowerCase()) || d.version.includes(q))
@@ -31,18 +36,18 @@ export function Deployments() {
         actions={<Button variant="primary" icon="changes" onClick={() => toast("A deploy form would open here")}>New deployment</Button>} />
       <div className="pw-page">
         <div className="ex-metrics">
-          <Metric label="Deploys per day" scope={orgWide("7-day average")} value="9.6" delta={{ value: 14, unit: " %", polarity: "up-good", window: "previous week" }} spark={{ points: deploysOk.map((v, i) => v + (deploysFailed[i] ?? 0)) }} />
-          <Metric label="Lead time for changes" scope={orgWide("median")} value="3.2" unit="h" target="Target under 24 h" delta={{ value: -9, unit: " %", window: "previous week" }} />
-          <Metric label="Change failure rate" scope={orgWide("7 days")} value="9.1" unit="%" status="warning" statusLabel="Above 5 % target" delta={{ value: 3.4, unit: " pt", window: "previous week", threshold: 0.5 }} />
-          <Metric label="Time to restore" scope={orgWide("median")} value="41" unit="min" target="Target 1 h" />
+          <Metric label="Deploys per day" scope="7-day average" value={varyRound(sel, "per-day", 9.6 * part).toFixed(1)} delta={{ value: varyInt(sel, "per-day-delta", 14, 0.8), unit: " %", polarity: "up-good", window: "previous week" }} spark={{ points: ok.map((v, i) => v + (failed[i] ?? 0)) }} />
+          <Metric label="Lead time for changes" scope="median" value={varyRound(sel, "lead", 3.2).toFixed(1)} unit="h" target="Target under 24 h" delta={{ value: -varyInt(sel, "lead-delta", 9, 0.8), unit: " %", window: "previous week" }} />
+          <Metric label="Change failure rate" scope="7 days" value={cfr.toFixed(1)} unit="%" {...(cfr > 5 ? { status: "warning" as const, statusLabel: "Above 5 % target" } : {})} delta={{ value: varyRound(sel, "cfr-delta", 3.4, 1, 0.8), unit: " pt", window: "previous week", threshold: 0.5 }} />
+          <Metric label="Time to restore" scope="median" value={String(varyInt(sel, "restore", 41))} unit="min" target="Target 1 h" />
         </div>
         <div className="ex-row ex-2">
-          <Panel title="Deploys by outcome" meta={orgWide("last 7 days")}>
+          <Panel title="Deploys by outcome" meta="last 7 days">
             <BarChart ariaLabel="Deploys per day by outcome, last 7 days" categories={deployDays} height={220} stacked
-              series={[{ name: "Succeeded", values: deploysOk, color: "chart-other" }, { name: "Failed", values: deploysFailed, color: "chart-1" }, { name: "Rolled back", values: deploysRolledBack, color: "chart-3" }]} />
+              series={[{ name: "Succeeded", values: ok, color: "chart-other" }, { name: "Failed", values: failed, color: "chart-1" }, { name: "Rolled back", values: rolledBack, color: "chart-3" }]} />
           </Panel>
-          <Panel title="In progress" meta={orgWide("1 rollout")}>
-            <div className="ex-stack">
+          <Panel title="In progress" meta={canary ? "1 rollout" : "none"}>
+            {canary ? <div className="ex-stack">
               <div className="ex-split"><span className="pw-mono">ranker-model v12</span><StatusBadge status="info" label="Canary" /></div>
               <ProgressBar label="Search traffic on v12" value={25} hint="Next step: 50 % at 16:40 if the guardrails hold." />
               <p className="ex-p pw-muted">Comparing click-through on 25 % of search traffic. Promotes automatically at 16:40 if the guardrails hold.</p>
@@ -52,7 +57,7 @@ export function Deployments() {
                 { time: "13:40", kind: "deploy", title: "Canary started at 5 %", actor: "Dev H, PR #88" },
               ]} />
               <div className="ex-actions"><Button size="sm" variant="danger" onClick={() => toast({ tone: "warning", title: "Canary halted", body: "Traffic moved back to v11." })}>Halt canary</Button><Button size="sm" onClick={() => toast({ tone: "healthy", title: "Promoting ranker-model v12" })}>Promote now</Button></div>
-            </div>
+            </div> : <StateBlock kind="empty" inline title="No rollouts in progress" body="Nothing owned in this scope is rolling out right now." />}
           </Panel>
         </div>
         <Panel flush title="Today" meta={`${rows.length} deployments`}>

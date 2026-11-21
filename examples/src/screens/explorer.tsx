@@ -6,7 +6,8 @@ import {
   PageHeader, Panel, Tabs, Metric, DataTable, StatusBadge, BulletBar, Trend, Breadcrumbs, TreeView, SplitView, TextInput, Button, Icon,
   entityIcon, entityLabel, type BreadcrumbItem, type Column, type Status, type TreeNode,
 } from "@pairwise/ui";
-import { Frame, OwnershipNote, useNav, useOwnership, useScope, setScope, frozen } from "../frame";
+import { Frame, OwnershipNote, useNav, useOwnership, useScope, useSelection, setScope, frozen } from "../frame";
+import { varyService } from "../vary";
 import { ROOT, UNITS, EXPLORER_TREE, RESOURCE_TYPES, lineage, rollup, unitById, unitOfNode, loadResourceTypes, serviceOwner, runOwner, workspaceOwner, worst, type Resource, type Unit } from "../org";
 import { incidents, isOpen, services, workspaces, type Incident, type Run, type Service, type Workspace, type Deploy } from "../data";
 import { SERVICE_STATUS } from "./services";
@@ -50,6 +51,7 @@ export function Explorer({ tab: tabParam }: { tab: string | undefined }) {
   const go = useNav();
   const scope = useScope();
   const own = useOwnership();
+  const sel = useSelection();
   const tab = TABS.some((t) => t.value === tabParam) ? tabParam ?? "overview" : "overview";
   const unit: Unit = unitById(scope ?? ROOT) ?? UNITS[0]!;
   const parent = unit.parent ? unitById(unit.parent) : undefined;
@@ -84,8 +86,8 @@ export function Explorer({ tab: tabParam }: { tab: string | undefined }) {
             <ResourcesTable rows={shown.resources} path={path} directLabel={own.directLabel} onOpen={(r) => go(r.href)} />
           ) : null}
           {tab === "delivery" ? <Delivery runs={shown.runs} deploys={shown.deploys} path={path} directLabel={own.directLabel} /> : null}
-          {tab === "observability" ? <Observability scopeLabel={unit.label} services={services.filter((s) => own.has(serviceOwner(s.name)))} open={incidents.filter((i) => isOpen(i) && own.has(serviceOwner(i.service)))} path={path} directLabel={own.directLabel} /> : null}
-          {tab === "infrastructure" ? <Infrastructure services={services.filter((s) => own.has(serviceOwner(s.name)))} path={path} directLabel={own.directLabel} /> : null}
+          {tab === "observability" ? <Observability scopeLabel={unit.label} services={services.filter((s) => own.has(serviceOwner(s.name))).map((s) => varyService(sel, s))} open={incidents.filter((i) => isOpen(i) && own.has(serviceOwner(i.service)))} path={path} directLabel={own.directLabel} /> : null}
+          {tab === "infrastructure" ? <Infrastructure services={services.filter((s) => own.has(serviceOwner(s.name))).map((s) => varyService(sel, s))} path={path} directLabel={own.directLabel} /> : null}
           {tab === "financials" ? <Financials unit={unit} rows={workspaces.filter((w) => own.has(workspaceOwner(w.name)))} path={path} directLabel={own.directLabel} /> : null}
         </div>
       </SplitView>

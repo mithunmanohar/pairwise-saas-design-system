@@ -1,7 +1,8 @@
 // Services: every service in scope, filterable, worst first. A row opens that service's health page.
 import { useState } from "react";
 import { PageHeader, Panel, FilterBar, DataTable, StatusBadge, BulletBar, Button, toast, type Column } from "@pairwise/ui";
-import { Frame, OwnershipNote, useNav, useOwnership } from "../frame";
+import { Frame, OwnershipNote, useNav, useOwnership, useSelection } from "../frame";
+import { varyService } from "../vary";
 import { services, type Service } from "../data";
 import { serviceOwner } from "../org";
 
@@ -25,7 +26,8 @@ export function Services() {
   const [q, setQ] = useState("");
   const [f, setF] = useState<Record<string, string>>({});
   const own = useOwnership();
-  const scoped = services.filter((s) => own.has(serviceOwner(s.name)));
+  const sel = useSelection();
+  const scoped = services.filter((s) => own.has(serviceOwner(s.name))).map((s) => varyService(sel, s));
   const rows = scoped.filter((s) => (!q || s.name.includes(q.toLowerCase()))
     && (!f.status || f.status === "all" || s.status === f.status)
     && (!f.owner || f.owner === "all" || s.owner === f.owner)
