@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 # Shared with pr-preview.yml, so publishes to gh-pages never overlap.
 concurrency:
@@ -51,3 +52,14 @@ jobs:
       - run: node scripts/build-site.mjs ../_site
         working-directory: site-src
       - run: node scripts/publish-pages.mjs --dir _site --to . --keep pr-preview --message "Publish the site from $(git -C site-src rev-parse --short HEAD)"
+      # Remove previews whose pull requests are no longer open, in case a close event was missed.
+      - name: Remove previews of closed pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch -q --depth=1 origin gh-pages
+          for n in $(git ls-tree --name-only FETCH_HEAD pr-preview/ | sed -n 's|^pr-preview/pr-\([0-9]*\)$|\1|p'); do
+            if [ "$(gh pr view "$n" --json state --jq .state)" != "OPEN" ]; then
+              node scripts/publish-pages.mjs --to "pr-preview/pr-$n" --remove --message "Remove the preview of closed pull request $n"
+            fi
+          done
