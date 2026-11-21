@@ -6,7 +6,7 @@ import * as RPopover from "@radix-ui/react-popover";
 import { Command } from "cmdk";
 import { DayPicker, type DateRange, type Matcher } from "react-day-picker";
 import type { RadioGroupProps, ComboboxProps, ComboboxOption, DatePickerProps, DateRangePickerProps, DateRangeValue, DateRangePreset, InlineEditProps, FileUploadProps, UploadItem } from "./types";
-import { cx, Button, useCmdkAria } from "./core";
+import { cx, Button, useCmdkAria, useCmdkHighlight } from "./core";
 import { Field, useField } from "./forms";
 import { Tag } from "./actions";
 import { ProgressBar } from "./display";
@@ -91,7 +91,8 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(funct
   const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
   const shown = q && filter ? opts.map((o) => [o, rankOpt(o, terms)] as const).filter(([, r]) => r >= 0).sort((a, b) => a[1] - b[1]).map(([o]) => o) : opts;
   const canCreate = !!creatable && !!q.trim() && !opts.some((o) => o.label.toLowerCase() === q.trim().toLowerCase());
-  const setQuery = (v: string) => { setQ(v); onQueryChange && onQueryChange(v); };
+  const hl = useCmdkHighlight([...shown.map((o) => o.value), ...(canCreate ? ["\u0000create"] : [])]);
+  const setQuery = (v: string) => { hl.onQuery(); setQ(v); onQueryChange && onQueryChange(v); };
   const pick = (v: string) => {
     if (multiple) emit(values.includes(v) ? values.filter((x) => x !== v) : [...values, v]);
     else { emit([v]); setOpen(false); }
@@ -124,7 +125,7 @@ export const Combobox = React.forwardRef<HTMLButtonElement, ComboboxProps>(funct
             <RPopover.Portal>
               <RPopover.Content className="pw-popover pw-combo__pop" align="start" sideOffset={4} collisionPadding={8} aria-label={label}
                 onOpenAutoFocus={(e) => { e.preventDefault(); inputRef.current?.focus(); }}>
-                <Command shouldFilter={false} loop label={"Search " + label.toLowerCase()}>
+                <Command shouldFilter={false} loop label={"Search " + label.toLowerCase()} value={hl.value} onValueChange={hl.onValueChange} onKeyDown={hl.onKeyDown} onPointerMoveCapture={hl.onPointerMoveCapture}>
                   <div className="pw-combo__search"><Icon name="search" size={14} />
                     <Command.Input ref={inputRef} className="pw-combo__in" placeholder={searchPlaceholder} value={q} onValueChange={setQuery} />
                   </div>
