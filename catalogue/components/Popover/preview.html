@@ -1,0 +1,30 @@
+<!-- @dsCard group="Overlays" height=300 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Popover</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-stack{display:grid;gap:10px;width:260px}
+.pv-end{display:flex;justify-content:flex-end;gap:8px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){
+  return row(
+    cell('Filters (open)', h(C.Popover,{label:'Run filters',forceOpen:true,trigger:h(C.Button,{icon:'filter'},'Filters')},
+      h('div',{className:'pv-stack'},
+        h(C.Checkbox,{label:'Only failed runs',defaultChecked:true}),
+        h(C.Checkbox,{label:'Only my runs'}),
+        h(C.Select,{label:'Branch',options:['main','feature/add-retry'],defaultValue:'main'}),
+        h('div',{className:'pv-end'}, h(C.PopoverClose,null,h(C.Button,{size:'sm',variant:'ghost'},'Reset')), h(C.PopoverClose,null,h(C.Button,{size:'sm',variant:'primary'},'Apply filters')))))),
+    cell('Closed', h(C.Popover,{label:'Run details',trigger:h(C.Button,{variant:'ghost',icon:'more','aria-label':'Run details'})}, 'run_8f3k2'))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

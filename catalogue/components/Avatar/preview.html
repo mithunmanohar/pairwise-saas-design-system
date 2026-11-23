@@ -1,0 +1,25 @@
+<!-- @dsCard group="Data display" height=150 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Avatar</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;width:auto}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+function Demo(){ var team=['Dev A','Dev B','Dev C','Dev D','Dev E','Dev F'].map(function(n){return {name:n};});
+  return row(
+    cell('Sizes 20 · 28 · 32 · 36', h('div',{style:{display:'flex',gap:12,alignItems:'center'}}, h(C.Avatar,{name:'Dev A',size:20}), h(C.Avatar,{name:'Dev B'}), h(C.Avatar,{name:'Dev C',size:32}), h(C.Avatar,{name:'Dev D',size:36}))),
+    cell('With status', h('div',{style:{display:'flex',gap:12,alignItems:'center'}}, h(C.Avatar,{name:'Dev E',size:32,status:'healthy'}), h(C.Avatar,{name:'Dev F',size:32,status:'critical'}))),
+    cell('AvatarGroup, max 4', h(C.AvatarGroup,{label:'Reviewers',people:team,max:4})),
+    cell('In a row', h('span',{style:{display:'inline-flex',gap:8,alignItems:'center'}}, h(C.Avatar,{name:'Dev A',decorative:true}), h('span',null,'Dev A'), h('span',{className:'pw-caption pw-muted'},'Owner'))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

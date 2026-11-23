@@ -1,0 +1,34 @@
+<!-- @dsCard group="Shell" height=150 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ScopeNote</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var ORG=[{id:'co',kind:'company',label:'Example Company',status:'critical',statusCount:1,children:[
+  {id:'fn-data',kind:'function',label:'Data and analytics',status:'critical',statusCount:1,children:[
+    {id:'sq-ml',kind:'squad',label:'ML engineering',status:'critical',statusCount:1,children:[
+      {id:'in-ai',kind:'initiative',label:'AI transformation',status:'critical',statusCount:1,children:[
+        {id:'pr-fc',kind:'project',label:'Forecasting platform',status:'critical',statusCount:1,children:[{id:'rg-fc',kind:'resources',label:'Pipelines',meta:3}]},
+        {id:'pr-rec',kind:'project',label:'Recommendation engine',meta:11},
+        {id:'rg-ai',kind:'resources',label:'Direct resources',meta:6}]},
+      {id:'in-fraud',kind:'initiative',label:'Fraud detection',status:'warning',statusCount:1,children:[{id:'pr-ff',kind:'project',label:'Fraud features'}]}]},
+    {id:'sq-dp',kind:'squad',label:'Data platform'}]},
+  {id:'fn-fin',kind:'function',label:'Finance and risk',noAccess:true},
+  {id:'fn-cx',kind:'function',label:'Customer experience'}]}];
+function Demo(){ var m=useState('descendants');
+  return h(F,null, cell('With Direct only', h(C.ScopeNote,{scope:'AI transformation',summary:'and its 2 projects',runtime:'prod / region-a',mode:m[0],onModeChange:m[1]})),
+    cell('Whole organisation', h(C.ScopeNote,{scope:'the whole organisation',summary:'(3 business functions)'})));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

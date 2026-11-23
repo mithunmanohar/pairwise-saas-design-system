@@ -1,0 +1,49 @@
+<!-- @dsCard group="Data display" height=1260 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>DataTable</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:start}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el){ return h('div',{className:'pv-cell'}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+
+var rows=[{id:'sample-api',kind:'Deployment',ns:'example-team',status:'critical',label:'CrashLoopBackOff',ready:'4/6',restarts:37,cpu:1.84,age:'41d'},{id:'feature-store-api',kind:'Deployment',ns:'feature-store',status:'healthy',ready:'8/8',restarts:0,cpu:3.12,age:'93d'},{id:'search-index-svc',kind:'Deployment',ns:'search-ml',status:'warning',label:'Degraded',ready:'5/6',restarts:3,cpu:6.07,age:'12d'},{id:'eval-runner-2817',kind:'Job',ns:'data-science',status:'info',label:'Running',ready:'1/1',restarts:0,cpu:15.6,age:'2h'},{id:'inference-gateway',kind:'Deployment',ns:'serving',status:'healthy',ready:'12/12',restarts:1,cpu:2.48,age:'64d'}];
+var cols=[{key:'id',header:'Workload',sortable:true,mono:true},{key:'kind',header:'Kind'},{key:'ns',header:'Namespace',mono:true},{key:'status',header:'Status',sortable:true,sortValue:function(r){return {critical:0,warning:1,unknown:2,info:3,healthy:4}[r.status];},defaultDir:'asc',render:function(r){return h(C.StatusBadge,{status:r.status,label:r.label,size:'sm'});}},{key:'ready',header:'Ready',align:'right',mono:true},{key:'restarts',header:'Restarts 1 h',align:'right',sortable:true,mono:true},{key:'cpu',header:'CPU (cores)',align:'right',sortable:true,mono:true,render:function(r){return r.cpu.toFixed(2);}},{key:'age',header:'Age',align:'right',mono:true}];
+var runs=[];for(var i=0;i<23;i++){runs.push({id:'run_'+(8000+i*37).toString(36),repo:['sample-repo','docs-site','infra'][i%3],branch:i%4?'main':'feature/add-retry',status:i%6===0?'critical':'healthy',mins:(3+i*7%19)});}
+var runCols=[{key:'id',header:'Run',mono:true,pin:'start',hideable:false},{key:'repo',header:'Repository',mono:true,sortable:true,defaultDir:'asc'},{key:'branch',header:'Branch',mono:true},{key:'status',header:'Status',render:function(r){return h(C.StatusBadge,{status:r.status,label:r.status==='critical'?'Failed':'Passed'});}},{key:'mins',header:'Duration',num:true,align:'right',sortable:true,render:function(r){return r.mins+' min';}}];
+function Selectable(){ var sel=useState([runs[0].id,runs[2].id,runs[3].id]), hid=useState([]);
+  return h(F,null,
+    h('div',{style:{display:'flex',justifyContent:'flex-end',padding:'8px 12px'}},h(C.ColumnsMenu,{columns:runCols,hidden:hid[0],onChange:hid[1]})),
+    h(C.DataTable,{columns:runCols,rows:runs,rowKey:'id',pageSize:5,pageSizeOptions:[5,10,25],selection:'multiple',selectedKeys:sel[0],onSelectionChange:sel[1],hiddenColumns:hid[0],
+      bulkActions:function(keys){return h(F,null,h(C.Button,{size:'sm',icon:'refresh'},'Re-run '+keys.length),h(C.Button,{size:'sm',variant:'danger'},'Cancel runs'));},
+      rowActions:function(r){return [{label:'Copy run id',icon:'copy'},{label:'Open in CI provider',icon:'external'},'separator',{label:'Cancel run',tone:'critical'}];}}));
+}
+var FC={id:'pr-fc',label:'Forecasting platform',kind:'project'}, REC={id:'pr-rec',label:'Recommendation engine',kind:'project'};
+var PIPES=[{id:'forecasting-train',st:'critical',cost:1.9,path:[FC,{id:'r1',label:'forecast-models',kind:'repository'}]},{id:'feature-backfill',st:'warning',cost:2.6,path:[FC,{id:'r2',label:'feature-jobs',kind:'repository'}]},{id:'forecasting-eval',st:'healthy',cost:0.4,path:[FC,{id:'r1',label:'forecast-models',kind:'repository'}]},{id:'reco-train',st:'healthy',cost:1.2,path:[REC,{id:'r3',label:'reco-models',kind:'repository'}]},{id:'data-quality',st:'healthy',cost:0.1,path:[]}];
+var W={critical:'Failed',warning:'Retried',healthy:'Passed'};
+function ListTree(){ var v=useState('tree');
+  return h(C.DataTable,{caption:'Pipelines',rows:PIPES,view:v[0],onViewChange:v[1],getPath:function(p){return p.path;},itemNoun:['pipeline','pipelines'],directLabel:'Owned by the initiative',
+    toolbar:h(C.ScopeNote,{scope:'AI transformation',summary:'and its 2 projects'}),
+    columns:[{key:'id',header:'Pipeline',mono:true},{key:'st',header:'Status',render:function(p){return h(C.StatusBadge,{status:p.st,label:W[p.st]});},rollup:{status:function(p){return p.st;},word:function(s){return {critical:'failed',warning:'retried',healthy:'passed'}[s]||s;}}},
+      {key:'cost',header:'Cost, MTD',align:'right',num:true,render:function(p){return '$'+p.cost.toFixed(1)+'k';},rollup:'sum',format:function(n){return '$'+n.toFixed(1)+'k';}}]});
+}
+function Demo(){ return h(F,null,
+  cell('Default: worst status first, row expand, critical row tint, sortable', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols,rows:rows,defaultSort:{key:'status',dir:'asc'},rowTone:function(r){return r.status==='critical'?'critical':null;},onRowClick:function(){},pageSize:4,renderExpanded:function(r){return h('div',{className:'pw-mono'},r.id+'-6f8b9d7c4-k2x9q ,  Back-off restarting failed container (exit 137, OOMKilled)');}}))),
+  cell('List | Tree views: path below the scope, rollups on collapsed rows (try Tree)', h('div',{style:{width:'100%',border:'1px solid var(--border)',background:'var(--surface-raised)'}},h(ListTree))),
+  cell('Selection, bulk actions, row actions, page size, pinned first column', h('div',{style:{width:'100%',border:'1px solid var(--border)',background:'var(--surface-raised)'}},h(Selectable))),
+  h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}},
+    cell('Loading', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'loading'}))),
+    cell('Empty (filters active)', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],emptyTitle:'No failing workloads in example-team',emptyBody:'Filters: Status = Failing, Namespace = example-team.'}))),
+    cell('Error', h('div',{style:{width:'100%',border:'1px solid var(--border)'}},h(C.DataTable,{columns:cols.slice(0,4),rows:[],state:'error',errorDetail:'GET /api/clusters/workloads 504, kube-apiserver cluster-prod-1',onRetry:function(){}})))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>
