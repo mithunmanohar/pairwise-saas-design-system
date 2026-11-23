@@ -97,6 +97,11 @@ AI tools will invent their own buttons and colours unless told not to. Paste thi
 - Layout and spacing in your own CSS use the Pairwise variables only, e.g. `var(--space-4)`, `var(--surface-raised)`,
   `var(--border)`, `var(--ink-muted)`, `var(--radius-md)`. Never hard-code colours.
 - Status is always `StatusBadge` (icon + label + colour). Sentence case, no emoji.
+- AI features (an assistant, agents) use the assistant parts: `AssistantPanel`, `PromptComposer`, `ContextBar`,
+  `AssistantMessage`, `AssistantAnswer`. Never build your own chat UI. Mark AI content with the assistant icon and a
+  label, never a colour, gradient or sparkle.
+- Render answers as `AssistantAnswer` blocks: a summary first, `items` for things to look at, `metrics` for numbers,
+  one `next` step. Not paragraphs. Pages declare what the assistant can see with `useAssistantContext`.
 - If a component you need doesn't exist, use the closest one and add a `TODO(pairwise):` comment instead of building
   a new one here.
 ```

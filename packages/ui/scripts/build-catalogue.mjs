@@ -32,14 +32,27 @@ if (unknown.length) throw new Error("cards in an unknown group: " + unknown.join
 // Tiny Markdown → HTML for the card READMEs: paragraphs, "- " lists, **bold**, `code`.
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+// The READMEs' small Markdown: paragraphs, "- " lists, ``` fences and | tables |.
 function md(src) {
-  const out = []; let list = null;
-  for (const line of src.split("\n")) {
-    if (/^\s*- /.test(line)) { list ??= []; list.push(`<li>${inline(line.replace(/^\s*- /, ""))}</li>`); continue; }
+  const out = []; let list = null, fence = null, table = null;
+  const flush = () => {
     if (list) { out.push(`<ul>${list.join("")}</ul>`); list = null; }
+    if (table) { const [head, ...rows] = table; out.push(`<table class="cat-table"><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`); table = null; }
+  };
+  for (const line of src.split("\n")) {
+    if (fence) { if (/^```/.test(line)) { out.push(`<pre class="cat-pre"><code>${esc(fence.join("\n"))}</code></pre>`); fence = null; } else fence.push(line); continue; }
+    if (/^```/.test(line)) { flush(); fence = []; continue; }
+    if (/^\|.*\|\s*$/.test(line)) {
+      if (list) flush();
+      const cells = line.trim().slice(1, -1).split("|").map((c) => c.trim());
+      if (!cells.every((c) => /^:?-+:?$/.test(c))) (table ??= []).push(cells);
+      continue;
+    }
+    if (/^\s*- /.test(line)) { if (table) flush(); list ??= []; list.push(`<li>${inline(line.replace(/^\s*- /, ""))}</li>`); continue; }
+    flush();
     if (line.trim()) out.push(`<p>${inline(line)}</p>`);
   }
-  if (list) out.push(`<ul>${list.join("")}</ul>`);
+  flush();
   return out.join("\n");
 }
 
@@ -77,6 +90,10 @@ body { margin: 0; }
 .cat-readme { max-width: 760px; color: var(--ink); }
 .cat-readme p, .cat-readme ul { margin: var(--space-2) 0; }
 .cat-readme code { font-family: var(--font-mono); font-size: 13px; }
+.cat-pre { margin: var(--space-2) 0; padding: var(--space-3); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-sunken); white-space: pre-wrap; }
+.cat-table { border-collapse: collapse; margin: var(--space-2) 0; }
+.cat-table th, .cat-table td { padding: var(--space-1) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.cat-table th { color: var(--ink-muted); font-weight: 600; }
 .cat-frame { position: relative; margin-top: var(--space-3); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
 .cat-frame iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; }
 .cat-hidden { display: none; }
@@ -156,7 +173,28 @@ writeFileSync(join(DS, "catalogue.html"), page);
 
 // ---------- dist/COMPONENTS.md ----------
 const types = readFileSync(join(PKG, "src", "types.ts"), "utf8").split("\n");
-const propsOf = (name) => types.find((l) => l.startsWith(`export interface ${name}Props `));
+// The whole declaration (interfaces and types can span lines): from its first line until the braces close.
+function declOf(name) {
+  const start = types.findIndex((l) => new RegExp(`^export (interface|type) ${name}\\b`).test(l));
+  if (start < 0) return null;
+  const isType = types[start].startsWith("export type");
+  const out = []; let depth = 0;
+  for (let i = start; i < types.length; i++) {
+    const l = types[i]; out.push(l);
+    for (const ch of l.replace(/\/\*.*?\*\//g, "")) { if (ch === "{") depth++; else if (ch === "}") depth--; }
+    // an interface ends when its braces close; a type alias (e.g. a union over several lines) at its semicolon
+    if (depth <= 0 && (isType ? /;\s*$/.test(l) : /}\s*$/.test(l))) break;
+  }
+  return out.join("\n");
+}
+// Types an agent needs beside a component's props, e.g. the shape of an answer block.
+const EXTRA = {
+  AssistantAnswer: ["AnswerBlock"], AttentionList: ["AttentionItem"], MetricStrip: ["MetricStripItem"], EntityRef: [],
+  ContextBar: ["AssistantContextItem", "AssistantContextKind"], AssistantMessage: ["AssistantAuthor", "AssistantSource", "AssistantProvenance"],
+  AssistantPanel: ["AssistantConversation", "AssistantProviderProps", "AssistantApi", "TopBarAssistant"],
+  DataTable: ["Column"], TreeView: ["TreeNode"], TopBar: ["TopBarAssistant"],
+};
+const propsOf = (name) => [declOf(name + "Props"), ...(EXTRA[name] || []).map(declOf)].filter(Boolean).join("\n") || null;
 const docs = [
   "# @pairwise/ui components",
   "",
@@ -165,6 +203,8 @@ const docs = [
   "Setup: import `@pairwise/ui/fonts.css`, `@pairwise/ui/tokens.css` and `@pairwise/ui/styles.css` once; set `data-theme` (light | dark), `data-density` (compact | comfortable) and optionally `data-font` (atkinson | inter | plex | system) on `<html>`; wrap the app in `<PairwiseProvider>`; render `<Toaster />` once if you use `toast()`.",
   "",
   "Styling your own layout: use the CSS variables from tokens.css (`var(--surface-raised)`, `var(--border)`, `var(--ink-muted)`, `var(--space-4)`, `var(--radius-md)`), never raw colours. Status is always icon + label + colour (`StatusBadge`); `status-critical` is the only colour that asks for action. Sentence case, no emoji.",
+  "",
+  "AI features (an assistant, agents): use the assistant parts, never a chat UI of your own. `AssistantProvider` above the routes; `AssistantPanel` in `AppShell`'s `assistant` slot with a `PromptComposer` and a `ContextBar`; the `TopBar` `assistant` launcher; `useAssistantContext` on each page to say what it shows (page, entity, scopes, time, the person's access). Render each answer with `AssistantAnswer` from typed blocks (`AnswerBlock`), not one long Markdown string: a `summary` first (one or two sentences, with status), `items` for things to look at (worst first), `metrics` for numbers (at most 4), one `next` step (a proposal; real changes go through a confirm `Modal`), then evidence (`code`, `steps`, `custom`) and `sources`. Pass real identifiers as `entities` so they become chips. Mark AI content with the assistant icon and a label only: no colour, gradient, glow or sparkle; the `assistant` tokens are for the launcher alone. Your app calls the model; these components never do.",
   "",
   ...cards.flatMap((c) => {
     const p = propsOf(c.name);

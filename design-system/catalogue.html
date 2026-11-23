@@ -21,6 +21,10 @@ body { margin: 0; }
 .cat-readme { max-width: 760px; color: var(--ink); }
 .cat-readme p, .cat-readme ul { margin: var(--space-2) 0; }
 .cat-readme code { font-family: var(--font-mono); font-size: 13px; }
+.cat-pre { margin: var(--space-2) 0; padding: var(--space-3); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-sunken); white-space: pre-wrap; }
+.cat-table { border-collapse: collapse; margin: var(--space-2) 0; }
+.cat-table th, .cat-table td { padding: var(--space-1) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.cat-table th { color: var(--ink-muted); font-weight: 600; }
 .cat-frame { position: relative; margin-top: var(--space-3); overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
 .cat-frame iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; }
 .cat-hidden { display: none; }
@@ -138,11 +142,9 @@ body { margin: 0; }
 <header><h2 class="pw-heading">Field</h2><span class="pw-caption pw-muted">Forms</span></header>
 <div class="cat-readme"><p>The label, hint, error and "Required" marker that every form control shares. TextInput, Textarea, Select, Checkbox and Switch are built on it; use it directly to put any other control into a form.</p>
 <p><strong>Consumer provides:</strong> <code>label</code> and a render function as children, which receives the props to spread on the focusable element: <code>id</code>, <code>aria-describedby</code>, <code>aria-invalid</code> and <code>aria-required</code>. Optional <code>hint</code>, <code>error</code>, <code>required</code>, <code>hideLabel</code> and <code>id</code>.</p>
-<p>```tsx</p>
-<p>&lt;Field label="Retention" hint="Days to keep run logs." error={err}&gt;</p>
-<p>  {(p) =&gt; &lt;input className="pw-input" type="number" {...p} /&gt;}</p>
-<p>&lt;/Field&gt;</p>
-<p>```</p>
+<pre class="cat-pre"><code>&lt;Field label="Retention" hint="Days to keep run logs." error={err}&gt;
+  {(p) =&gt; &lt;input className="pw-input" type="number" {...p} /&gt;}
+&lt;/Field&gt;</code></pre>
 <ul><li><code>required</code> shows a muted "Required" after the label and sets <code>aria-required</code>. The visible word is hidden from screen readers, which already announce "required".</li><li><code>error</code> is shown in <code>status-critical</code> with an icon. It sets <code>aria-invalid</code> and is read after the hint.</li><li><code>readOnly</code> inputs get the sunken surface and stay focusable and copyable. Use <code>disabled</code> only when the value doesn't apply.</li><li>Every control forwards its ref to the focusable element, so form libraries (for example react-hook-form <code>register</code> or <code>Controller</code>) can focus the first invalid field.</li><li>Checkbox takes <code>checked="indeterminate"</code> for a select-all that covers some, not all, rows.</li></ul></div>
 <div class="cat-frame" data-card="Field" style="height:250px"></div>
 </section>
@@ -556,17 +558,16 @@ body { margin: 0; }
 <header><h2 class="pw-heading">AssistantAnswer</h2><span class="pw-caption pw-muted">Assistant</span></header>
 <div class="cat-readme"><p>An answer drawn from typed blocks instead of one long Markdown string, so every kind of information has its own shape: the conclusion first, things to look at as rows, numbers as a strip, the next step set apart, and evidence folded away.</p>
 <p><strong>Consumer provides:</strong> <code>blocks</code> (in reading order), <code>streaming</code>, <code>sources</code> + <code>onSource</code> (for "[1]"), <code>entities</code> (identifiers that become <code>EntityRef</code> chips in text).</p>
-<p>| Block | Drawn as |</p>
-<p>|---|---|</p>
-<p>| <code>summary</code> | <code>AnswerSummary</code>: the conclusion, with its status |</p>
-<p>| <code>items</code> | <code>AttentionList</code>: rows, worst first, at most 5 |</p>
-<p>| <code>metrics</code> | <code>MetricStrip</code>: up to 4 figures |</p>
-<p>| <code>next</code> | <code>NextStep</code>: the tinted box with buttons |</p>
-<p>| <code>text</code> | <code>Markdown</code>, with citations and entity chips |</p>
-<p>| <code>code</code> | <code>CodeBlock</code> (<code>diff: true</code> for a diff) |</p>
-<p>| <code>steps</code> | "How this was worked out", folded |</p>
-<p>| <code>custom</code> | any node (a chart, a DataTable) |</p>
-<ul><li>Ask your model for these blocks (structured output or a tool call) instead of prose. Markdown stays for the few sentences in between.</li><li>Writing rules for agents: the summary first, at most two sentences. A list of things becomes <code>items</code>, never a paragraph. Numbers go in <code>metrics</code>. Give one next step. Name each identifier once.</li><li>While <code>streaming</code>, a placeholder shows where the next block goes, and the last text block holds back unfinished syntax.</li></ul></div>
+<table class="cat-table"><thead><tr><th>Block</th><th>Drawn as</th></tr></thead><tbody><tr><td><code>summary</code></td><td><code>AnswerSummary</code>: the conclusion, with its status</td></tr><tr><td><code>items</code></td><td><code>AttentionList</code>: rows, worst first, at most 5</td></tr><tr><td><code>metrics</code></td><td><code>MetricStrip</code>: up to 4 figures</td></tr><tr><td><code>next</code></td><td><code>NextStep</code>: the tinted box with buttons</td></tr><tr><td><code>text</code></td><td><code>Markdown</code>, with citations and entity chips</td></tr><tr><td><code>code</code></td><td><code>CodeBlock</code> (<code>diff: true</code> for a diff)</td></tr><tr><td><code>steps</code></td><td>"How this was worked out", folded</td></tr><tr><td><code>custom</code></td><td>any node (a chart, a DataTable)</td></tr></tbody></table>
+<ul><li>Ask your model for these blocks (structured output or a tool call) instead of prose. Markdown stays for the few sentences in between.</li><li>Writing rules for agents: the summary first, at most two sentences. A list of things becomes <code>items</code>, never a paragraph. Numbers go in <code>metrics</code>. Give one next step. Name each identifier once.</li><li>While <code>streaming</code>, a placeholder shows where the next block goes, and the last text block holds back unfinished syntax.</li></ul>
+<p><strong>Instructions for your model.</strong> Ask for JSON blocks with structured output or a tool call, and add this to its system prompt:</p>
+<pre class="cat-pre"><code>Answer as a JSON array of blocks, in this order:
+1. {"type":"summary","text":…,"status":…}: the conclusion in at most two sentences. "critical" only if someone must act now.
+2. {"type":"items","title":…,"items":[…]}: the things to look at, worst first, at most five. Each has the identifier, a short title and one action.
+3. {"type":"metrics","items":[…]}: at most four figures the conclusion depends on.
+4. {"type":"next","text":…}: one next step. Propose it; never say you did it.
+5. Then "text" (a sentence or two, citing sources as [1]), "code" (diffs), "steps" (how you worked it out, short).
+Name each identifier once, exactly as written in the product (INC-2041, checkout-api). No headings, no tables of prose.</code></pre></div>
 <div class="cat-frame" data-card="AssistantAnswer" style="height:820px"></div>
 </section>
 <section class="cat-card" id="AssistantMessage" data-name="assistantmessage">

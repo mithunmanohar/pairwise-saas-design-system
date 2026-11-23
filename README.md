@@ -317,8 +317,11 @@ This repository was itself built with AI coding agents (Claude Code), under the 
 - Don't create your own buttons, inputs, tables, menus, modals, toasts or badges, and don't add another UI library.
 - Your own CSS uses Pairwise variables only (`var(--space-4)`, `var(--surface-raised)`); never hard-code colours.
 - Status is always `StatusBadge`. Sentence case, no emoji.
-- AI features use the assistant parts (`AssistantPanel`, `AssistantMessage`, `PromptComposer`, `ContextBar`); mark AI content with the assistant icon and a label, never a colour.
-- Answers are `AssistantAnswer` blocks: a summary first, rows for things, a metric strip for numbers, one next step. Not paragraphs.
+- AI features (an assistant, agents) use the assistant parts: `AssistantPanel`, `PromptComposer`, `ContextBar`,
+  `AssistantMessage`, `AssistantAnswer`. Never build your own chat UI. Mark AI content with the assistant icon and a
+  label, never a colour, gradient or sparkle.
+- Render answers as `AssistantAnswer` blocks: a summary first, `items` for things to look at, `metrics` for numbers,
+  one `next` step. Not paragraphs. Pages declare what the assistant can see with `useAssistantContext`.
 - Missing a component? Use the closest one and leave a `TODO(pairwise):` instead of building a new one.
 ```
 
