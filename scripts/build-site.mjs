@@ -76,6 +76,7 @@ body { margin: 0; }
 .lp-cta a { text-decoration: none; }
 .lp-shot { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
 .lp-h2 { margin: var(--space-12) 0 var(--space-5); }
+.lp-lead { max-width: 720px; margin: calc(-1 * var(--space-3)) 0 var(--space-5); }
 .lp-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-5); }
 .lp-card { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--ink); text-decoration: none; }
 .lp-card:hover { border-color: var(--border-strong); }
@@ -98,7 +99,7 @@ body { margin: 0; }
   <main>
     <section class="lp-hero">
       <h1>A production-grade design system for AI applications and multi-tenant SaaS</h1>
-      <p>Design tokens and 68 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.</p>
+      <p>Design tokens and 68 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and its AI features (a contextual assistant with grounded answers) look and behave like the rest of the app.</p>
       <div class="lp-cta">
         <a class="pw-btn pw-btn--primary" href="demo/"><span>Open the live demo</span></a>
         <a class="pw-btn pw-btn--secondary" href="catalogue/"><span>Browse all components</span></a>
@@ -108,6 +109,9 @@ body { margin: 0; }
     <h2 class="pw-heading lp-h2">A complete app, built only from the package</h2>
     <div class="lp-cards">${card("overview", "overview", "Overview", "The whole estate at a glance: one open incident stands out, healthy services stay quiet.")}${card("services/checkout-api", "service-health", "Service health", "Observability: metrics with context, latency against the SLO, errors by type, endpoints worst first. Updates live.")}${card("incidents/INC-2041", "incident", "Incident", "Severity, customer impact, the latency regression marked on the chart, responders and a live timeline.")}${card("deploys", "deployments", "Deployments", "Delivery metrics, deploys by outcome, a canary in progress, and every rollout with a rollback one click away.")}${card("runs/run_8f3k2", "run-detail", "CI run detail", "Developer platform: a checks matrix shows new versus flaky failures, the failing log, run history and steps.")}${card("usage", "usage", "Usage and cost", "Spend against budget, cost by category or team, model tokens by hour, and workspaces near their limit.")}${card("access", "access", "Access", "Members with inline role changes, an invite form with validation, API tokens and the audit log.")}${card("repos/sample-repo", "settings", "Repository settings", "Everyday SaaS: validation that says how to fix it, toggles, toasts, and a type-to-confirm delete.")}${card("services", "services", "Services", "A filterable, sortable list of services with status and error budget, worst first.")}
     </div>
+    <h2 class="pw-heading lp-h2">An assistant that reads as part of the app</h2>
+    <p class="lp-lead pw-muted">It sees the page and scope you're in and shows that context. Every answer has citations and sources, and it can't change anything. AI is marked by an icon and a label, never a colour or a sparkle. Press Ctrl+I in the demo; its answers are scripted, with no model calls.</p>
+    <a href="demo/?state=assistant#/incidents/INC-2041"><img class="lp-shot" src="images/assistant-incident-dark.png" alt="The assistant docked beside an incident, citing the deploy that caused it" loading="lazy"></a>
     <h2 class="pw-heading lp-h2">Responsive down to a phone</h2>
     <div class="lp-phones">
       <img src="images/phone-overview-dark.png" alt="Overview on a phone" loading="lazy"><img src="images/phone-incident-dark.png" alt="Incident on a phone" loading="lazy"><img src="images/phone-run-detail-dark.png" alt="CI run on a phone" loading="lazy">
@@ -120,6 +124,7 @@ body { margin: 0; }
       <li><b>Typed end to end</b><span class="pw-muted">Strict TypeScript with zero any. Tables infer your row type; type tests run against the built package.</span></li>
       <li><b>Refactors proven pixel-identical</b><span class="pw-muted">Every component is screenshotted in both themes and densities and diffed before a change merges.</span></li>
       <li><b>Built for AI agents</b><span class="pw-muted">Agents in every project read one generated COMPONENTS.md and use the system instead of inventing UI.</span></li>
+      <li><b>AI inside the apps, too</b><span class="pw-muted">Assistant panel, messages, composer and context bar, built from the same parts. The app brings its own model.</span></li>
     </ul>
   </main>
   <footer class="lp-foot pw-caption">Every screen on this site is built only from <code class="pw-mono">@pairwise/ui</code>. All data is fictional. Source, rules and build reports are on GitHub.</footer>
