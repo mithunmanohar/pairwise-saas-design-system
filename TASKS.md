@@ -4,7 +4,7 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 2.2.0 (the assistant), committed; 2.1.0 is released (tag `ui-v2.1.0`). What each version
+Status: `@pairwise/ui` 2.2.0 (the assistant) is released (tag `ui-v2.2.0`). What each version
 contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
 
 ## Done in 2.2.0

@@ -332,7 +332,7 @@ The point isn't that AI wrote the code. It's that the output is **consistent, ac
 ## Use it
 
 ```bash
-pnpm add github:mithunmanohar/pairwise-saas-design-system#ui-v2.1.0
+pnpm add github:mithunmanohar/pairwise-saas-design-system#ui-v2.2.0
 ```
 
 ```tsx
@@ -352,7 +352,7 @@ export function App() {
 }
 ```
 
-Use the latest `ui-v*` tag from [Releases](https://github.com/mithunmanohar/pairwise-saas-design-system/releases); the assistant arrives with `ui-v2.2.0`. Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (or `plex`, `system`) on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
+Use the latest `ui-v*` tag from [Releases](https://github.com/mithunmanohar/pairwise-saas-design-system/releases). Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (or `plex`, `system`) on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
 
 ## Repository map
 
