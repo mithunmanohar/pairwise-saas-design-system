@@ -232,7 +232,7 @@ test.describe("the demo's assistant (2.2)", () => {
     await page.goto(live("incidents/INC-2041", "&frozen=1"));
     await page.getByRole("button", { name: "More actions for INC-2041" }).click();
     await page.getByRole("menuitem", { name: "Investigate with the assistant" }).click();
-    await expect(panel(page).locator(".pw-md").getByText("most likely comes from deploy")).toBeVisible();
+    await expect(panel(page).locator(".pw-answer .pw-lead")).toContainText("most likely comes from deploy v2.14.1");
     await expect(panel(page).getByRole("link", { name: /^Source 1: Deploy dep_9a1/ })).toBeVisible();
     await expect(panel(page).getByText("Removed:", { exact: false })).toHaveCount(1);
     await panel(page).getByRole("button", { name: "Close" }).click();

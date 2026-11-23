@@ -1,24 +1,22 @@
 // The demo's assistant. The Pages site is static, so answers are scripted: each one is built from the demo's fictional
 // data for the current page, ownership scope, runtime scope and time range (seeded like vary.ts, so the same question
-// in the same selection always gets the same answer), then "streamed" a few words at a time. No model, no API keys.
-// Conversations live in a module store so they survive moving between pages.
-import { useSyncExternalStore, type ReactNode } from "react";
+// in the same selection always gets the same answer), then "streamed" a block at a time. No model, no API keys.
+// Answers are typed blocks (AnswerBlock), the way an app would ask its model to answer: the conclusion first, things
+// to look at as rows, numbers as a strip, the next step set apart, evidence folded. Conversations live in a module
+// store so they survive moving between pages.
+import { useSyncExternalStore } from "react";
 import {
-  AssistantPanel, AssistantMessage, PromptComposer, ContextBar, Markdown, ResourceCard, Disclosure, CodeBlock, Metric, StateBlock,
-  useAssistant, type AssistantContextItem, type AssistantSource, type AssistantFeedback, type AssistantMessageStatus, type PromptSuggestion, type PromptCommand, type TopBarAssistant, type UploadItem,
+  AssistantPanel, AssistantMessage, AssistantAnswer, PromptComposer, ContextBar, StateBlock,
+  useAssistant, type AnswerBlock, type AttentionItem, type EntityRefProps, type AssistantContextItem, type AssistantSource, type AssistantFeedback,
+  type AssistantMessageStatus, type PromptSuggestion, type PromptCommand, type TopBarAssistant, type UploadItem,
 } from "@pairwise/ui";
-import { services, incidents, incidentById, isOpen, deploys, repos, members, workspaces, serviceByName } from "./data";
-import { RESOURCES, RESOURCE_TYPES, SCOPE_TREE, inScope, pathBelow, rollup, serviceOwner, unitById, workspaceOwner, type Resource } from "./org";
+import { services, incidents, incidentById, isOpen, deploys, repos, members, workspaces, serviceByName, type Incident, type Service } from "./data";
+import { RESOURCE_TYPES, SCOPE_TREE, inScope, pathBelow, rollup, serviceOwner, unitById, workspaceOwner, type Resource } from "./org";
 import { share, varyInt, varyRound, type Selection } from "./vary";
 
 /* ---------- The store ---------- */
-type Extra =
-  | { type: "resources"; ids: string[] }
-  | { type: "metric"; label: string; value: string; delta: number; window: string }
-  | { type: "steps"; steps: string[] }
-  | { type: "diff"; title: string; code: string };
-interface Answer { markdown: string; sources: AssistantSource[]; extras: Extra[]; followUps: PromptSuggestion[]; announce: string }
-interface Msg { id: string; who: "person" | "assistant"; text: string; status: AssistantMessageStatus; answer?: Answer; feedback?: AssistantFeedback; context?: string[] }
+interface Answer { blocks: AnswerBlock[]; sources: AssistantSource[]; followUps: PromptSuggestion[]; announce: string }
+interface Msg { id: string; who: "person" | "assistant"; text: string; status: AssistantMessageStatus; answer?: Answer; shown?: number; feedback?: AssistantFeedback; context?: string[] }
 interface Conv { id: string; title: string; updated: string; messages: Msg[] }
 interface State { convs: Conv[]; activeId: string | null; busy: string | null; announcement: string; unread: boolean; draft: string; removed: string[]; added: AssistantContextItem[]; files: UploadItem[] }
 let state: State = { convs: [], activeId: null, busy: null, announcement: "", unread: false, draft: "", removed: [], added: [], files: [] };
@@ -34,58 +32,91 @@ export interface PageInfo { section: string; id?: string; label: string; sel: Se
 let page: PageInfo | null = null;
 /** Frame reports the page and selection on every render, so ask() knows where it was asked. */
 export const setAssistantPage = (p: PageInfo) => { page = p; };
+/** Set by the panel: buttons in answers open demo pages. */
+let nav: (path: string) => void = () => undefined;
+let askAgain: (prompt: string) => void = () => undefined;
+
+/* ---------- Identifiers that become chips wherever they appear ---------- */
+const open = (path: string) => () => nav(path);
+const incRef = (i: Incident): EntityRefProps => ({ label: i.id, icon: "siren", kindLabel: "Incident", onOpen: open("incidents/" + i.id) });
+const svcRef = (name: string): EntityRefProps => ({ label: name, kind: "webapp", onOpen: open("services/" + name) });
+const resRef = (r: Resource): EntityRefProps => ({ label: r.name, kind: RESOURCE_TYPES.find((t) => t.type === r.type)?.kind ?? "resources", ...(r.type === "workspace" ? { icon: "coins" as const, kindLabel: "Cost workspace" } : {}), onOpen: open(r.href) });
+export const ENTITIES: EntityRefProps[] = [
+  ...incidents.map(incRef), ...services.map((s) => svcRef(s.name)),
+  ...repos.map((r) => ({ label: r.name, kind: "repository" as const, onOpen: open("repos/" + r.name) })),
+  // Workspaces whose names are ordinary words ("training", "staging") stay plain text: a chip must mean an identifier.
+  ...workspaces.filter((w) => /[-\d]/.test(w.name)).map((w) => ({ label: w.name, icon: "coins" as const, kindLabel: "Cost workspace", onOpen: open("usage") })),
+];
 
 /* ---------- Scripted answers ---------- */
 const scopeName = (sel: Selection) => (sel.scope ? unitById(sel.scope)?.label ?? "this scope" : "the whole organisation");
-const where = (sel: Selection) => `**${scopeName(sel)}**, ${sel.env} / ${sel.cloud}`;
+const runtime = (sel: Selection) => `${sel.env} / ${sel.cloud}`;
 const money = (k: number) => `$${k.toFixed(1)}k`;
 const src = (id: string, title: string, extra: Partial<AssistantSource> = {}): AssistantSource => ({ id, title, ...extra });
-const svcRes = (name: string) => "svc:" + name;
+const plural = (n: number, one: string, many = one + "s") => `${n} ${n === 1 ? one : many}`;
+const sevStatus = (i: Incident) => (i.sev <= 2 ? "critical" as const : "warning" as const);
+const incItem = (i: Incident): AttentionItem => ({ id: i.id, ref: incRef(i), title: i.title, meta: `Severity ${i.sev} · ${i.state.toLowerCase()} for ${i.duration}`, status: sevStatus(i), statusLabel: i.state, action: { label: "Open", onSelect: open("incidents/" + i.id) } });
+const svcItem = (sel: Selection, s: Service): AttentionItem => ({
+  id: s.name, ref: svcRef(s.name), title: `p95 ${varyInt(sel, "p95-" + s.name, s.p95)} ms against a ${s.slo} ms objective`,
+  meta: pathBelow(serviceOwner(s.name), sel.scope).map((p) => p.label).join(" › ") || undefined,
+  status: s.status === "healthy" ? undefined : s.status, statusLabel: s.status === "critical" ? "Down" : "Degraded", action: { label: "Open", onSelect: open("services/" + s.name) },
+});
 
 function attention(sel: Selection): Answer {
   const r = rollup(sel.scope, sel.mode);
-  const open = r.openIncidents;
-  const degraded = services.filter((s) => s.status !== "healthy" && inScope(serviceOwner(s.name), sel.scope, sel.mode));
-  if (!open.length && !degraded.length) {
-    return { markdown: `Nothing needs attention in ${where(sel)} right now. Every service is within its objective and there are no open incidents [1].`,
-      sources: [src("svc", "Service health", { kind: "Services" })], extras: [], followUps: [{ label: "What changed today?" }], announce: "Assistant replied: nothing needs attention." };
+  const open_ = r.openIncidents;
+  const inScopeSvcs = services.filter((s) => inScope(serviceOwner(s.name), sel.scope, sel.mode));
+  const degraded = inScopeSvcs.filter((s) => s.status !== "healthy");
+  if (!open_.length && !degraded.length) {
+    return { blocks: [{ type: "summary", text: `Nothing needs attention in ${scopeName(sel)} (${runtime(sel)}) right now.`, status: "healthy", statusLabel: "All healthy" },
+      { type: "text", markdown: "Every service is within its objective and there are no open incidents [1]." }],
+      sources: [src("svc", "Service health", { kind: "Services" })], followUps: [{ label: "What changed today?" }], announce: "Assistant replied: nothing needs attention." };
   }
-  const lines = [
-    `${open.length ? `**${open.length} open incident${open.length === 1 ? "" : "s"}** and ` : ""}**${degraded.length} degraded service${degraded.length === 1 ? "" : "s"}** in ${where(sel)} [1]:`,
-    "",
-    ...open.map((i) => `- \`${i.id}\` ${i.title}, severity ${i.sev}, ${i.state.toLowerCase()} for ${i.duration} [2].`),
-    ...degraded.map((s) => `- \`${s.name}\`: p95 ${varyInt(sel, "p95-" + s.name, s.p95)} ms against a ${s.slo} ms objective.`),
-    "",
-    open.some((i) => i.id === "INC-2041") ? "The checkout slowdown started 2 minutes after deploy `v2.14.1` [3]. Rolling back is the quickest fix." : "None of them followed a deploy in the last hour.",
-  ];
+  const worst = open_.some((i) => i.sev <= 2) ? "critical" as const : "warning" as const;
+  const checkout = open_.some((i) => i.id === "INC-2041");
   return {
-    markdown: lines.join("\n"),
+    blocks: [
+      { type: "summary", text: `${open_.length ? plural(open_.length, "open incident") + " and " : ""}${plural(degraded.length, "degraded service")} need attention in ${scopeName(sel)}.`, status: worst, statusLabel: worst === "critical" ? "Needs action" : "Needs attention" },
+      { type: "items", title: "Needs attention", items: [...open_.map(incItem), ...degraded.map((s) => svcItem(sel, s))] },
+      { type: "metrics", items: [
+        { label: "Services healthy", value: `${inScopeSvcs.length - degraded.length} of ${inScopeSvcs.length}` },
+        { label: "Open incidents", value: String(open_.length) },
+        { label: "Deploys today", value: String(r.deploys.length), delta: { value: 14, unit: " %", polarity: "neutral", window: "7-day average" } },
+      ] },
+      ...(checkout ? [
+        { type: "text" as const, markdown: "The checkout slowdown started 2 minutes after deploy `v2.14.1` of checkout-api [3]." },
+        { type: "next" as const, text: "Roll back checkout-api to `v2.14.0`, the version before the slowdown.", actions: [{ label: "Investigate INC-2041", onSelect: () => askAgain("Investigate INC-2041") }, { label: "Open deployments", onSelect: open("deploys") }] },
+      ] : []),
+    ],
     sources: [src("svc", "Service health", { kind: "Services" }), src("inc", "Open incidents", { kind: "Incidents" }), src("dep", "Deploy dep_9a1, checkout-api v2.14.1", { kind: "Deployment", excerpt: "PR #1482 by Dev B, 14:29" })],
-    extras: [{ type: "resources", ids: degraded.map((s) => svcRes(s.name)).slice(0, 3) }],
-    followUps: [{ label: "Investigate INC-2041" }, { label: "Draft a status update" }],
-    announce: `Assistant replied: ${open.length} open incidents and ${degraded.length} degraded services.`,
+    followUps: [{ label: "Draft a status update" }, { label: "What changed today?" }],
+    announce: `Assistant replied: ${open_.length} open incidents and ${degraded.length} degraded services need attention.`,
   };
 }
 function spend(sel: Selection): Answer {
   const total = varyRound(sel, "spend", 46.5 * share(sel)); // the same figure as Usage and cost's Spend
-  const ws = workspaces.filter((w) => inScope(workspaceOwner(w.name), sel.scope, sel.mode)).sort((a, b) => b.change - a.change);
-  const top = ws[0];
-  const rise = varyRound(sel, "spend-delta", 9.4, 1, 0.8);
-  const lines = [
-    `Spend in ${where(sel)} is **${money(total)}** this month, **${rise} %** above the same day last month [1].`,
-    "",
-    top ? `Most of the rise is \`${top.name}\` (${top.team}), up ${top.change} %${top.tokens ? `, from ${top.tokens}M model tokens` : ""} [2].` : "No workspace in this scope rose by more than 5 %.",
-    "",
-    "| Workspace | Spend | Budget | Change |", "| --- | --- | --- | --- |",
-    ...ws.slice(0, 4).map((w) => `| ${w.name} | ${money(w.spend)} | ${money(w.budget)} | ${w.change > 0 ? "+" : ""}${w.change} % |`),
-  ];
+  const forecast = varyRound(sel, "forecast", 54.8 * share(sel)), budget = Math.round(52 * share(sel) * 10) / 10;
+  const ws = workspaces.filter((w) => inScope(workspaceOwner(w.name), sel.scope, sel.mode)).sort((a, b) => b.spend / b.budget - a.spend / a.budget);
   const near = ws.filter((w) => w.spend / w.budget >= 0.92);
-  if (near.length) lines.push("", `${near.map((w) => "`" + w.name + "`").join(" and ")} ${near.length === 1 ? "is" : "are"} within 8 % of budget.`);
+  const top = [...ws].sort((a, b) => b.change - a.change)[0];
+  const rise = varyRound(sel, "spend-delta", 9.4, 1, 0.8);
   return {
-    markdown: lines.join("\n"),
+    blocks: [
+      { type: "summary", text: `Spend is ${money(total)} this month, up ${rise} %${top ? `, mostly ${top.name}` : ""}. The forecast is over budget.`, status: forecast > budget ? "warning" : undefined, statusLabel: "Over budget" },
+      { type: "metrics", items: [
+        { label: "Spend, month to date", value: money(total), delta: { value: rise, unit: " %", window: "same day last month" } },
+        { label: "Forecast", value: money(forecast) },
+        { label: "Budget", value: money(budget) },
+      ] },
+      ...(near.length ? [{ type: "items" as const, title: "Near budget", items: near.map((w): AttentionItem => ({
+        id: w.id, ref: { label: w.name, icon: "coins", kindLabel: "Cost workspace", onOpen: open("usage") }, title: `${money(w.spend)} of ${money(w.budget)}, up ${w.change} % on last month`,
+        meta: w.team, status: "warning", statusLabel: `${Math.round((w.spend / w.budget) * 100)} % of budget`,
+      })) }] : []),
+      ...(top ? [{ type: "text" as const, markdown: `${top.name} (${top.team}) rose ${top.change} %${top.tokens ? `, from ${top.tokens}M model tokens` : ""} [2].` }] : []),
+      ...(near.length ? [{ type: "next" as const, text: `Set a budget alert on the ${near[0]!.name} workspace, or cap its nightly workers.`, actions: [{ label: "Open usage and cost", onSelect: open("usage") }] }] : []),
+    ],
     sources: [src("cost", "Usage and cost, month to date", { kind: "Report", updated: "Today 06:00" }), src("ws", "Workspace budgets", { kind: "Report" })],
-    extras: [{ type: "metric", label: "Spend, month to date", value: money(total), delta: rise, window: "same day last month" }],
-    followUps: [{ label: "Which workspaces are near budget?" }, { label: "Break it down by squad" }],
+    followUps: [{ label: "Break it down by squad" }, { label: "What changed today?" }],
     announce: `Assistant replied: spend is ${money(total)}, up ${rise} percent.`,
   };
 }
@@ -93,24 +124,29 @@ function investigate(sel: Selection, id: string): Answer {
   const inc = incidentById(id) ?? incidents[0]!;
   const dep = deploys.find((d) => d.service === inc.service);
   const svc = serviceByName(inc.service);
+  const alert = inc.events.find((e) => e.kind === "alert");
+  const p95 = svc ? varyInt(sel, "p95-" + svc.name, svc.p95) : 0;
   return {
-    markdown: [
-      `\`${inc.id}\` (${inc.title}) most likely comes from ${dep ? `deploy \`${dep.version}\` of \`${inc.service}\` at ${dep.when} [1]` : "a change to its dependencies"}.`,
-      "",
-      `- The alert fired at ${inc.events.find((e) => e.kind === "alert")?.time ?? inc.started} [2]${svc ? `: p95 ${varyInt(sel, "p95-" + svc.name, svc.p95)} ms against ${svc.slo} ms` : ""}.`,
-      dep ? `- ${dep.pr} changed the retry policy, which doubles calls to the payments provider under load [3].` : "- No deploy in the last hour.",
-      "- Error rate is unchanged, so customers see slow checkouts, not failures.",
-      "",
-      `**Suggested next step:** roll back to the previous version. It's a proposal: nothing has been changed.`,
-    ].join("\n"),
-    sources: [src("dep", `Deploy ${dep?.id ?? "dep_9a1"}, ${inc.service} ${dep?.version ?? ""}`.trim(), { kind: "Deployment", updated: dep?.when }),
-      src("alert", "Alert: p95 above SLO for 2 min", { kind: "Alert", excerpt: inc.events.find((e) => e.kind === "alert")?.body }),
-      src("pr", `Pull request ${dep?.pr ?? "#1482"}`, { entity: "repository", path: [{ id: "r", label: "sample-repo" }] })],
-    extras: [
+    blocks: [
+      { type: "summary", text: `${inc.id} most likely comes from ${dep ? `deploy ${dep.version} of ${inc.service}` : "a change to its dependencies"}.`, status: sevStatus(inc), statusLabel: `Severity ${inc.sev}` },
+      ...(svc ? [{ type: "metrics" as const, items: [
+        { label: "p95 latency", value: `${p95} ms`, delta: { value: Math.round(((p95 - svc.slo) / svc.slo) * 100), unit: " %", window: "objective", breach: true } },
+        { label: "Objective", value: `${svc.slo} ms` },
+        { label: "Error rate", value: `${svc.errors} %`, delta: { value: 0, unit: " %", polarity: "neutral" as const, window: "last hour" } },
+      ] }] : []),
+      { type: "text", markdown: [
+        `- The alert fired at ${alert?.time ?? inc.started} [2], 2 minutes after the deploy at ${dep?.when ?? "14:29"} [1].`,
+        dep ? `- ${dep.pr} changed the retry policy, which doubles calls to the payments provider under load [3].` : "- No deploy in the last hour.",
+        "- Customers see slow checkouts, not failures.",
+      ].join("\n") },
+      { type: "code", title: "retry.yaml in " + (dep?.pr ?? "#1482"), code: "@@ payments client @@\n timeout: 2s\n-retries: 1\n+retries: 3\n+retry_on: [timeout, 503]", diff: true },
+      { type: "next", text: `Roll back ${inc.service} to \`v2.14.0\`, then confirm p95 returns under ${svc?.slo ?? 300} ms.`, actions: [{ label: `Open ${inc.service}`, onSelect: open("services/" + inc.service) }, { label: "Draft a status update", onSelect: () => askAgain("Draft a status update") }] },
       { type: "steps", steps: ["Read the incident timeline and the alert", `Compared ${inc.service}'s latency with deploys in the last 2 hours`, "Read the diff of the deploy that preceded the alert", "Checked the error rate for failed payments"] },
-      { type: "diff", title: "retry.yaml in " + (dep?.pr ?? "#1482"), code: "@@ payments client @@\n timeout: 2s\n-retries: 1\n+retries: 3\n+retry_on: [timeout, 503]" },
     ],
-    followUps: [{ label: "Draft a status update" }, { label: "Who should review the rollback?" }],
+    sources: [src("dep", `Deploy ${dep?.id ?? "dep_9a1"}, ${inc.service} ${dep?.version ?? ""}`.trim(), { kind: "Deployment", updated: dep?.when }),
+      src("alert", "Alert: p95 above SLO for 2 min", { kind: "Alert", excerpt: alert?.body }),
+      src("pr", `Pull request ${dep?.pr ?? "#1482"}`, { entity: "repository", path: [{ id: "r", label: "sample-repo" }] })],
+    followUps: [{ label: "Who should review the rollback?" }],
     announce: `Assistant replied: ${inc.id} most likely comes from deploy ${dep?.version ?? ""}.`,
   };
 }
@@ -119,17 +155,14 @@ function owns(sel: Selection): Answer {
   const by = (t: Resource["type"]) => r.resources.filter((x) => x.type === t).length;
   const bad = r.resources.filter((x) => x.status === "warning" || x.status === "critical");
   return {
-    markdown: [
-      `${where(sel)} owns **${r.resources.length} resources**${sel.mode === "direct" ? " directly" : ", including everything below it"} [1]:`,
-      "",
-      `- ${by("service")} services, ${by("repository")} repositories and ${by("workspace")} cost workspaces`,
-      `- ${r.runs.length} CI runs and ${r.deploys.length} deploys today`,
-      "",
-      bad.length ? `${bad.length} need${bad.length === 1 ? "s" : ""} attention:` : "All of them are healthy.",
-    ].join("\n"),
+    blocks: [
+      { type: "summary", text: `${scopeName(sel)} owns ${plural(r.resources.length, "resource")}${sel.mode === "direct" ? " directly" : ", including everything below it"}. ${bad.length ? `${bad.length} need${bad.length === 1 ? "s" : ""} attention.` : "All are healthy."}`, status: bad.length ? "warning" : "healthy", statusLabel: bad.length ? "Needs attention" : "All healthy" },
+      { type: "metrics", items: [{ label: "Services", value: String(by("service")) }, { label: "Repositories", value: String(by("repository")) }, { label: "Cost workspaces", value: String(by("workspace")) }, { label: "Deploys today", value: String(r.deploys.length) }] },
+      ...(bad.length ? [{ type: "items" as const, title: "Needs attention", items: bad.map((x): AttentionItem => ({ id: x.id, ref: resRef(x), title: x.detail, meta: pathBelow(x.owner, sel.scope).map((p) => p.label).join(" › ") || undefined, status: x.status, statusLabel: x.statusLabel, action: { label: "Open", onSelect: open(x.href) } })) }] : []),
+      { type: "text", markdown: "Counts come from the resource explorer [1]." },
+    ],
     sources: [src("explorer", "Resource explorer", { kind: "Ownership" })],
-    extras: [{ type: "resources", ids: bad.map((x) => x.id).slice(0, 3) }],
-    followUps: [{ label: "What changed today?" }, { label: "Why did spend rise this month?" }],
+    followUps: [{ label: "Why did spend rise this month?" }, { label: "What changed today?" }],
     announce: `Assistant replied: ${r.resources.length} resources, ${bad.length} need attention.`,
   };
 }
@@ -137,36 +170,54 @@ function service(sel: Selection, name: string): Answer {
   const s = serviceByName(name)!;
   const dep = deploys.find((d) => d.service === name);
   const p95 = varyInt(sel, "p95-" + name, s.p95);
+  const healthy = s.status === "healthy";
   return {
-    markdown: s.status === "healthy"
-      ? `\`${name}\` is healthy: p95 is ${p95} ms against a ${s.slo} ms objective, with ${Math.round(s.budget * 100)} % of its error budget left [1].`
-      : `\`${name}\` is degraded: p95 is **${p95} ms** against a ${s.slo} ms objective [1].${dep ? ` It started after deploy \`${dep.version}\` at ${dep.when} [2].` : ""}`,
+    blocks: [
+      { type: "summary", text: healthy ? `${name} is healthy.` : `${name} is degraded: p95 is ${p95} ms against a ${s.slo} ms objective.`, status: healthy ? "healthy" : s.status, statusLabel: healthy ? "Healthy" : "Degraded" },
+      { type: "metrics", items: [
+        { label: "p95 latency", value: `${p95} ms`, delta: healthy ? undefined : { value: Math.round(((p95 - s.slo) / s.slo) * 100), unit: " %", window: "objective", breach: true } },
+        { label: "Objective", value: `${s.slo} ms` },
+        { label: "Error budget left", value: `${Math.round(s.budget * 100)} %` },
+        { label: "Requests", value: `${s.rps}`, unit: "/s" },
+      ] },
+      { type: "text", markdown: dep ? `Last deploy: \`${dep.version}\` at ${dep.when} by ${dep.author}, ${dep.statusLabel.toLowerCase()} [2].` : "No deploys today [1]." },
+      ...(!healthy && dep ? [{ type: "next" as const, text: `Compare ${name} before and after \`${dep.version}\`, and roll back if it caused the slowdown.`, actions: [{ label: `Open ${name}`, onSelect: open("services/" + name) }] }] : []),
+    ],
     sources: [src("svc", `${name} latency`, { entity: "webapp" }), ...(dep ? [src("dep", `Deploy ${dep.id}, ${name} ${dep.version}`, { kind: "Deployment" })] : [])],
-    extras: [{ type: "resources", ids: [svcRes(name)] }],
-    followUps: s.status === "healthy" ? [{ label: "What changed today?" }] : [{ label: "Investigate INC-2041" }],
-    announce: `Assistant replied: ${name} is ${s.status === "healthy" ? "healthy" : "degraded"}.`,
+    followUps: healthy ? [{ label: "What changed today?" }] : [{ label: "Investigate INC-2041" }],
+    announce: `Assistant replied: ${name} is ${healthy ? "healthy" : "degraded"}.`,
   };
 }
 function statusUpdate(sel: Selection): Answer {
   const inc = incidents.find((i) => isOpen(i) && inScope(serviceOwner(i.service), sel.scope, sel.mode)) ?? incidents[0]!;
+  const text = `Slower checkouts. Since ${inc.started.replace("Today ", "")}, some checkouts take longer than usual. Payments are not failing. We've found the cause and are rolling back a change. Next update in 30 minutes.`;
   return {
-    markdown: ["Here's a draft for the status page. Edit it before you post it:", "", `> **Slower checkouts.** Since ${inc.started.replace("Today ", "")}, some checkouts take longer than usual. Payments are not failing. We've found the cause and are rolling back a change. Next update in 30 minutes.`].join("\n"),
-    sources: [src("inc", `${inc.id} timeline`, { kind: "Incident" })], extras: [], followUps: [{ label: "Make it shorter" }],
+    blocks: [
+      { type: "summary", text: `A draft status update for ${inc.id}. Edit it before you post it.` },
+      { type: "code", title: "Status page draft", code: text },
+      { type: "next", text: `Post it from ${inc.id}'s timeline.`, proposal: false, actions: [{ label: `Open ${inc.id}`, onSelect: open("incidents/" + inc.id) }] },
+    ],
+    sources: [src("inc", `${inc.id} timeline`, { kind: "Incident" })], followUps: [{ label: "Make it shorter" }],
     announce: "Assistant replied with a draft status update.",
   };
 }
 function changes(sel: Selection): Answer {
   const d = rollup(sel.scope, sel.mode).deploys;
+  const bad = d.filter((x) => x.status !== "healthy");
   return {
-    markdown: d.length ? [`${d.length} deploys in ${where(sel)} today [1]:`, "", ...d.slice(0, 5).map((x) => `- ${x.when} \`${x.service}\` ${x.version}: ${x.statusLabel.toLowerCase()}`)].join("\n") : `No deploys in ${where(sel)} today [1].`,
-    sources: [src("dep", "Deployments, today", { kind: "Deployments" })], extras: [], followUps: [{ label: "What needs attention right now?" }],
+    blocks: [
+      { type: "summary", text: d.length ? `${plural(d.length, "deploy")} in ${scopeName(sel)} today. ${bad.length ? `${bad.length} didn't go cleanly.` : "All succeeded."}` : `No deploys in ${scopeName(sel)} today.`, status: bad.some((x) => x.status === "critical") ? "warning" : undefined, statusLabel: "Some failed" },
+      ...(d.length ? [{ type: "items" as const, title: "Today, newest first", items: d.map((x): AttentionItem => ({ id: x.id, ref: svcRef(x.service), title: `${x.version} at ${x.when} by ${x.author}`, meta: `${x.env} · ${x.pr}`, status: x.status === "healthy" ? undefined : x.status === "info" ? "info" : x.status, statusLabel: x.statusLabel, action: { label: "Open", onSelect: open("deploys") } })) }] : []),
+      { type: "text", markdown: "From the deployments list [1]." },
+    ],
+    sources: [src("dep", "Deployments, today", { kind: "Deployments" })], followUps: [{ label: "What needs attention right now?" }],
     announce: `Assistant replied: ${d.length} deploys today.`,
   };
 }
 function fallback(sel: Selection, label: string): Answer {
   return {
-    markdown: `This demo answers from its sample data about ${label.toLowerCase()} in ${where(sel)}. Try one of these, or mention a service with @.`,
-    sources: [], extras: [], followUps: suggestionsFor(page?.section ?? "", page?.id), announce: "Assistant replied with suggestions.",
+    blocks: [{ type: "text", markdown: `This demo answers from its sample data about ${label.toLowerCase()} in **${scopeName(sel)}**. Try one of these, or mention a service with @.` }],
+    sources: [], followUps: suggestionsFor(page?.section ?? "", page?.id), announce: "Assistant replied with suggestions.",
   };
 }
 function respond(prompt: string, sel: Selection, p: PageInfo | null, ctx: AssistantContextItem[]): Answer {
@@ -183,20 +234,50 @@ function respond(prompt: string, sel: Selection, p: PageInfo | null, ctx: Assist
   return fallback(sel, p?.label ?? "this page");
 }
 
-/* ---------- Asking, streaming, stopping ---------- */
+/* ---------- Streaming: blocks appear in order; text blocks a few words at a time ---------- */
+const cost = (b: AnswerBlock) => (b.type === "text" ? b.markdown.length : b.type === "summary" || b.type === "next" ? b.text.length : 80);
+const total = (a: Answer) => a.blocks.reduce((n, b) => n + cost(b), 0);
+function partial(blocks: AnswerBlock[], n: number): AnswerBlock[] {
+  const out: AnswerBlock[] = [];
+  let used = 0;
+  for (const b of blocks) {
+    const c = cost(b);
+    if (used + c <= n) { out.push(b); used += c; continue; }
+    const k = n - used;
+    if (k > 0 && b.type === "text") out.push({ ...b, markdown: b.markdown.slice(0, k) });
+    else if (k > 0 && b.type === "summary") out.push({ ...b, text: b.text.slice(0, k) });
+    break;
+  }
+  return out;
+}
+/** Plain text of an answer, for Copy. */
+const plain = (a: Answer) => a.blocks.map((b) => {
+  switch (b.type) {
+    case "summary": return b.text;
+    case "text": return b.markdown;
+    case "items": return b.items.map((i) => `- ${i.ref.label}: ${typeof i.title === "string" ? i.title : ""}${i.statusLabel ? ` (${i.statusLabel})` : ""}`).join("\n");
+    case "metrics": return b.items.map((m) => `${m.label}: ${m.value}${m.unit ?? ""}`).join(" · ");
+    case "next": return `Next step: ${b.text}`;
+    case "code": return b.code;
+    case "steps": return b.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
+    default: return "";
+  }
+}).filter(Boolean).join("\n\n");
+
 let timer: number | undefined;
 const live = () => !new URLSearchParams(location.search).has("frozen");
 const patchMsg = (id: string, patch: Partial<Msg>) => set({ convs: state.convs.map((c) => ({ ...c, messages: c.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)) })) });
 function stream(id: string, answer: Answer) {
   window.clearInterval(timer);
-  const words = answer.markdown.split(/(\s+)/);
-  if (!live()) { patchMsg(id, { text: answer.markdown, status: "done" }); set({ busy: null, announcement: answer.announce }); return; }
+  const end = total(answer);
+  if (!live()) { patchMsg(id, { shown: end, status: "done" }); set({ busy: null, announcement: answer.announce }); return; }
   let n = 0;
   set({ busy: id, announcement: "" });
+  patchMsg(id, { shown: 0, status: "streaming" });
   timer = window.setInterval(() => {
-    n += 6;
-    const done = n >= words.length;
-    patchMsg(id, { text: words.slice(0, n).join(""), status: done ? "done" : "streaming" });
+    n += 18;
+    const done = n >= end;
+    patchMsg(id, { shown: Math.min(n, end), status: done ? "done" : "streaming" });
     if (done) { window.clearInterval(timer); set({ busy: null, announcement: answer.announce, unread: !page?.open }); }
   }, 45);
 }
@@ -209,7 +290,7 @@ export function demoAsk(prompt: string | undefined, ctx: AssistantContextItem[])
   if (!conv) { conv = { id: "c" + (state.convs.length + 1), title: prompt.length > 48 ? prompt.slice(0, 47) + "…" : prompt, updated: now(), messages: [] }; set({ convs: [conv, ...state.convs], activeId: conv.id }); }
   const answer = respond(prompt, sel, page, ctx);
   const q: Msg = { id: nextId(), who: "person", text: prompt, status: "done" };
-  const a: Msg = { id: nextId(), who: "assistant", text: "", status: "streaming", answer, context: ctx.map((c) => c.label) };
+  const a: Msg = { id: nextId(), who: "assistant", text: "", status: "streaming", answer, shown: 0, context: ctx.map((c) => c.label) };
   const cid = conv.id;
   set({ convs: state.convs.map((c) => (c.id === cid ? { ...c, updated: now(), messages: [...c.messages, q, a] } : c)), draft: "" });
   stream(a.id, answer);
@@ -253,21 +334,6 @@ const TEMPLATES: PromptSuggestion[] = [
 ];
 
 /* ---------- The panel ---------- */
-function Extras({ extras, go }: { extras: Extra[]; go: (path: string) => void }): ReactNode {
-  return extras.map((x, i) => {
-    if (x.type === "resources") return x.ids.map((id) => {
-      const r = RESOURCES.find((y) => y.id === id);
-      if (!r) return null;
-      const s = r.type === "service" ? serviceByName(r.name) : undefined;
-      return <ResourceCard key={id} kind={r.type === "service" ? "webapp" : RESOURCE_TYPES.find((t) => t.type === r.type)?.kind ?? "resources"} name={r.name} mono status={r.status === "healthy" ? undefined : r.status} statusLabel={r.statusLabel}
-        path={pathBelow(r.owner, page?.sel.scope ?? null)} facts={s ? [{ label: "p95", value: `${s.p95} ms` }, { label: "Objective", value: `${s.slo} ms` }] : [{ label: "Kind", value: r.detail }]}
-        onOpen={() => go(r.href)} actions={[{ label: "Open", icon: "external", onSelect: () => go(r.href) }]} />;
-    });
-    if (x.type === "metric") return <Metric key={i} compact label={x.label} value={x.value} delta={{ value: x.delta, unit: " %", window: x.window }} />;
-    if (x.type === "steps") return <Disclosure key={i} summary="How this was worked out" meta={`${x.steps.length} steps`}><ol className="ex-worked">{x.steps.map((s) => <li key={s}>{s}</li>)}</ol></Disclosure>;
-    return <CodeBlock key={i} title={x.title} code={x.code} diff />;
-  });
-}
 const PAGE_HELP: Record<string, string> = {
   usage: "It can explain spend and budgets", explorer: "It can tell you what a scope owns", incidents: "It can investigate an incident with you",
 };
@@ -282,6 +348,8 @@ export function DemoAssistant({ go, context }: { go: (path: string) => void; con
     a.ask(text, [...s.added, ...files]); set({ files: [] });
   };
   const sources = (m: Msg) => m.answer?.sources ?? [];
+  nav = (p) => { go(p); if (a.expanded) a.setExpanded(false); };
+  askAgain = (p) => ask(p);
   const sug = suggestionsFor(page?.section ?? "", page?.id);
   return (
     <AssistantPanel open={a.open} onClose={() => a.setOpen(false)} expanded={a.expanded} onExpandedChange={a.setExpanded}
@@ -305,11 +373,11 @@ export function DemoAssistant({ go, context }: { go: (path: string) => void; con
           <AssistantMessage key={m.id} author={{ name: "Assistant", kind: "assistant" }} status={m.status} time={conv?.updated}
             sources={m.status === "streaming" ? undefined : sources(m)} onSource={() => undefined}
             feedback={m.feedback} onFeedback={(f) => patchMsg(m.id, { feedback: f })} onReport={() => undefined}
-            copyText={m.answer?.markdown} onRegenerate={m.answer ? () => stream(m.id, m.answer!) : undefined}
+            copyText={m.answer ? plain(m.answer) : undefined} onRegenerate={m.answer ? () => stream(m.id, m.answer!) : undefined}
             provenance={{ generated: conv?.updated ?? "", model: "Scripted demo answers", context: m.context, tools: ["services.read", "incidents.read", "costs.read"] }}
             followUps={m.answer?.followUps} onFollowUp={(f) => ask(f.prompt ?? f.label)}>
-            <Markdown streaming={m.status === "streaming"} sources={sources(m)} onSource={() => undefined}>{m.text}</Markdown>
-            {m.status === "done" && m.answer ? <Extras extras={m.answer.extras} go={(p) => { go(p); if (!a.expanded) return; a.setExpanded(false); }} /> : null}
+            {m.answer ? <AssistantAnswer blocks={m.status === "streaming" ? partial(m.answer.blocks, m.shown ?? 0) : m.status === "stopped" ? partial(m.answer.blocks, m.shown ?? 0) : m.answer.blocks}
+              streaming={m.status === "streaming"} sources={sources(m)} onSource={() => undefined} entities={ENTITIES} /> : null}
           </AssistantMessage>
         ))}
     </AssistantPanel>

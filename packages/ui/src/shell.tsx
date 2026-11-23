@@ -66,7 +66,7 @@ function bindAssistantShortcut() {
   });
 }
 const ACTIVITY: Record<NonNullable<TopBarAssistant["activity"]>, string> = { idle: "", working: "working", "needs-input": "needs your input", unread: "new reply" };
-function AssistantLauncher({ open, onToggle, activity = "idle", label = "Assistant", shortcut = true, showLabel }: TopBarAssistant & { showLabel: boolean }) {
+function AssistantLauncher({ open, onToggle, activity = "idle", label = "Assistant", shortcut = true, showLabel, showKeys }: TopBarAssistant & { showLabel: boolean; showKeys: boolean }) {
   const toggle = useRef(onToggle); toggle.current = onToggle;
   useEffect(() => {
     if (!shortcut) return;
@@ -80,6 +80,8 @@ function AssistantLauncher({ open, onToggle, activity = "idle", label = "Assista
       aria-label={label + (state ? ", " + state : "")} onClick={onToggle}>
       <Icon name="assistant" />
       {showLabel ? <span aria-hidden="true">{activity === "working" ? "Working…" : label}</span> : null}
+      {/* The shortcut is drawn by CSS from data-keys, so it isn't part of the button's name (that's aria-keyshortcuts). */}
+      {showLabel && showKeys && shortcut ? <kbd className="pw-kbd" data-keys={keys} aria-hidden="true" /> : null}
       {activity !== "idle" ? <span className={cx("pw-iconbtn__dot", "is-" + activity)} aria-hidden="true" /> : null}
     </button>
   );
@@ -95,7 +97,7 @@ export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time,
       <div className="pw-topbar__search"><GlobalSearch items={searchItems} recent={searchRecent} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
       <div className="pw-topbar__end">
         <TimeRangePicker value={time} onChange={onTime} refresh={refresh} onRefreshChange={onRefresh} onCopy={onCopyRange} />
-        {assistant ? <AssistantLauncher {...assistant} showLabel={mode === "full"} /> : null}
+        {assistant ? <AssistantLauncher {...assistant} showLabel={mode !== "tablet"} showKeys={mode === "full"} /> : null}
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
           <Icon name="bell" />{alerts ? <span className="pw-iconbtn__n">{alerts}</span> : null}
         </button>

@@ -169,8 +169,10 @@ product with its own look.
 3. **AI content is marked by an icon, a label and its layout, never by colour.**
    - The assistant: `Avatar icon="assistant"` + "Assistant".
    - Agents: initials on the neutral fill + the agent's name.
-   - No accent hue, gradient, glow, shimmer or sparkle anywhere.
+   - No accent hue, gradient, glow, shimmer or sparkle in AI content.
    - The person's own messages sit on the right in a bordered box.
+   - **The one exception is the way in.** The top-bar launcher has its own tint (the `assistant` tokens, DECISIONS
+     #30) and shows its shortcut, so it is easy to find. Nothing else uses those tokens.
 4. **Show what it can see.** A `ContextBar` above the composer lists the page, the selected entity, filters, the
    ownership scope, the runtime scope, the time range and the person's access.
    - Items are icon + word, never a colour.
@@ -186,9 +188,20 @@ product with its own look.
    - Show referenced resources as `ResourceCard`.
    - Put the working ("How this was worked out") in a `Disclosure`, as concise steps, never raw reasoning.
    - Code is mono with copy, and diffs use `CodeBlock diff`. There is no multi-hue syntax theme.
-7. **Answers compose the system.** An `AssistantMessage` holds `Markdown`, `DataTable` (List view), `KeyValueList`,
-   `Metric`, the charts and `CodeBlock`. Ask, explore, investigate, generate and recommend are the same parts in a
-   different order, not separate implementations.
+7. **Answers are blocks, not articles.** Agents present a lot of information, so the shape does the work. Ask the
+   model for typed blocks (`AnswerBlock`) and draw them with `AssistantAnswer`:
+   - `summary` first: the conclusion in one or two sentences, with its status. Someone who reads only this knows what
+     to do.
+   - Things to look at become `items` (an `AttentionList`): rows, worst first, at most 5, one action each. Never a
+     paragraph of names.
+   - Numbers become `metrics` (a `MetricStrip`): at most 4, with their trend. Not numbers inside sentences.
+   - One `next` step (a `NextStep`), on a neutral tint, with buttons that open or prepare. It says it is a proposal.
+   - Evidence as `code` (diffs), `steps` (folded) or `custom` (a chart, a `DataTable`), and sources under the answer.
+   - `text` (Markdown) only for the few sentences between blocks. Name each identifier once; identifiers become
+     `EntityRef` chips (kind icon + mono name on a neutral tint) through `entities`.
+   - Neutral tints only: `surface-selected` for identifiers, `surface-hover` for the next step. Colour stays for status.
+   Ask, explore, investigate, generate and recommend are the same blocks in a different order, not separate
+   implementations.
 8. **States.**
    - Streaming: indeterminate `ProgressBar` + "Responding…", with no pulsing dots or shimmer.
    - Stopped: an unknown badge + Regenerate.

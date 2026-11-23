@@ -100,6 +100,18 @@ export const color = {
     "light": "#eceef1",
     "dark": "#20252b"
   },
+  "assistant": {
+    "light": "#4338ca",
+    "dark": "#b9b3ff"
+  },
+  "assistant-surface": {
+    "light": "#ebeafd",
+    "dark": "#272552"
+  },
+  "assistant-surface-hover": {
+    "light": "#dedcfb",
+    "dark": "#312e66"
+  },
   "chart-1": {
     "light": "#2a62c9",
     "dark": "#4d8ae6"

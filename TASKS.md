@@ -21,7 +21,10 @@ contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
 - **New components:**
   - Markdown, Citation, SourceList, ResourceCard, Disclosure;
   - ContextBar, PromptComposer, AssistantMessage, AssistantPanel;
-  - AssistantProvider, with `useAssistant` and `useAssistantContext`.
+  - AssistantProvider, with `useAssistant` and `useAssistantContext`;
+  - structured answers (DECISIONS #30): AssistantAnswer with typed blocks, AnswerSummary, AttentionList, MetricStrip,
+    NextStep, EntityRef;
+  - the launcher's own tint (`assistant` tokens).
 - **The demo:**
   - the assistant on every page, with scripted answers seeded from the sample data and the selection;
   - "Ask the assistant" in page and row menus and in the command palette;

@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml?query=branch%3Amain)
 
-**One set of design tokens and 68 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and AI features inside those apps (a contextual assistant with grounded answers) look and behave like the rest of the app.**
+**One set of design tokens and 74 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and AI features inside those apps (a contextual assistant with grounded answers) look and behave like the rest of the app.**
 
 **[Live demo](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/)** · **[Component catalogue](https://mithunmanohar.github.io/pairwise-saas-design-system/catalogue/)** · [Site](https://mithunmanohar.github.io/pairwise-saas-design-system/)
 
@@ -131,12 +131,16 @@ It also looks like a different product. Each decision below answers one of those
 | **It sees what you see, and shows it.** The page, the selected resource, the ownership scope, the runtime scope, the time range and your access are chips above the input. You can inspect each one with its path, remove it or add to it. | People trust an answer when they know what it was based on. Context they can't see is context they can't correct. |
 | **It says what it may do.** "Read only" is always sent and can't be removed. A proposed change is labelled as a proposal ("nothing has been changed"). | The worst AI failure in an ops tool is an action nobody expected. Approvals and execution are a separate, later step on the existing confirm dialog. |
 | **Grounded or it didn't happen.** Numbered citations in the text, the sources under the answer, the resources as cards with their status, and "How this was worked out" as short steps. It never shows raw reasoning. | An answer you can check in one click is worth more than a longer one. Steps explain without dumping a chain of thought. |
-| **AI is marked by an icon, a label and layout, never colour.** No gradient, glow, shimmer or sparkle. | Colour already means status here: the one red thing is the thing to act on. A purple "AI" glow would compete with it, and it tells you nothing about the answer. |
+| **Answers are blocks, not articles.** The conclusion first, with its status. Things to look at become rows, worst first, at most five. Numbers go in a strip. There is one next step, in a tinted box with buttons. Evidence is folded. Identifiers like `INC-2041` become chips, apart from the words that describe them. | Agents produce a lot. The shape of the answer should point at what to act on, and the limits are built in, so an agent can't bury the panel. |
+| **AI content is marked by an icon, a label and layout, never colour.** No gradient, glow, shimmer or sparkle in answers. The one exception is the way in: the launcher has its own tint and shows its shortcut. | Colour already means status here: the one red thing is the thing to act on. A coloured "AI" answer would compete with it and tell you nothing. A tinted button, though, makes the assistant easy to find. |
 | **One panel, in the shell, no floating button.** It docks beside the content at 1280 px and wider, is a drawer below that, and can expand. The provider sits above the routes, so it stays open between pages (and in the demo, so does the conversation). | You ask about the page while looking at it. A floating button would cover table rows and the toasts. |
 | **Accessible while it streams.** A finished answer is announced once, never word by word. Focus moves to the input on open and back on close. Escape closes one layer at a time. | A screen reader reading every token is unusable, and it is the easiest thing to get wrong in a streaming UI. |
 | **The app owns the model.** The components take messages and state as props. `AssistantProvider` hands the prompt and context to your code. | Teams use different models, gateways and policies. The design system owns the experience, not the vendor. |
 
-**Built from the system, not beside it.** An answer is made of the same parts as a page: `Markdown`, `Metric`, `DataTable`, `ResourceCard`, `CodeBlock` (with a new `diff` mode) and `Disclosure`. Asking, exploring, investigating and generating are the same parts in a different order, not four implementations. The additions to existing components are small and additive, and 2.1 apps build unchanged:
+**Built from the system, not beside it.** The model returns typed blocks, and `AssistantAnswer` draws them with the system's parts:
+- `AnswerSummary`, `AttentionList`, `MetricStrip`, `NextStep` and `EntityRef`, which are new;
+- `Markdown`, `CodeBlock` (with a new `diff` mode) and `Disclosure`;
+- a `custom` block for any chart or `DataTable`. Asking, exploring, investigating and generating are the same parts in a different order, not four implementations. The additions to existing components are small and additive, and 2.1 apps build unchanged:
 - a launcher in `TopBar`;
 - a slot in `AppShell`;
 - a docked `Drawer`;
@@ -157,7 +161,8 @@ const a = useAssistant();
       composer={<PromptComposer onSubmit={(q) => a.ask(q)} context={<ContextBar items={a.context} />} />}>
       {messages.map((m) => (
         <AssistantMessage key={m.id} author={m.author} status={m.status} sources={m.sources}>
-          <Markdown streaming={m.status === "streaming"} sources={m.sources}>{m.text}</Markdown>
+          {/* blocks: [{ type: "summary", … }, { type: "items", … }, { type: "metrics", … }, { type: "next", … }] */}
+          <AssistantAnswer blocks={m.blocks} streaming={m.status === "streaming"} sources={m.sources} entities={knownIds} />
         </AssistantMessage>
       ))}
     </AssistantPanel>
@@ -216,7 +221,7 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 
 ## Every component, one visual language
 
-68 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
+74 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
 
 <table>
 <tr><td width="50%"><b>Buttons</b><br><img src="docs/images/components/Button.png" alt="Button variants and states"></td><td width="50%"><b>Status: icon + label + colour</b><br><img src="docs/images/components/StatusBadge.png" alt="Status badges and trends"></td></tr>
@@ -231,7 +236,8 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 <tr><td><b>Empty, error, no-access and loading states</b><br><img src="docs/images/components/StateBlock.png" alt="State blocks"></td><td><b>Timeline</b><br><img src="docs/images/components/Timeline.png" alt="Timeline"></td></tr>
 <tr><td><b>Page header</b><br><img src="docs/images/components/PageHeader.png" alt="Page header"></td><td><b>Heatmap</b><br><img src="docs/images/components/Heatmap.png" alt="Heatmap"></td></tr>
 <tr><td><b>Run history</b><br><img src="docs/images/components/RunStrip.png" alt="Run strip"></td><td><b>One icon set, drawn for the system</b><br><img src="docs/images/components/Icon.png" alt="Icons"></td></tr>
-<tr><td><b>Assistant messages: sources, feedback, states</b><br><img src="docs/images/components/AssistantMessage.png" alt="Assistant messages: an answer with citations and a resource card, streaming, stopped and failed"></td><td><b>Prompt composer: suggestions, attachments, @ and /</b><br><img src="docs/images/components/PromptComposer.png" alt="Prompt composer states"></td></tr>
+<tr><td><b>Structured answers: conclusion, rows, figures, next step</b><br><img src="docs/images/components/AssistantAnswer.png" alt="An answer drawn from typed blocks: a summary with its status, rows worst first, a metric strip, a tinted next step"></td><td><b>Assistant messages: sources, feedback, states</b><br><img src="docs/images/components/AssistantMessage.png" alt="Assistant messages: an answer with citations and a resource card, streaming, stopped and failed"></td></tr>
+<tr><td><b>Prompt composer: suggestions, attachments, @ and /</b><br><img src="docs/images/components/PromptComposer.png" alt="Prompt composer states"></td><td><b>Figures as a strip, not sentences</b><br><img src="docs/images/components/MetricStrip.png" alt="Metric strip with four figures and trends"></td></tr>
 </table>
 
 ---
@@ -247,7 +253,7 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 | **One source of truth** | Every colour, space, radius and type style lives in [`tokens.json`](design-system/tokens.json): 31 colour tokens × 2 themes, 8 spacing steps, 8 type styles. | A small generator emits CSS variables and typed TypeScript names (`ColorToken`), so a typo in a colour name is a compile error. |
 | **Contrast with margin** | Text ≥ 4.8:1 and UI ≥ 3:1 on every surface, both themes. That's above the AA minimum, so rendering differences can't fail it. | Unit tests compute WCAG contrast for every token pair on every run. |
 | **Colour-blind-safe charts** | Five categorical colours whose worst adjacent pair stays ≥ 11 ΔE2000 under normal, protan, deutan and tritan vision (worst case: 14.9 light, 16.2 dark). | Unit tests simulate colour-vision deficiency and fail the build below 11. |
-| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 105 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions (an answer is announced once, never word by word), the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 68 cards, 14 demo routes or 4 demo pages with the assistant open, in either theme. |
+| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 107 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions (an answer is announced once, never word by word), the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 74 cards, 14 demo routes or 4 demo pages with the assistant open, in either theme. |
 | **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. Every card is captured and axe-checked in both themes. |
 | **Calm, optional motion** | Menus and popovers fade 4 px from their trigger; dialogs fade in, drawers slide in. Nothing decorative. | Durations and layers are tokens; the lint rejects raw durations and z-index values. `prefers-reduced-motion` sets every duration to 0 ms, which a test checks. |
 | **Writing is design** | Sentence case, verb + object buttons ("Roll back to v2.14.0", never "OK"), errors that say how to fix it, no emoji. | [Guidelines](design-system/GUIDELINES.md) plus every component's README. AI agents read them via `COMPONENTS.md`. |
@@ -276,7 +282,7 @@ flowchart LR
   T["tokens.json<br/>(single source of truth)"] --> G["generators"]
   G --> CSS["tokens.css<br/>light/dark × compact/comfortable"]
   G --> TS["typed token names"]
-  CSS --> P["@pairwise/ui<br/>68 components · Radix, cmdk and React Aria behaviour"]
+  CSS --> P["@pairwise/ui<br/>74 components · Radix, cmdk and React Aria behaviour"]
   TS --> P
   P --> D["catalogue.html + COMPONENTS.md"]
   P --> A1["Ops dashboard"]
@@ -312,6 +318,7 @@ This repository was itself built with AI coding agents (Claude Code), under the 
 - Your own CSS uses Pairwise variables only (`var(--space-4)`, `var(--surface-raised)`); never hard-code colours.
 - Status is always `StatusBadge`. Sentence case, no emoji.
 - AI features use the assistant parts (`AssistantPanel`, `AssistantMessage`, `PromptComposer`, `ContextBar`); mark AI content with the assistant icon and a label, never a colour.
+- Answers are `AssistantAnswer` blocks: a summary first, rows for things, a metric strip for numbers, one next step. Not paragraphs.
 - Missing a component? Use the closest one and leave a `TODO(pairwise):` instead of building a new one.
 ```
 

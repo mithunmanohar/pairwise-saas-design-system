@@ -283,6 +283,7 @@ export interface MarkdownProps {
   /** in-app navigation; return false to let the browser follow the link */ onLink?: (href: string) => boolean | void;
   /** headings never rank above this level (default 3: "#" to "###" are h3, "####" is h4) */ headingLevel?: 2 | 3 | 4;
   /** "[1]" in the text becomes a Citation to the first source, and so on */ sources?: AssistantSource[]; onSource?: (s: AssistantSource) => void;
+  /** identifiers (e.g. INC-2041, checkout-api) that become EntityRef chips wherever they appear, in text or code spans */ entities?: EntityRefProps[];
   className?: string;
 }
 export interface ResourceCardProps {
@@ -315,3 +316,37 @@ export interface AssistantApi {
   /** opens the panel and asks; extra context is added to the page's (an entity from a row's menu) */ ask: (prompt?: string, extra?: AssistantContextItem[]) => void;
   /** the current page's context items (useAssistantContext) */ context: AssistantContextItem[];
 }
+
+/* ---------- Structured answers (2.2) ---------- */
+/** An identifier in text or a row: kind icon + mono name on a neutral tint. */
+export interface EntityRefProps {
+  label: string; kind?: EntityKind; /** overrides the kind's icon, e.g. "siren" for an incident */ icon?: IconName;
+  /** read before the label, e.g. "Incident" (default the kind's word) */ kindLabel?: string;
+  href?: string; onOpen?: () => void; /** default true */ mono?: boolean;
+}
+export interface AnswerSummaryProps { status?: Status; /** read with the status, e.g. "Needs attention" */ statusLabel?: string; children?: React.ReactNode }
+export interface AttentionItem {
+  id: string; ref: EntityRefProps; title: React.ReactNode; /** a muted second line, e.g. "investigating for 27 min" */ meta?: React.ReactNode;
+  status?: Status; statusLabel?: string; /** one action, e.g. { label: "Open" } */ action?: { label: string; onSelect: () => void };
+}
+export interface AttentionListProps { items: AttentionItem[]; /** a short heading, e.g. "Needs attention" */ title?: string; /** rows before "Show N more" (default 5) */ max?: number }
+export interface MetricStripItem { label: string; value: string; unit?: string; delta?: TrendProps }
+export interface MetricStripProps { /** up to four; more are not shown */ items: MetricStripItem[]; /** accessible name (default "Key figures") */ label?: string }
+export interface NextStepProps { /** default "Suggested next step" */ title?: string; children?: React.ReactNode; /** buttons that open or prepare, never ones that change things unasked */ actions?: React.ReactNode; /** says "Proposed. Nothing has been changed." (default true) */ proposal?: boolean }
+/** One section of an answer. An agent returns these instead of one long Markdown string; AssistantAnswer draws them. */
+export type AnswerBlock =
+  | { type: 'summary'; text: string; status?: Status; statusLabel?: string }
+  | { type: 'text'; markdown: string }
+  | { type: 'items'; items: AttentionItem[]; title?: string; max?: number }
+  | { type: 'metrics'; items: MetricStripItem[]; label?: string }
+  | { type: 'next'; text: string; title?: string; actions?: { label: string; onSelect: () => void }[]; proposal?: boolean }
+  | { type: 'code'; code: string; title?: string; diff?: boolean }
+  | { type: 'steps'; steps: string[]; title?: string }
+  | { type: 'custom'; content: React.ReactNode };
+export interface AssistantAnswerProps {
+  /** in reading order; put a summary first */ blocks: AnswerBlock[];
+  /** more blocks are coming: the last text block holds back unfinished syntax, and a placeholder shows where the next block goes */ streaming?: boolean;
+  /** "[1]" in text blocks becomes a citation */ sources?: AssistantSource[]; onSource?: (s: AssistantSource) => void;
+  /** identifiers that become EntityRef chips wherever they appear in text blocks */ entities?: EntityRefProps[];
+}
+

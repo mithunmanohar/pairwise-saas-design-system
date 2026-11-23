@@ -70,8 +70,9 @@ export function App() {
 - **Data:** DataTable (sorting, paging, selection, bulk and row actions, column visibility, server mode), Pagination, ColumnsMenu, KeyValueList, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
 - **The assistant (2.2):** AssistantPanel (docked in AppShell's `assistant` slot), AssistantMessage, PromptComposer
   (@mentions, slash commands, templates, attachments), ContextBar, AssistantProvider with `useAssistant` /
-  `useAssistantContext`, and the TopBar launcher (Ctrl+I / ⌘I). Answers compose Markdown, Citation, SourceList,
-  ResourceCard, Disclosure, CodeBlock `diff` and any of the data components. You bring the model; nothing here calls one.
+  `useAssistantContext`, and the TopBar launcher (Ctrl+I / ⌘I). Answers are typed blocks drawn by AssistantAnswer
+  (AnswerSummary, AttentionList, MetricStrip, NextStep, EntityRef), with Markdown, Citation, SourceList, ResourceCard,
+  Disclosure and CodeBlock `diff`. You bring the model; nothing here calls one.
 - **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend (every chart has a table view)
 - **Helpers:** `cx`, `toISODate` / `parseISODate`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values, including `motion` and `layer` (`@pairwise/ui/tokens`)
 

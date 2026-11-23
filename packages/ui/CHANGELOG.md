@@ -44,6 +44,20 @@ answers built from its sample data.
   states; one polite live region that announces a finished answer once, never each streamed word.
 - **AssistantProvider, useAssistant, useAssistantContext (new):** open and expanded state, `ask(prompt, extraContext)`
   for launchers anywhere, and each page's context items. `onAsk` hands the prompt and context to your app.
+- **Structured answers (new):** `AssistantAnswer` draws an answer from typed blocks (`AnswerBlock`: summary, items,
+  metrics, next, text, code, steps, custom) instead of one long Markdown string, using:
+  - `AnswerSummary`: the conclusion first, with its status;
+  - `AttentionList`: rows worst first, at most 5, then "Show N more";
+  - `MetricStrip`: up to 4 figures with trends;
+  - `NextStep`: the next step on a neutral tint, labelled as a proposal;
+  - `EntityRef`: an identifier as kind icon + mono name on a neutral tint.
+  `Markdown` and `AssistantAnswer` take `entities`, so identifiers in model text become chips.
+- **The launcher's tint (new tokens):** `assistant`, `assistant-surface`, `assistant-surface-hover`. The top-bar
+  launcher shows its label from 1024 px and its shortcut (Ctrl I / ⌘I) when the rail is expanded. It is the only
+  non-status tint in the system (DECISIONS #30); AI content stays neutral. A test keeps its text at 4.8:1 or more.
+- **Icon:** `arrow-right`.
+- **AssistantPanel:** a new turn opens at the top of the panel with the question above the answer, instead of
+  following the text down.
 - **Catalogue:** a new "Assistant" group.
 
 ## 2.1.0 (2026-11-21)

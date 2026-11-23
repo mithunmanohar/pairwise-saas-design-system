@@ -65,7 +65,7 @@ const SCREENS = [
 // Component cards for the README gallery (dark theme, compact).
 const COMPONENTS = ["Button", "ActionMenu", "StatusBadge", "Tag", "CopyButton", "TextInput", "Select", "Checkbox", "Switch",
   "Tabs", "TimeRangePicker", "AlertBanner", "Toaster", "StateBlock", "Modal", "Drawer", "Metric", "DataTable", "CodeBlock",
-  "Timeline", "TimeSeriesChart", "BarChart", "StatusGrid", "RunStrip", "Heatmap", "PageHeader", "Icon", "AssistantMessage", "PromptComposer"];
+  "Timeline", "TimeSeriesChart", "BarChart", "StatusGrid", "RunStrip", "Heatmap", "PageHeader", "Icon", "AssistantAnswer", "AssistantMessage", "PromptComposer", "MetricStrip"];
 
 function loadPlaywright() {
   const req = createRequire(import.meta.url);

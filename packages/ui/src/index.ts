@@ -13,6 +13,7 @@ export { KeyValueList, Avatar, AvatarGroup, ProgressBar } from "./display";
 export { RadioGroup, Combobox, DatePicker, DateRangePicker, DEFAULT_RANGE_PRESETS, InlineEdit, FileUpload, toISODate, parseISODate } from "./inputs";
 export { TreeView, ScopePicker, SplitView, ScopeNote, indexTree } from "./hierarchy";
 export type { TreeIndexEntry } from "./hierarchy";
-export { Disclosure, Citation, SourceList, ResourceCard } from "./content";
+export { Disclosure, Citation, SourceList, ResourceCard, EntityRef, AnswerSummary, AttentionList, MetricStrip, NextStep } from "./content";
 export { Markdown } from "./markdown";
+export { AssistantAnswer } from "./answer";
 export { ContextBar, PromptComposer, AssistantMessage, AssistantPanel, AssistantProvider, useAssistant, useAssistantContext } from "./assistant";

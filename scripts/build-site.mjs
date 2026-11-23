@@ -60,7 +60,7 @@ const card = (route, img, title, body) => `
 writeFileSync(join(OUT, "index.html"), `<!doctype html>
 <html lang="en" data-theme="dark" data-density="compact"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${PREVIEW ? "Preview: " : ""}Pairwise: a production-grade design system for AI applications and multi-tenant SaaS</title>${NOINDEX}
-<meta name="description" content="Design tokens and 68 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
+<meta name="description" content="Design tokens and 74 accessible React components for ML platforms, LLM and agentic AI tools, AIOps dashboards and multi-tenant SaaS. Light and dark themes, two densities, built with AI agents.">
 <link rel="stylesheet" href="catalogue/tokens.css"><link rel="stylesheet" href="catalogue/components/bundle.css">
 <style>
 body { margin: 0; }
@@ -99,7 +99,7 @@ body { margin: 0; }
   <main>
     <section class="lp-hero">
       <h1>A production-grade design system for AI applications and multi-tenant SaaS</h1>
-      <p>Design tokens and 68 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and its AI features (a contextual assistant with grounded answers) look and behave like the rest of the app.</p>
+      <p>Design tokens and 74 accessible React components, with light and dark themes and two densities. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and its AI features (a contextual assistant with grounded answers) look and behave like the rest of the app.</p>
       <div class="lp-cta">
         <a class="pw-btn pw-btn--primary" href="demo/"><span>Open the live demo</span></a>
         <a class="pw-btn pw-btn--secondary" href="catalogue/"><span>Browse all components</span></a>
@@ -110,7 +110,7 @@ body { margin: 0; }
     <div class="lp-cards">${card("overview", "overview", "Overview", "The whole estate at a glance: one open incident stands out, healthy services stay quiet.")}${card("services/checkout-api", "service-health", "Service health", "Observability: metrics with context, latency against the SLO, errors by type, endpoints worst first. Updates live.")}${card("incidents/INC-2041", "incident", "Incident", "Severity, customer impact, the latency regression marked on the chart, responders and a live timeline.")}${card("deploys", "deployments", "Deployments", "Delivery metrics, deploys by outcome, a canary in progress, and every rollout with a rollback one click away.")}${card("runs/run_8f3k2", "run-detail", "CI run detail", "Developer platform: a checks matrix shows new versus flaky failures, the failing log, run history and steps.")}${card("usage", "usage", "Usage and cost", "Spend against budget, cost by category or team, model tokens by hour, and workspaces near their limit.")}${card("access", "access", "Access", "Members with inline role changes, an invite form with validation, API tokens and the audit log.")}${card("repos/sample-repo", "settings", "Repository settings", "Everyday SaaS: validation that says how to fix it, toggles, toasts, and a type-to-confirm delete.")}${card("services", "services", "Services", "A filterable, sortable list of services with status and error budget, worst first.")}
     </div>
     <h2 class="pw-heading lp-h2">An assistant that reads as part of the app</h2>
-    <p class="lp-lead pw-muted">It sees the page and scope you're in and shows that context. Every answer has citations and sources, and it can't change anything. AI is marked by an icon and a label, never a colour or a sparkle. Press Ctrl+I in the demo; its answers are scripted, with no model calls.</p>
+    <p class="lp-lead pw-muted">It sees the page and scope you're in and shows that context. Answers lead with the conclusion, then rows to look at, the key figures and one next step, with citations and sources. It can't change anything. Press Ctrl+I in the demo; its answers are scripted, with no model calls.</p>
     <a href="demo/?state=assistant#/incidents/INC-2041"><img class="lp-shot" src="images/assistant-incident-dark.png" alt="The assistant docked beside an incident, citing the deploy that caused it" loading="lazy"></a>
     <h2 class="pw-heading lp-h2">Responsive down to a phone</h2>
     <div class="lp-phones">

@@ -16,6 +16,7 @@ test.describe("assistant panel", () => {
     await open(page, "assistant-shell");
     const launcher = page.getByRole("button", { name: "Assistant" });
     await expect(launcher).toHaveAttribute("aria-keyshortcuts", "Control+I Meta+I");
+    await expect(launcher.locator("kbd")).toHaveAttribute("data-keys", "Ctrl I"); // shown on the button when the rail is expanded
     await launcher.focus();
     await page.keyboard.press("Control+i");
     await expect(panel(page)).toBeVisible();
@@ -240,6 +241,45 @@ test.describe("content parts", () => {
       input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true }));
     });
     await expect(page.getByRole("list", { name: "Attach files: files" }).getByText("build.log")).toBeVisible();
+  });
+});
+
+test.describe("structured answers", () => {
+  test("blocks in order: summary, rows (5 of 7, then Show more), figures (at most 4), next step, folded steps", async ({ page }) => {
+    await open(page, "assistant-answer");
+    const ans = page.locator(".pw-answer");
+    await expect(ans.locator("> *").first()).toHaveClass(/pw-lead/);
+    await expect(ans.locator(".pw-lead")).toContainText("Needs action");
+    const list = page.getByRole("region", { name: "Needs attention" });
+    await expect(list.getByRole("listitem")).toHaveCount(5);
+    await list.getByRole("button", { name: "Show 2 more" }).click();
+    await expect(list.getByRole("listitem")).toHaveCount(7);
+    await expect(page.getByRole("button", { name: "Show 2 more" })).toHaveCount(0);
+    await list.getByRole("button", { name: "Open svc-0" }).click();
+    await expect(page.getByTestId("opened")).toHaveText("act-0");
+    const strip = page.getByRole("definition").locator("..").first();
+    await expect(page.locator(".pw-mstrip__item")).toHaveCount(4);
+    await expect(page.getByText("Hidden fifth")).toHaveCount(0);
+    void strip;
+    const next = page.getByRole("region", { name: "Suggested next step" });
+    await expect(next).toContainText("Proposed. Nothing has been changed.");
+    await next.getByRole("button", { name: "Open deployments" }).click();
+    await expect(page.getByTestId("opened")).toHaveText("deploys");
+    await expect(page.getByText("Added:", { exact: false })).toHaveCount(1);
+    await expect(page.getByText("Read the incidents")).toBeHidden();
+  });
+
+  test("identifiers in text become chips that open by keyboard; the kind is read first", async ({ page }) => {
+    await open(page, "assistant-answer");
+    const md = page.locator(".pw-answer .pw-md").first();
+    const inc = md.getByRole("link", { name: "Incident INC-2041" });
+    await inc.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("opened")).toHaveText("INC-2041");
+    await md.getByRole("link", { name: "Web app checkout-api" }).click();
+    await expect(page.getByTestId("opened")).toHaveText("checkout-api");
+    await md.getByRole("link", { name: "Source 1: Deploy dep_9a1" }).click();
+    await expect(page.getByTestId("opened")).toHaveText("source");
   });
 });
 

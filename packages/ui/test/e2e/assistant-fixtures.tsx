@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   AppShell, SideNav, TopBar, AssistantPanel, AssistantMessage, PromptComposer, ContextBar, AssistantProvider, useAssistant, useAssistantContext,
-  Markdown, Citation, SourceList, ResourceCard, Disclosure, CodeBlock, Avatar, FileUpload, ActionMenu, Button,
+  Markdown, Citation, SourceList, ResourceCard, Disclosure, CodeBlock, Avatar, FileUpload, ActionMenu, Button, AssistantAnswer, type AnswerBlock, type EntityRefProps,
   type AssistantContextItem, type AssistantFeedback, type AssistantMessageStatus, type TreeNode, type UploadItem, type NavGroup,
 } from "../../src/index";
 
@@ -154,6 +154,29 @@ function AssistantContentFixture() {
   );
 }
 
+// Structured answers: every block type, an over-long list (7 rows, 5 shown), entity chips in text.
+function AnswerFixture() {
+  const [opened, setOpened] = useState("none");
+  const o = (what: string) => () => setOpened(what);
+  const ents: EntityRefProps[] = [{ label: "INC-2041", icon: "siren", kindLabel: "Incident", onOpen: o("INC-2041") }, { label: "checkout-api", kind: "webapp", onOpen: o("checkout-api") }];
+  const rows = Array.from({ length: 7 }, (_, i) => ({ id: "r" + i, ref: { label: "svc-" + i, kind: "webapp" as const, onOpen: o("svc-" + i) }, title: `Row ${i + 1}`, status: i < 2 ? "critical" as const : "warning" as const, statusLabel: i < 2 ? "Down" : "Degraded", action: { label: "Open", onSelect: o("act-" + i) } }));
+  const blocks: AnswerBlock[] = [
+    { type: "summary", text: "2 services are down and 5 are degraded.", status: "critical", statusLabel: "Needs action" },
+    { type: "items", title: "Needs attention", items: rows },
+    { type: "metrics", items: [{ label: "Services healthy", value: "3 of 10" }, { label: "Open incidents", value: "2" }, { label: "p95", value: "403 ms", delta: { value: 34, unit: " %", breach: true } }, { label: "Deploys", value: "8" }, { label: "Hidden fifth", value: "x" }] },
+    { type: "text", markdown: "It started with INC-2041 on `checkout-api` [1]." },
+    { type: "next", text: "Roll back checkout-api.", actions: [{ label: "Open deployments", onSelect: o("deploys") }] },
+    { type: "code", code: "-a\n+b", title: "change", diff: true },
+    { type: "steps", steps: ["Read the incidents", "Compared deploys"] },
+  ];
+  return (
+    <div style={{ maxWidth: 440 }}>
+      <AssistantAnswer blocks={blocks} entities={ents} sources={[{ id: "s", title: "Deploy dep_9a1" }]} onSource={o("source")} />
+      <span data-testid="opened">{opened}</span>
+    </div>
+  );
+}
+
 export const assistantFixtures: Record<string, () => React.ReactElement> = {
-  "assistant-shell": AssistantShellFixture, "assistant-content": AssistantContentFixture,
+  "assistant-shell": AssistantShellFixture, "assistant-content": AssistantContentFixture, "assistant-answer": AnswerFixture,
 };

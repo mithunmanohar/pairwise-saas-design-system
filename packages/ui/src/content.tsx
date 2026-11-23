@@ -1,8 +1,8 @@
 // Content parts for answers and records: expandable details, citations and their sources, and a resource card.
 // They are generic (a "Related" list or a runbook can use them too); the assistant composes them.
 import * as React from "react";
-import type { DisclosureProps, CitationProps, SourceListProps, ResourceCardProps, AssistantSource } from "./types";
-import { cx, StatusBadge } from "./core";
+import type { DisclosureProps, CitationProps, SourceListProps, ResourceCardProps, AssistantSource, EntityRefProps, AttentionListProps, MetricStripProps, NextStepProps, AnswerSummaryProps } from "./types";
+import { cx, Button, StatusBadge, StatusDot, Trend } from "./core";
 import { ActionMenu } from "./actions";
 import { KeyValueList } from "./display";
 import { PathLine } from "./data";
@@ -88,5 +88,86 @@ export function ResourceCard({ kind, name, mono, href, onOpen, status, statusLab
       {path && path.length ? <PathLine path={path} direct="" /> : null}
       {facts && facts.length ? <KeyValueList items={facts} layout="inline" className="pw-rcard__facts" /> : null}
     </article>
+  );
+}
+
+/* ---------- EntityRef ---------- */
+// An identifier inside text or a row: the kind's icon and the name in mono on a neutral tint, so "INC-2041" reads as a
+// thing you can open, apart from the words describing it. A link when it opens something; the kind is read first.
+export function EntityRef({ label, kind, icon, kindLabel, href, onOpen, mono = true }: EntityRefProps) {
+  const word = kindLabel ?? (kind ? entityLabel[kind] : undefined);
+  const ic = icon ?? (kind ? entityIcon[kind] : undefined);
+  const body = <>{ic ? <Icon name={ic} size={12} /> : null}{word ? <span className="pw-sr">{word} </span> : null}<span className={mono ? "pw-mono" : undefined}>{label}</span></>;
+  if (href || onOpen) return <a className="pw-ref is-link" href={href ?? "#"} onClick={(e) => { if (onOpen) { e.preventDefault(); onOpen(); } }}>{body}</a>;
+  return <span className="pw-ref">{body}</span>;
+}
+
+/* ---------- AnswerSummary ---------- */
+// The answer first: one or two sentences, a little larger, with the status of what it is about (healthy stays quiet).
+export function AnswerSummary({ status, statusLabel, children }: AnswerSummaryProps) {
+  return (
+    <p className={cx("pw-lead", status && "has-status")}>
+      {status ? <StatusDot status={status} label={statusLabel} /> : null}
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/* ---------- AttentionList ---------- */
+// The things to look at, worst first: each row is an identifier, its status and one action on the first line, and
+// what it is on the second. At most `max` rows show (default 5); the rest are one click away, never a wall of text.
+export function AttentionList({ items, title, max = 5 }: AttentionListProps) {
+  const [all, setAll] = React.useState(false);
+  const shown = all ? items : items.slice(0, max), rest = items.length - shown.length;
+  if (!items.length) return null;
+  return (
+    <section className="pw-attn" aria-label={title ?? "Items"}>
+      {title ? <div className="pw-eyebrow" aria-hidden="true">{title}</div> : null}
+      <ul className="pw-attn__list">
+        {shown.map((it) => (
+          <li key={it.id} className={cx("pw-attn__row", it.status === "critical" && "is-critical")}>
+            <span className="pw-attn__top">
+              <EntityRef {...it.ref} />
+              {it.status ? <StatusBadge status={it.status} label={it.statusLabel} size="sm" /> : null}
+              {it.action ? <Button size="sm" variant="ghost" className="pw-attn__act" onClick={it.action.onSelect}>{it.action.label}<span className="pw-sr"> {it.ref.label}</span></Button> : null}
+            </span>
+            <span className="pw-attn__title">{it.title}</span>
+            {it.meta ? <span className="pw-caption pw-muted">{it.meta}</span> : null}
+          </li>
+        ))}
+      </ul>
+      {rest > 0 ? <Button size="sm" variant="ghost" icon="chevron-down" onClick={() => setAll(true)}>{`Show ${rest} more`}</Button> : null}
+    </section>
+  );
+}
+
+/* ---------- MetricStrip ---------- */
+// The numbers an answer rests on, as a row of up to four figures with their trend, not sentences full of numbers.
+export function MetricStrip({ items, label = "Key figures" }: MetricStripProps) {
+  const shown = items.slice(0, 4);
+  if (!shown.length) return null;
+  return (
+    <dl className="pw-mstrip" aria-label={label}>
+      {shown.map((m) => (
+        <div key={m.label} className="pw-mstrip__item">
+          <dt className="pw-caption pw-muted">{m.label}</dt>
+          <dd><span className="pw-mstrip__v pw-num">{m.value}</span>{m.unit ? <span className="pw-muted"> {m.unit}</span> : null}</dd>
+          {m.delta ? <dd className="pw-mstrip__d"><Trend {...m.delta} /></dd> : null}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/* ---------- NextStep ---------- */
+// What to do now, set apart on a neutral tint with real buttons. A proposal says so: nothing has been changed.
+export function NextStep({ title = "Suggested next step", children, actions, proposal = true }: NextStepProps) {
+  return (
+    <section className="pw-next" aria-label={title}>
+      <div className="pw-next__h"><Icon name="arrow-right" size={14} /><span className="pw-body-strong">{title}</span></div>
+      <div className="pw-next__b">{children}</div>
+      {proposal ? <div className="pw-caption pw-muted">Proposed. Nothing has been changed.</div> : null}
+      {actions ? <div className="pw-next__acts">{actions}</div> : null}
+    </section>
   );
 }

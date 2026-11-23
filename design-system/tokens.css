@@ -24,6 +24,9 @@
   --status-unknown-surface: #eef0f3;
   --status-info: #3c4654;
   --status-info-surface: #eceef1;
+  --assistant: #4338ca;
+  --assistant-surface: #ebeafd;
+  --assistant-surface-hover: #dedcfb;
   --chart-1: #2a62c9;
   --chart-2: #b23a78;
   --chart-3: #6b7a12;
@@ -59,6 +62,9 @@
   --status-unknown-surface: #222831;
   --status-info: #c3cad3;
   --status-info-surface: #20252b;
+  --assistant: #b9b3ff;
+  --assistant-surface: #272552;
+  --assistant-surface-hover: #312e66;
   --chart-1: #4d8ae6;
   --chart-2: #c95791;
   --chart-3: #8a9a20;

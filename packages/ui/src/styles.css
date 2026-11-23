@@ -807,14 +807,17 @@ a.pw-btn { text-decoration: none; }
 .pw-drawer--docked[data-state="open"] { animation: none; }
 .pw-shell__body { flex: 1; min-height: 0; display: flex; position: relative; }
 .pw-shell__body > .pw-shell__content { flex: 1; min-width: 0; }
-/* Launcher in the top bar */
-.pw-topbar__ask { gap: 6px; }
-.pw-topbar__ask.has-label { width: auto; padding: 0 var(--space-2); font: 500 13px var(--font-sans); }
-.pw-topbar__ask.is-on { background: var(--surface-selected); }
-.pw-iconbtn__dot { position: absolute; top: 6px; right: 5px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--surface-raised); background: var(--ink); box-sizing: content-box; }
+/* Launcher in the top bar: the one place with its own tint (assistant tokens, DECISIONS #30), so the way in is easy
+   to find. AI content itself stays neutral. */
+.pw-topbar__ask { gap: 6px; background: var(--assistant-surface); color: var(--assistant); transition: background-color var(--duration-fast) var(--ease-standard); }
+.pw-topbar__ask:hover, .pw-topbar__ask.is-on { background: var(--assistant-surface-hover); }
+.pw-topbar__ask.has-label { width: auto; padding: 0 var(--space-3) 0 10px; font: 600 13px var(--font-sans); }
+.pw-topbar__ask .pw-kbd { margin-left: 2px; color: var(--assistant); border-color: currentColor; background: transparent; }
+.pw-topbar__ask .pw-kbd::before { content: attr(data-keys); }
+.pw-iconbtn__dot { position: absolute; top: 6px; right: 5px; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--assistant-surface); background: var(--ink); box-sizing: content-box; }
 .pw-iconbtn__dot.is-needs-input { background: var(--status-info); }
-.pw-iconbtn__dot.is-working { background: var(--surface-raised); border-color: var(--ink-muted); width: 6px; height: 6px; }
-.pw-topbar__ask.has-label .pw-iconbtn__dot { top: 5px; right: 3px; }
+.pw-iconbtn__dot.is-working { background: var(--assistant-surface); border-color: var(--assistant); width: 6px; height: 6px; }
+.pw-topbar__ask.has-label .pw-iconbtn__dot { top: 4px; right: 4px; }
 @media (max-width: 640px) { .pw-topbar .pw-topbar__ask ~ .pw-iconbtn { margin-left: 0; } }
 /* Avatar with an icon */
 .pw-av__fb .pw-icon { display: block; }
@@ -929,3 +932,38 @@ a.pw-cite:hover { color: var(--ink); border-color: var(--border-strong); backgro
 .pw-asst__empty { display: grid; gap: var(--space-4); }
 .pw-asst__end { height: 0; padding: 0 !important; }
 @media (prefers-reduced-motion: reduce) { .pw-disc__chev { transition: none; } }
+
+/* ---------- Structured answers (2.2) ---------- */
+/* Neutral tints only: an identifier on surface-selected, the next step on surface-hover. Colour stays for status. */
+.pw-answer { display: grid; gap: var(--space-3); min-width: 0; }
+.pw-answer__next { display: grid; gap: var(--space-2); }
+/* Inline (not flex) so it sits on the text's baseline; the icon is nudged to the x-height. */
+.pw-ref { display: inline; padding: 2px 5px; margin: 0 1px; border-radius: var(--radius-sm); background: var(--surface-selected); color: var(--ink); font-size: 12.5px; line-height: 20px; text-decoration: none; white-space: nowrap; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.pw-ref > .pw-icon { display: inline-block; margin-right: 4px; vertical-align: -2px; color: var(--ink-muted); }
+.pw-ref > .pw-mono { font-size: 12.5px; }
+.pw-ref.is-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.pw-lead { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; font-size: 15px; line-height: 22px; font-weight: 600; }
+.pw-lead > .pw-sdot { flex: none; margin-top: 3px; }
+.pw-eyebrow { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-muted); }
+.pw-attn { display: grid; gap: var(--space-1); min-width: 0; justify-items: start; }
+.pw-attn__list { list-style: none; margin: 0; padding: 0; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.pw-attn__row { display: grid; gap: 2px; padding: var(--space-2) var(--space-3); min-width: 0; }
+.pw-attn__row + .pw-attn__row { border-top: 1px solid var(--border); }
+.pw-attn__top { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.pw-attn__top > .pw-badge { margin-left: auto; }
+.pw-attn__act { margin: -4px -8px -4px 0; color: var(--ink-muted); font-weight: 500; }
+.pw-attn__act:hover { color: var(--ink); }
+.pw-attn__top > .pw-ref + .pw-attn__act { margin-left: auto; }
+.pw-attn__title { min-width: 0; overflow-wrap: anywhere; }
+.pw-mstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.pw-mstrip__item { display: grid; gap: 2px; align-content: start; min-width: 0; padding: var(--space-2) var(--space-3); box-shadow: -1px 0 0 var(--border); }
+.pw-mstrip dd { margin: 0; }
+.pw-mstrip__v { font-size: 18px; line-height: 24px; font-weight: 600; }
+.pw-mstrip__d { font-size: 12px; min-width: 0; }
+.pw-mstrip__d > * { white-space: normal; flex-wrap: wrap; }
+.pw-next { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-hover); border: 1px solid var(--border); }
+.pw-next__h { display: flex; align-items: center; gap: 6px; }
+.pw-next__h > .pw-icon { color: var(--ink-muted); }
+.pw-next__acts { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.pw-steps { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+

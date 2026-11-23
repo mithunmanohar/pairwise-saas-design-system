@@ -4,8 +4,8 @@
 // render Markdown don't load the parser.
 import * as React from "react";
 import { compiler, RuleType, type MarkdownToJSX } from "markdown-to-jsx/react";
-import type { MarkdownProps, AssistantSource } from "./types";
-import { Citation } from "./content";
+import type { MarkdownProps, AssistantSource, EntityRefProps } from "./types";
+import { Citation, EntityRef } from "./content";
 import { cx } from "./core";
 import { CodeBlock } from "./actions";
 const { useMemo, useRef } = React;
@@ -20,7 +20,18 @@ function withCitations(text: string, key: string, sources: AssistantSource[], op
     return s ? <Citation key={key + "-" + i} n={Number(p)} title={s.title} href={s.href} onOpen={open ? () => open(s) : undefined} /> : "[" + p + "]";
   });
 }
-export function Markdown({ children, streaming, onLink, headingLevel = 3, className, sources, onSource }: MarkdownProps) {
+// Known identifiers ("INC-2041", "checkout-api") become EntityRef chips, then "[1]" becomes a citation.
+const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function enrich(text: string, key: string, entities: EntityRefProps[] | undefined, sources: AssistantSource[] | undefined, open?: (s: AssistantSource) => void): React.ReactNode {
+  const cite = (t: string, k: string) => (sources && sources.length ? withCitations(t, k, sources, open) : t);
+  if (!entities || !entities.length) return cite(text, key);
+  const byLabel = new Map(entities.map((e) => [e.label, e]));
+  const re = new RegExp(`(?<![\\w-])(${[...byLabel.keys()].sort((a, b) => b.length - a.length).map(esc).join("|")})(?![\\w-])`);
+  const parts = text.split(re);
+  if (parts.length === 1) return cite(text, key);
+  return parts.map((p, i) => (i % 2 === 1 ? <EntityRef key={key + "-e" + i} {...byLabel.get(p)!} /> : <React.Fragment key={key + "-t" + i}>{cite(p, key + "-" + i)}</React.Fragment>));
+}
+export function Markdown({ children, streaming, onLink, headingLevel = 3, className, sources, onSource, entities }: MarkdownProps) {
   const linkRef = useRef(onLink); linkRef.current = onLink;
   const srcRef = useRef(onSource); srcRef.current = onSource;
   const out = useMemo(() => {
@@ -41,8 +52,11 @@ export function Markdown({ children, streaming, onLink, headingLevel = 3, classN
           const lang = node.lang || "";
           return <CodeBlock key={state.key} code={node.text} title={lang || "Code"} diff={lang === "diff"} maxHeight={280} />;
         }
-        if (node.type === RuleType.text && sources && sources.length) return <React.Fragment key={state.key}>{withCitations(node.text, String(state.key), sources, srcRef.current && ((s) => srcRef.current!(s)))}</React.Fragment>;
-        if (node.type === RuleType.codeInline) return <code key={state.key} className="pw-md__code">{node.text}</code>;
+        if (node.type === RuleType.text && ((sources && sources.length) || (entities && entities.length))) return <React.Fragment key={state.key}>{enrich(node.text, String(state.key), entities, sources, srcRef.current && ((s) => srcRef.current!(s)))}</React.Fragment>;
+        if (node.type === RuleType.codeInline) {
+          const ent = entities?.find((e) => e.label === node.text);
+          return ent ? <EntityRef key={state.key} {...ent} /> : <code key={state.key} className="pw-md__code">{node.text}</code>;
+        }
         if (node.type === RuleType.image) {
           const label = node.alt || node.title || "Image";
           return node.target ? <a key={state.key} href={node.target} className="pw-link">{label}</a> : <span key={state.key}>{label}</span>;
@@ -51,6 +65,6 @@ export function Markdown({ children, streaming, onLink, headingLevel = 3, classN
       },
     };
     return compiler(children, options);
-  }, [children, streaming, headingLevel, sources]);
+  }, [children, streaming, headingLevel, sources, entities]);
   return <div className={cx("pw-md", className)}>{out}</div>;
 }

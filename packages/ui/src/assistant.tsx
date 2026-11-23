@@ -335,17 +335,23 @@ export function AssistantPanel({
   const setCovering = slot?.setCovering;
   useEffect(() => { if (!setCovering) return; setCovering(covering); return () => setCovering(false); }, [covering, setCovering]);
   const endRef = useRef<HTMLDivElement>(null);
-  const stick = useRef(true);
-  const hasMessages = React.Children.toArray(children).length > 0;
-  useEffect(() => {
+  const count = React.Children.toArray(children).length;
+  const hasMessages = count > 0;
+  // A new turn starts at the top of the panel, with the question just above the answer, so a long structured answer
+  // reads from its beginning (the conclusion first). The panel never chases the streaming text down.
+  const seen = useRef(-1);
+  React.useLayoutEffect(() => {
+    if (!open) { seen.current = -1; return; }
     const sc = endRef.current?.closest(".pw-drawer__b");
-    if (!sc) return;
-    const on = () => { stick.current = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 48; };
-    sc.addEventListener("scroll", on, { passive: true });
-    return () => sc.removeEventListener("scroll", on);
-  }, [open, state]);
-  // Keep the newest words in view while an answer streams, unless the person has scrolled up to read.
-  useEffect(() => { const sc = endRef.current?.closest(".pw-drawer__b"); if (sc && stick.current) sc.scrollTop = sc.scrollHeight; });
+    if (!sc || count === seen.current) return;
+    const first = seen.current < 0;
+    seen.current = count;
+    const msgs = sc.querySelectorAll<HTMLElement>(".pw-msgs > .pw-msg");
+    const people = sc.querySelectorAll<HTMLElement>(".pw-msgs > .pw-msg--person");
+    const target = people[people.length - 1] ?? msgs[msgs.length - 1];
+    if (!target) return;
+    sc.scrollTop += target.getBoundingClientRect().top - sc.getBoundingClientRect().top - (first ? 0 : 8);
+  }, [count, open, state]);
   const active = conversations.find((c) => c.id === activeId);
   const actions = <>
     {onNewConversation ? <Tooltip content="New conversation"><Button variant="ghost" icon="plus" aria-label="New conversation" onClick={onNewConversation} /></Tooltip> : null}

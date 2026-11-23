@@ -4,5 +4,5 @@ The assistant's panel. Inside `AppShell`'s `assistant` slot it docks beside the 
 
 - Opened from the top bar's launcher (`TopBar assistant`, Ctrl+I / ⌘I), "Ask the assistant" items in page and row menus, and a command in the palette. No floating button: it would cover rows and the toasts.
 - Docked, it is a non-modal Radix dialog with a border and no shadow: the page stays usable, clicking the page keeps it open, and Escape closes it only from inside. Focus moves to the composer on open and back to the launcher on close.
-- One polite live region reads `announcement` once per answer ("Assistant replied: …", "Response stopped"), never each streamed word. The newest words stay in view unless the person scrolls up.
+- One polite live region reads `announcement` once per answer ("Assistant replied: …", "Response stopped"), never each streamed word. A new turn opens at the top of the panel, with the question just above the answer, so a long answer reads from its conclusion; the panel never chases streaming text down.
 - `AssistantProvider` holds open, expanded and the page's context; `useAssistant().ask(prompt, extraContext)` opens it from anywhere; `useAssistantContext(items)` declares what a page shows. It makes no model calls: `onAsk` hands the prompt and context to your app.
