@@ -73,7 +73,7 @@ function rollupCell<T>(c: Column<T>, rows: T[]): React.ReactNode {
   return <StatusBadge status={worst} label={worst === "healthy" ? "All " + word("healthy") : n + " " + word(worst)} />;
 }
 // The path line under a row's name in List view: the levels below the scope, folded in the middle when long.
-function PathLine({ path, direct }: { path: PathSegment[]; direct: string }) {
+export function PathLine({ path, direct }: { path: PathSegment[]; direct: string }) {
   if (!path.length) return <span className="pw-path">{direct}</span>;
   const parts = path.length > 3 ? [path[0]!.label, "…", ...path.slice(-2).map((p) => p.label)] : path.map((p) => p.label);
   return (

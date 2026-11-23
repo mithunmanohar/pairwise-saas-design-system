@@ -3,6 +3,63 @@
 All notable changes to `@pairwise/ui`. Versions follow semver:
 **patch** (1.0.x) = fixes, **minor** (1.x.0) = new components or props, **major** (x.0.0) = changes that may need edits in your project.
 
+## 2.2.0 (2026-11-23)
+
+The assistant: a contextual AI assistant that reads as Pairwise, not a separate chat product. Product teams get the
+chat layout, the response layout, context handling and the AI states, and bring their own model; nothing in the
+package calls one. Every change to existing components is additive, so 2.1 code builds unchanged. The rules are in
+GUIDELINES "The assistant and AI content" and DECISIONS #29. The demo has the assistant on every page, with scripted
+answers built from its sample data.
+
+- **Icons (new):** `assistant` (a speech bubble with a prompt mark; never a sparkle), `send`, `stop`, `attach`,
+  `thumb-up`, `thumb-down`, `history`, `expand`, `collapse`.
+- **Token:** `assistant-width` (400 px) for the docked panel.
+- **New dependency:** `markdown-to-jsx` (MIT, no dependencies of its own), for `Markdown` only.
+- **TopBar `assistant` (new):** a launcher left of alerts with `aria-expanded`, Ctrl+I / ⌘I, and an activity state
+  (working, needs input, unread) that is read with its name and never pulses.
+- **AppShell `assistant` (new):** an AssistantPanel docks beside the content at 1280 px and wider, and is a modal
+  drawer below that. Expanded, it covers the content, which stays mounted and inert.
+- **Drawer `docked`, `actions`, `className` (new):** a panel in place (border, no shadow or scrim, non-modal, page
+  clicks keep it open, Escape only from inside), and header controls before Close. An element marked
+  `data-autofocus` takes focus on open.
+- **CodeBlock `diff` (new):** + and − lines get a sign column, a neutral tint and "Added:" / "Removed:" for screen
+  readers. No red and green.
+- **FileUpload `variant="button"` (new):** a paperclip button instead of the drop zone, with the same checks and rows.
+- **Avatar `icon` (new):** an icon instead of initials, on the neutral fill.
+- **Markdown (new):** model text as Pairwise elements: text styles, links, lists, tables, inline code, and CodeBlock
+  for fences. Raw HTML is never rendered and images become links. `streaming` holds back unfinished syntax; `sources`
+  turns "[1]" into citations.
+- **Citation, SourceList (new):** numbered references and the sources behind them, with kind, path, excerpt and date.
+- **ResourceCard (new):** a referenced resource: kind (icon + word), name, status, path below the scope, facts and a
+  menu.
+- **Disclosure (new):** expandable details on native `<details>`.
+- **ContextBar (new):** what the assistant can see, as icon + word chips: the page, entity, filters, ownership
+  scope, runtime scope, time range and the person's access. Remove, add from the page, and inspect every item with
+  its path; the ownership scope changes through the existing ScopePicker.
+- **PromptComposer (new):** a multiline input with suggestions, templates, attachments, @mentions and slash commands
+  (cmdk), Send that becomes Stop, a character limit and validation, and a disabled state with its reason.
+- **AssistantMessage (new):** one turn: author (icon or agent initials and name), streaming, done, stopped and error
+  states, sources, follow-ups, and helpful / not helpful, copy, regenerate, report and "About this answer".
+- **AssistantPanel (new):** the panel: new conversation, history, expand, close; loading, empty, error and no-access
+  states; one polite live region that announces a finished answer once, never each streamed word.
+- **AssistantProvider, useAssistant, useAssistantContext (new):** open and expanded state, `ask(prompt, extraContext)`
+  for launchers anywhere, and each page's context items. `onAsk` hands the prompt and context to your app.
+- **Structured answers (new):** `AssistantAnswer` draws an answer from typed blocks (`AnswerBlock`: summary, items,
+  metrics, next, text, code, steps, custom) instead of one long Markdown string, using:
+  - `AnswerSummary`: the conclusion first, with its status;
+  - `AttentionList`: rows worst first, at most 5, then "Show N more";
+  - `MetricStrip`: up to 4 figures with trends;
+  - `NextStep`: the next step on a neutral tint, labelled as a proposal;
+  - `EntityRef`: an identifier as kind icon + mono name on a neutral tint.
+  `Markdown` and `AssistantAnswer` take `entities`, so identifiers in model text become chips.
+- **The launcher's tint (new tokens):** `assistant`, `assistant-surface`, `assistant-surface-hover`. The top-bar
+  launcher shows its label from 1024 px and its shortcut (Ctrl I / ⌘I) when the rail is expanded. It is the only
+  non-status tint in the system (DECISIONS #30); AI content stays neutral. A test keeps its text at 4.8:1 or more.
+- **Icon:** `arrow-right`.
+- **AssistantPanel:** a new turn opens at the top of the panel with the question above the answer, instead of
+  following the text down.
+- **Catalogue:** a new "Assistant" group.
+
 ## 2.1.0 (2026-11-21)
 
 Ownership hierarchy and scope: a Resource Explorer, one ownership scope carried across pages, and tables with List

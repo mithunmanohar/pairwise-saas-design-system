@@ -1,0 +1,27 @@
+<!-- @dsCard group="Data display" height=230 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ResourceCard</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+function Demo(){
+  var acts=[{label:'Open',icon:'external',onSelect:noop},{label:'Ask the assistant',icon:'assistant',onSelect:noop}];
+  return row(
+    cell('With status, path and facts', h(C.ResourceCard,{kind:'webapp',name:'checkout-api',mono:true,status:'warning',statusLabel:'Degraded',path:[{id:'a',label:'Commerce'},{id:'b',label:'Checkout'}],facts:[{label:'p95',value:'840 ms'},{label:'Owner',value:'Squad Checkout'}],onOpen:noop,actions:acts}),320),
+    cell('Healthy is quiet', h(C.ResourceCard,{kind:'pipeline',name:'nightly-training',mono:true,path:[{id:'c',label:'Forecasting platform'}],facts:[{label:'Last run',value:'2 h ago'},{label:'Duration',value:'41 min'}],onOpen:noop}),320));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -8,9 +8,10 @@ import "@pairwise/ui/styles.css";
 import "./examples.css";
 import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { AppShell, SideNav, TopBar, PairwiseProvider, Toaster, Drawer, Select, Button, ScopePicker, ScopeNote, toast, tokens, type BreadcrumbsProps, type FontPreset, type NavGroup, type Scope, type ScopeDimension, type SearchItem } from "@pairwise/ui";
+import { AppShell, SideNav, TopBar, PairwiseProvider, Toaster, Drawer, Select, Button, ScopePicker, ScopeNote, AssistantProvider, useAssistant, useAssistantContext, TIME_RANGES, toast, tokens, type AssistantContextItem, type BreadcrumbsProps, type FontPreset, type NavGroup, type Scope, type ScopeDimension, type SearchItem } from "@pairwise/ui";
 import { incidents, isOpen, repos, runs, services } from "./data";
-import { ROOT, SCOPE_TREE, UNITS, inScope, pathBelow, rollup, scopeSummary, unitById, type ScopeMode } from "./org";
+import { ROOT, SCOPE_TREE, UNITS, inScope, lineage, pathBelow, rollup, scopeSummary, unitById, type ScopeMode } from "./org";
+import { DemoAssistant, demoAsk, setAssistantPage, assistantActivity, clearUnread, useAssistantStore, suggestionsFor } from "./assistant";
 import type { Selection } from "./vary";
 
 export const params = new URLSearchParams(location.search);
@@ -209,19 +210,45 @@ const SEARCH: (SearchItem & { path: string })[] = [
   ...UNITS.filter((u) => u.id !== ROOT && !u.noAccess).map((u) => ({ label: u.label, kind: "Scope", group: "Teams and projects", description: "Open in the resource explorer", path: `explorer?scope=${u.id}` })),
 ];
 const RECENT = ["checkout-api", "INC-2041", "run_8f3k2"].map((l) => SEARCH.find((s) => s.label === l)).filter((s): s is (typeof SEARCH)[number] => !!s);
-function commands(go: (path: string) => void, openPrefs: () => void): SearchItem[] {
+function commands(go: (path: string) => void, openPrefs: () => void, openAssistant: () => void): SearchItem[] {
   const pages = NAV.flatMap((g) => g.items).concat([{ key: "admin", label: "Administration", icon: "settings" }]);
   return [
     ...pages.map((p): SearchItem => ({ id: "go:" + p.key, label: "Go to " + p.label.toLowerCase(), group: "Commands", icon: p.icon, keywords: ["open", "page", p.key], onRun: () => go(p.key) })),
     { id: "cmd:theme", label: "Switch theme", group: "Commands", icon: "settings", description: "Between light and dark", keywords: ["dark", "light", "mode"], onRun: () => setPrefs({ theme: getPrefs().theme === "dark" ? "light" : "dark" }) },
+    { id: "cmd:ask", label: "Ask the assistant", group: "Commands", icon: "assistant", description: "About this page and scope", shortcut: "Ctrl I", keywords: ["ai", "help", "question", "chat"], onRun: openAssistant },
     { id: "cmd:prefs", label: "Open your preferences", group: "Commands", icon: "user", description: "Font, theme and density", keywords: ["settings", "font", "density"], onRun: openPrefs },
   ];
 }
 const RUNTIME_OPTIONS = { env: ["prod", "staging"], cloud: ["region-a", "region-b"], cluster: ["cluster-1", "cluster-2"] };
 const RUNTIME_LABEL = { env: "Environment", cloud: "Region", cluster: "Cluster" };
 
+/* ---------- What the assistant can see on this page ---------- */
+const PAGE_LABEL: Record<string, string> = { ...Object.fromEntries(NAV.flatMap((g) => g.items).map((i) => [i.key, i.label])), admin: "Administration" };
+const DETAIL_LABEL: Record<string, string> = { services: "Service health", incidents: "Incident", runs: "CI run", repos: "Repository settings", explorer: "Resource explorer" };
+const ENTITY_KIND = { services: "webapp", runs: "pipeline", repos: "repository" } as const;
+function pageContext(section: string, id: string | undefined, sel: ReturnType<typeof useSelection>): AssistantContextItem[] {
+  const unit = sel.scope ? unitById(sel.scope) : undefined;
+  const above = sel.scope ? lineage(sel.scope).slice(0, -1).map((u) => ({ id: u.id, label: u.label })) : [];
+  const time = TIME_RANGES.find((t) => t.value === sel.time)?.label ?? sel.time;
+  return [
+    { id: "page", kind: "page", label: id && DETAIL_LABEL[section] ? DETAIL_LABEL[section]! : PAGE_LABEL[section] ?? "This page", removable: false },
+    ...(id && section !== "explorer" ? [{ id: "entity:" + id, kind: "entity" as const, label: id, ...(section in ENTITY_KIND ? { entity: ENTITY_KIND[section as keyof typeof ENTITY_KIND] } : {}) }] : []),
+    { id: "own", kind: "ownership", label: unit?.label ?? "Whole organisation", entity: unit?.kind ?? "company", path: above, detail: sel.mode === "direct" ? "Direct only" : "Including everything below" },
+    { id: "rt", kind: "runtime", label: `${sel.env} / ${sel.cloud} / ${sel.cluster}` },
+    { id: "time", kind: "time", label: time },
+    { id: "perm", kind: "permission", label: "Read only", detail: "It reads what you can see. It can't change anything.", removable: false },
+  ];
+}
+
 export function Frame({ active, children }: { active: string; children: ReactNode }) {
   const go = useNav();
+  const assistant = useAssistant();
+  useAssistantStore();
+  const sel = useSelection();
+  const [section = "", sub] = hashPath().split("/");
+  const ctx = useMemo(() => pageContext(section || active, sub, sel), [section, active, sub, sel]);
+  useAssistantContext(ctx);
+  setAssistantPage({ section: section || active, id: sub, label: ctx[0]!.label, sel, open: assistant.open });
   const p = usePrefs();
   const org = ORGS.find((o) => o.id === p.org) ?? ORGS[0];
   const scope = useScope();
@@ -236,6 +263,7 @@ export function Frame({ active, children }: { active: string; children: ReactNod
   const [prefsOpen, setPrefsOpen] = useState(demoState === "prefs");
   return (
     <AppShell
+      assistant={<DemoAssistant go={go} context={assistant.context} />}
       nav={<SideNav active={active} nav={NAV} onNavigate={go} badges={{ incidents: { count: openIncidents, tone: "critical" }, runs: { count: 1 } }} />}
       top={
         <TopBar
@@ -256,8 +284,9 @@ export function Frame({ active, children }: { active: string; children: ReactNod
               { label: "Sign out", icon: "external", onSelect: () => toast({ title: "This is a demo", body: "You stay signed in as Dev A." }) },
             ],
           }}
-          searchItems={[...commands(go, () => setPrefsOpen(true)), ...SEARCH]} searchRecent={RECENT} onSearch={(i) => { if (i.onRun) return; const hit = SEARCH.find((s) => s.label === i.label); if (!hit) return; if (hit.path.startsWith("explorer?scope=")) { location.hash = "/" + hit.path; return; } go(hit.path); }}
+          searchItems={[...commands(go, () => setPrefsOpen(true), () => { assistant.setOpen(true); clearUnread(); }), ...SEARCH]} searchRecent={RECENT} onSearch={(i) => { if (i.onRun) return; const hit = SEARCH.find((s) => s.label === i.label); if (!hit) return; if (hit.path.startsWith("explorer?scope=")) { location.hash = "/" + hit.path; return; } go(hit.path); }}
           onCopyRange={() => toast("Time range copied")}
+          assistant={{ open: assistant.open, onToggle: () => { assistant.toggle(); clearUnread(); }, activity: assistantActivity(assistant.open) }}
         />
       }>
       {children}
@@ -266,10 +295,20 @@ export function Frame({ active, children }: { active: string; children: ReactNod
   );
 }
 
+function AskOnce() {
+  const a = useAssistant();
+  const [done, setDone] = useState(false);
+  if (demoState === "assistant" && !done && a.context.length) { setDone(true); queueMicrotask(() => a.ask(suggestionsForPage())); }
+  return null;
+}
+const suggestionsForPage = () => { const [s = "overview", id] = hashPath().split("/"); return suggestionsFor(s, id)[0]?.label ?? "What needs attention right now?"; };
+
 /** Renders a screen. ?theme= wins, then a saved preference, then `defaultTheme` (the live demo defaults to dark). */
 export function mount(screen: ReactNode, defaultTheme: ThemeId = "dark") {
   initPrefs(defaultTheme);
   const el = document.getElementById("root");
   if (!el) throw new Error("#root missing");
-  createRoot(el).render(<PairwiseProvider>{screen}<Toaster /></PairwiseProvider>);
+  // The assistant's provider sits above the routed pages, so it stays open (and keeps its conversation) between pages.
+  // ?state=assistant opens it with the page's first suggestion answered (for screenshots).
+  createRoot(el).render(<PairwiseProvider><AssistantProvider onAsk={demoAsk} defaultOpen={demoState === "assistant"}>{screen}<AskOnce /></AssistantProvider><Toaster /></PairwiseProvider>);
 }

@@ -5,6 +5,7 @@ import * as RProgress from "@radix-ui/react-progress";
 import type { KeyValueListProps, AvatarProps, AvatarGroupProps, ProgressBarProps } from "./types";
 import { cx, Skeleton, StatusDot } from "./core";
 import { CopyButton } from "./actions";
+import { Icon } from "./icons";
 
 /* ---------- KeyValueList ---------- */
 // A <dl> of labelled facts: an object's details in a drawer, a page header's fields, a settings summary.
@@ -36,12 +37,14 @@ const initialsOf = (name: string) => {
   const a = parts[0]?.[0] ?? "", b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : parts[0]?.[1] ?? "";
   return (a + b).toUpperCase();
 };
-export function Avatar({ name, src, size = 28, status, decorative, initials }: AvatarProps) {
+// `icon` replaces the initials, e.g. for the assistant: still a neutral fill, never a per-agent colour.
+const AV_ICON = { 20: 12, 28: 16, 32: 16, 36: 20 } as const;
+export function Avatar({ name, src, size = 28, status, decorative, initials, icon }: AvatarProps) {
   return (
     <span className={cx("pw-av", "pw-av--" + size)} role={decorative ? undefined : "img"} aria-label={decorative ? undefined : name + (status ? ", " + status : "")} aria-hidden={decorative || undefined}>
       <RAvatar.Root className="pw-av__root">
         {src ? <RAvatar.Image className="pw-av__img" src={src} alt="" /> : null}
-        <RAvatar.Fallback className="pw-av__fb" delayMs={src ? 300 : 0}>{initials || initialsOf(name)}</RAvatar.Fallback>
+        <RAvatar.Fallback className="pw-av__fb" delayMs={src ? 300 : 0}>{icon ? <Icon name={icon} size={AV_ICON[size]} /> : initials || initialsOf(name)}</RAvatar.Fallback>
       </RAvatar.Root>
       {status ? <span className="pw-av__status" aria-hidden="true"><StatusDot status={status} /></span> : null}
     </span>

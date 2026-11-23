@@ -1,6 +1,6 @@
 // Deployments: what shipped today, how delivery is trending (DORA-style), and a rollback one click away.
 import { useState } from "react";
-import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, StateBlock, FilterBar, Button, Drawer, Timeline, CopyButton, KeyValueList, InlineEdit, ProgressBar, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Panel, Metric, BarChart, DataTable, StatusBadge, StateBlock, FilterBar, Button, Drawer, Timeline, CopyButton, KeyValueList, InlineEdit, ProgressBar, useAssistant, toast, type Column } from "@pairwise/ui";
 import { Frame, OwnershipNote, useNav, useOwnership, useSelection } from "../frame";
 import { serviceOwner } from "../org";
 import { share, varyCounts, varyInt, varyRound } from "../vary";
@@ -8,6 +8,7 @@ import { deploys as allDeploys, deployDays, deploysOk, deploysFailed, deploysRol
 
 export function Deployments() {
   const go = useNav();
+  const assistant = useAssistant();
   const [q, setQ] = useState("");
   const [f, setF] = useState<Record<string, string>>({});
   const [peek, setPeek] = useState<Deploy | null>(null);
@@ -74,6 +75,7 @@ export function Deployments() {
             rowTone={(d) => (d.status === "critical" ? "critical" : null)} rowLabel={(d) => `${d.service} ${d.version}`}
             rowActions={(d) => [
               { label: "View service", icon: "server", onSelect: () => go("services/" + d.service) },
+              { label: "Ask the assistant", icon: "assistant", onSelect: () => assistant.ask(`How is ${d.service} doing since ${d.version}?`, [{ id: "svc:" + d.service, kind: "entity", entity: "webapp", label: d.service }]) },
               { label: "Copy deploy id", icon: "copy", onSelect: () => toast(`Copied ${d.id}`) },
               "separator",
               { label: `Roll back ${d.service}`, icon: "refresh", tone: "critical", disabled: d.status === "unknown" || d.env !== "prod", onSelect: () => toast({ tone: "warning", title: `Rolling back ${d.service}`, body: "You can follow it on this page." }) },

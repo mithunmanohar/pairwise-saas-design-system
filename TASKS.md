@@ -4,9 +4,36 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 2.1.0, committed but not yet tagged or released (the ownership hierarchy: TreeView,
-ScopePicker, SplitView, ScopeNote, DataTable List / Tree views). What it contains:
-[`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+Status: `@pairwise/ui` 2.2.0 (the assistant), committed; 2.1.0 is released (tag `ui-v2.1.0`). What each version
+contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+
+## Done in 2.2.0
+- **Why:** apps built on Pairwise (developer portals, platform and cloud tools, admin and analytics) need a
+  contextual assistant that reads as Pairwise, not a separate chat product.
+- **Decision:** [DECISIONS #29](design-system/DECISIONS.md#29--the-assistant-audit-proposal-and-what-was-built-22). It
+  holds the audit, the gap analysis, the contracts, the dependency, the deferred list and how the build differs. The
+  rules are in GUIDELINES "The assistant and AI content".
+- **Foundations:**
+  - assistant icons (no sparkle) and the `assistant-width` token;
+  - `markdown-to-jsx` (MIT);
+  - TopBar `assistant` (Ctrl+I / ⌘I) and AppShell `assistant`;
+  - Drawer `docked`, FileUpload `variant="button"`, CodeBlock `diff` and Avatar `icon`.
+- **New components:**
+  - Markdown, Citation, SourceList, ResourceCard, Disclosure;
+  - ContextBar, PromptComposer, AssistantMessage, AssistantPanel;
+  - AssistantProvider, with `useAssistant` and `useAssistantContext`;
+  - structured answers (DECISIONS #30): AssistantAnswer with typed blocks, AnswerSummary, AttentionList, MetricStrip,
+    NextStep, EntityRef;
+  - the launcher's own tint (`assistant` tokens).
+- **The demo:**
+  - the assistant on every page, with scripted answers seeded from the sample data and the selection;
+  - "Ask the assistant" in page and row menus and in the command palette;
+  - `?state=assistant` opens it with the page's first question answered.
+- **Tests:**
+  - keyboard and focus (shortcut, focus return, Escape order, mentions and commands);
+  - live regions (no per-word announcements);
+  - context add, remove and inspect; report; expand; the modal drawer below 1280 px;
+  - axe with the panel open in both themes, on the fixtures and on 4 demo pages.
 
 ## Done in 2.1.0
 - **Why:** an ML platform organises everything by ownership (company → business function → squad → initiative →
@@ -47,7 +74,12 @@ ScopePicker, SplitView, ScopeNote, DataTable List / Tree views). What it contain
 - A dependency graph between resources (repository → pipeline → service → infrastructure); "Related" lists cover it.
 - A phone drill-down list for the explorer (today the tree opens in a drawer).
 - DataTable virtualisation, column resizing and pinning beyond the first column.
-- Agentic-coding components (DiffView, LogStream, …).
+- Agentic-coding components (DiffView, LogStream, …). `CodeBlock diff` (2.2, proposed) covers diff previews.
+- The assistant's Priority 2 and 3 (DECISIONS #29.5; candidates, not commitments):
+  - Priority 2: agent status and timeline, tool-call cards, plan with risk, approval card, before and after, result
+    summary.
+  - Priority 3: agent tasks, pause / resume / cancel / retry, input-needed notifications, multi-agent handoff,
+    generated forms, share and save.
 - A charting or table library (DECISIONS #10, #11).
 - Localised month names in the calendar menus.
 

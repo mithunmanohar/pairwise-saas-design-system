@@ -68,10 +68,16 @@ export function App() {
 - **Ownership hierarchy:** TreeView, ScopePicker, SplitView (explorer layout), ScopeNote, `entityIcon` / `entityLabel` for entity kinds; TopBar `ownership`; DataTable `getPath` for List and Tree views with column rollups
 - **Feedback and overlays:** AlertBanner, `toast()` + Toaster, Toast, StateBlock, Skeleton, ProgressBar, Tooltip (+ TooltipProvider), Popover, Modal, Drawer
 - **Data:** DataTable (sorting, paging, selection, bulk and row actions, column visibility, server mode), Pagination, ColumnsMenu, KeyValueList, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
+- **The assistant (2.2):** AssistantPanel (docked in AppShell's `assistant` slot), AssistantMessage, PromptComposer
+  (@mentions, slash commands, templates, attachments), ContextBar, AssistantProvider with `useAssistant` /
+  `useAssistantContext`, and the TopBar launcher (Ctrl+I / ⌘I). Answers are typed blocks drawn by AssistantAnswer
+  (AnswerSummary, AttentionList, MetricStrip, NextStep, EntityRef), with Markdown, Citation, SourceList, ResourceCard,
+  Disclosure and CodeBlock `diff`. You bring the model; nothing here calls one.
 - **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend (every chart has a table view)
 - **Helpers:** `cx`, `toISODate` / `parseISODate`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values, including `motion` and `layer` (`@pairwise/ui/tokens`)
 
-Behaviour comes from Radix, cmdk, react-day-picker and React Aria (trees), styled only with Pairwise tokens. Every component is checked
+Behaviour comes from Radix, cmdk, react-day-picker and React Aria (trees), and Markdown from markdown-to-jsx (its own
+module: apps that don't render Markdown don't load it), styled only with Pairwise tokens. Every component is checked
 with keyboard tests and axe in light and dark (`packages/ui/test/e2e`).
 
 Browse them all, live: open `design-system/catalogue.html` from the repo in a browser. Every component's usage notes and
@@ -91,6 +97,11 @@ AI tools will invent their own buttons and colours unless told not to. Paste thi
 - Layout and spacing in your own CSS use the Pairwise variables only, e.g. `var(--space-4)`, `var(--surface-raised)`,
   `var(--border)`, `var(--ink-muted)`, `var(--radius-md)`. Never hard-code colours.
 - Status is always `StatusBadge` (icon + label + colour). Sentence case, no emoji.
+- AI features (an assistant, agents) use the assistant parts: `AssistantPanel`, `PromptComposer`, `ContextBar`,
+  `AssistantMessage`, `AssistantAnswer`. Never build your own chat UI. Mark AI content with the assistant icon and a
+  label, never a colour, gradient or sparkle.
+- Render answers as `AssistantAnswer` blocks: a summary first, `items` for things to look at, `metrics` for numbers,
+  one `next` step. Not paragraphs. Pages declare what the assistant can see with `useAssistantContext`.
 - If a component you need doesn't exist, use the closest one and add a `TODO(pairwise):` comment instead of building
   a new one here.
 ```

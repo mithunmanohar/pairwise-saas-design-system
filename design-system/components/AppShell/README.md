@@ -10,3 +10,5 @@ The single application frame: side nav, top bar and content. Every screen uses i
 - **≤ 640 px viewport (phone):** the top bar takes two rows (menu, scope, alerts, account; then search and time range), page headers stack with actions below the title (leading icons on those buttons hide), tabs scroll sideways, banners wrap their action below the text, the time-range popover and toasts span the screen, and panels tighten their padding. Tables scroll inside their panel; the page never scrolls sideways.
 
 Density: compact on working views (traces, diffs, queues), comfortable on overview and reporting pages (`data-density` on the shell or `<html>`).
+
+**The assistant (2.2).** `assistant` takes an `AssistantPanel`, or a component that renders one. At 1280 px and wider it docks as a column beside the content (`assistant-width` 400 px), below the top bar. Below 1280 px it is a modal drawer, full width on phones. Expanded, it covers the content area, which stays mounted and `inert` so its scroll position survives.

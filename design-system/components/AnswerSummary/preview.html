@@ -1,0 +1,27 @@
+<!-- @dsCard group="Assistant" height=150 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AnswerSummary</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+function Demo(){
+  return h(F,null,
+    cell('Needs action', h(C.AnswerSummary,{status:'critical',statusLabel:'Needs action'},'INC-2041 most likely comes from deploy v2.14.1 of checkout-api.')),
+    cell('Healthy is quiet', h(C.AnswerSummary,{status:'healthy',statusLabel:'All healthy'},'Nothing needs attention in AI transformation right now.')),
+    cell('No status', h(C.AnswerSummary,null,'A draft status update for INC-2041. Edit it before you post it.')));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -75,3 +75,6 @@ html, body, #root, .ex-demo { height: 100%; margin: 0; }
 .ex-kind { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; }
 .ex-tree { display: grid; gap: var(--space-2); }
 .ex-tree__tools { display: flex; gap: var(--space-1); }
+
+/* The assistant's "How this was worked out" steps */
+.ex-worked { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-1); }

@@ -1,0 +1,36 @@
+<!-- @dsCard group="Assistant" height=170 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ContextBar</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+var ORG=[{id:'co',kind:'company',label:'Example Company',children:[{id:'fn-data',kind:'function',label:'Data and analytics',children:[{id:'in-ai',kind:'initiative',label:'AI transformation'}]}]}];
+var CTX=[{id:'page',kind:'page',label:'Usage and cost',removable:false},
+  {id:'own',kind:'ownership',label:'AI transformation',entity:'initiative',path:[{id:'fn',label:'Data and analytics'},{id:'sq',label:'ML engineering'}]},
+  {id:'rt',kind:'runtime',label:'prod / region-a'},{id:'time',kind:'time',label:'Last 30 days'},
+  {id:'f',kind:'filter',label:'Service: checkout-api',detail:'1 filter'},
+  {id:'perm',kind:'permission',label:'Read only',detail:'It can read this page; it can\'t change anything.',removable:false}];
+var SOURCES=[{id:'s1',title:'checkout-api latency',entity:'webapp',path:[{id:'p1',label:'Commerce'},{id:'p2',label:'Checkout'}],updated:'2 min ago'},
+  {id:'s2',title:'Deploy run_8f3k2',kind:'Deployment',excerpt:'timeout raised from 2s to 5s',updated:'13:40'}];
+function Demo(){
+  var it=useState(CTX), s=useState('in-ai');
+  return h(F,null,
+    cell('What the assistant can see: three chips, then "+N more" opens the full list', h('div',{style:{maxWidth:420}}, h(C.ContextBar,{items:it[0],onRemove:function(id){it[1](it[0].filter(function(c){return c.id!==id;}));},
+      available:[{id:'svc',kind:'entity',entity:'webapp',label:'checkout-api'}],onAdd:function(c){it[1](it[0].concat([c]));},scope:{nodes:ORG,value:s[0],onChange:s[1]}}))),
+    cell('Nothing attached', h(C.ContextBar,{items:[]})));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

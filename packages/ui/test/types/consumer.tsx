@@ -139,3 +139,34 @@ export const pathOf = indexTree(org).get("p")?.path.map((n) => n.label);
 export const badView = <DataTable rows={pipes} columns={[]} view="grid" />;
 // @ts-expect-error a rollup is sum, latest, {status}, or a function
 export const badRollup = <DataTable rows={pipes} columns={[{ key: "cost", header: "Cost", rollup: "average" }]} />;
+
+// 2.2: the assistant.
+import { AssistantPanel, AssistantMessage, PromptComposer, ContextBar, AssistantProvider, useAssistant, useAssistantContext, Markdown, Citation, SourceList, ResourceCard, Disclosure, AppShell, Drawer, type AssistantContextItem, type AssistantFeedback, type AssistantApi } from "@pairwise/ui";
+const ctx: AssistantContextItem[] = [{ id: "own", kind: "ownership", label: "AI transformation", entity: "initiative" }, { id: "perm", kind: "permission", label: "Read only", removable: false }];
+function UsesAssistant() {
+  const a: AssistantApi = useAssistant();
+  useAssistantContext(ctx);
+  const fb: AssistantFeedback = "helpful";
+  return (
+    <AppShell nav={<SideNav active="home" />} top={<TopBar assistant={{ open: a.open, onToggle: a.toggle, activity: "working" }} />}
+      assistant={<AssistantPanel open={a.open} onClose={() => a.setOpen(false)} expanded={a.expanded} onExpandedChange={a.setExpanded} state="ready"
+        composer={<PromptComposer onSubmit={(p) => a.ask(p, ctx)} busy onStop={() => undefined} maxLength={400} mentions={[{ value: "x", label: "x", entity: "webapp" }]} attachments={{ files: [], onFiles: (f) => f.length }} context={<ContextBar items={ctx} onRemove={(id) => id.length} />} />}>
+        <AssistantMessage author={{ name: "Assistant", kind: "assistant" }} status="streaming" feedback={fb} onFeedback={(f) => f} sources={[{ id: "s", title: "Runbook" }]} provenance={{ generated: "14:02" }}>
+          <Markdown streaming sources={[{ id: "s", title: "Runbook" }]} onLink={(h) => h.startsWith("#")}>{"**hi** [1]"}</Markdown>
+          <Citation n={1} title="Runbook" />
+          <SourceList sources={[{ id: "s", title: "Runbook", entity: "repository" }]} />
+          <ResourceCard kind="webapp" name="checkout-api" status="warning" facts={[{ label: "p95", value: "840 ms" }]} />
+          <Disclosure summary="Steps" meta="3">steps</Disclosure>
+          <CodeBlock code={"-a\n+b"} diff />
+          <Avatar name="Assistant" icon="assistant" />
+          <FileUpload label="Attach files" variant="button" />
+          <Drawer open title="Docked" onClose={() => undefined} docked actions={<Button>x</Button>} />
+        </AssistantMessage>
+      </AssistantPanel>} />
+  );
+}
+export const v22 = <AssistantProvider onAsk={(p, c) => c.length + (p?.length ?? 0)}><UsesAssistant /></AssistantProvider>;
+// @ts-expect-error context kinds are a fixed set
+export const badKind: AssistantContextItem = { id: "x", kind: "colour", label: "x" };
+// @ts-expect-error a message status is streaming, done, stopped or error
+export const badStatus = <AssistantMessage author={{ name: "A", kind: "assistant" }} status="thinking" />;

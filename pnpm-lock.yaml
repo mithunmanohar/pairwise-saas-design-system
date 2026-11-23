@@ -98,6 +98,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
+      markdown-to-jsx:
+        specifier: ^9.10.6
+        version: 9.10.6(react@18.3.1)
       react-aria-components:
         specifier: ^1.22.1
         version: 1.22.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -857,6 +860,24 @@ packages:
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
+
+  markdown-to-jsx@9.10.6:
+    resolution: {integrity: sha512-vvd4cMAAK6RDCzklzRYykG8Tos1Wyid8IoxenyiSAnGb1JIX2fTzn6MuU5QBu9Kb4BdjOCnKlbs84NQRVsaaVA==}
+    engines: {node: '>= 18'}
+    peerDependencies:
+      react: '>= 16.0.0'
+      react-native: '*'
+      solid-js: '>=1.0.0'
+      vue: '>=3.0.0'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-native:
+        optional: true
+      solid-js:
+        optional: true
+      vue:
+        optional: true
 
   playwright-core@1.63.0:
     resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
@@ -1660,6 +1681,10 @@ snapshots:
   loose-envify@1.4.0:
     dependencies:
       js-tokens: 4.0.0
+
+  markdown-to-jsx@9.10.6(react@18.3.1):
+    optionalDependencies:
+      react: 18.3.1
 
   playwright-core@1.63.0: {}
 

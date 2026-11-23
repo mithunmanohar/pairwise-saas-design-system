@@ -36,6 +36,7 @@ const P = {
   "arrow-up": <path d="M8 13V3.5M4.25 7.25 8 3.5l3.75 3.75"/>,
   "arrow-down": <path d="M8 3v9.5M4.25 8.75 8 12.5l3.75-3.75"/>,
   "arrow-left": <path d="M13 8H3.5M7.25 4.25 3.5 8l3.75 3.75"/>,
+  "arrow-right": <path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75"/>,
   sort: <path d="M5 2.75v10.5M2.75 5 5 2.75 7.25 5M11 13.25V2.75M8.75 11 11 13.25 13.25 11"/>,
   lock: <g><rect x="3" y="7" width="10" height="7"/><path d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2"/></g>,
   book: <g><path d="M2.75 3h4a1.5 1.5 0 0 1 1.25.7A1.5 1.5 0 0 1 9.25 3h4v9.5h-4a1.25 1.25 0 0 0-1.25 1.25A1.25 1.25 0 0 0 6.75 12.5h-4z"/><path d="M8 3.7v10"/></g>,
@@ -64,6 +65,16 @@ const P = {
   globe: <g><circle cx="8" cy="8" r="5.75"/><path d="M2.25 8h11.5M8 2.25c1.6 1.6 2.4 3.5 2.4 5.75S9.6 12.15 8 13.75C6.4 12.15 5.6 10.25 5.6 8S6.4 3.85 8 2.25z"/></g>,
   "level-up": <path d="M5 6.5 8 3.5l3 3M8 3.5v9"/>,
   columns: <g><rect x="2.5" y="2.75" width="11" height="10.5"/><path d="M6.25 2.75v10.5M9.75 2.75v10.5"/></g>,
+  // The assistant: a speech bubble with a prompt mark. Never a sparkle: AI is told apart by label and layout, not magic.
+  assistant: <g><path d="M2.5 3h11v7.5H7.25L4.5 13v-2.5h-2z"/><path d="m5.25 5.25 1.75 1.5-1.75 1.5M8.25 8.25h2.5"/></g>,
+  send: <g><path d="M2.25 7.75 13.75 2.25 10.5 13.75 7.5 9z"/><path d="M7.5 9 13.75 2.25"/></g>,
+  stop: <rect x="4" y="4" width="8" height="8"/>,
+  attach: <path d="M11.25 5.5 6.6 10.15a1.25 1.25 0 0 0 1.77 1.77l4.6-4.6a2.75 2.75 0 0 0-3.9-3.9L4.4 8.1a4.25 4.25 0 0 0 6 6l3.1-3.1"/>,
+  "thumb-up": <g><path d="M2.5 7.25h2.75v6.5H2.5z"/><path d="M5.25 7.25 7.75 2.5c1 0 1.75.8 1.5 1.85l-.5 2.4h4l-1.25 7H5.25"/></g>,
+  "thumb-down": <g transform="matrix(1 0 0 -1 0 16)"><path d="M2.5 7.25h2.75v6.5H2.5z"/><path d="M5.25 7.25 7.75 2.5c1 0 1.75.8 1.5 1.85l-.5 2.4h4l-1.25 7H5.25"/></g>,
+  history: <g><path d="M2.9 9.5A5.25 5.25 0 1 0 4.3 4.3L2.75 5.85"/><path d="M2.75 2.75v3.1h3.1M8 5.25V8l2 1.25"/></g>,
+  expand: <path d="M9.5 2.75h3.75V6.5M13.25 2.75l-4 4M6.5 13.25H2.75V9.5M2.75 13.25l4-4"/>,
+  collapse: <path d="M13.25 2.75l-4 4M9.25 3.5v3.25h3.25M2.75 13.25l4-4M3.5 9.25h3.25v3.25"/>,
 } satisfies Record<string, React.ReactElement>;
 
 // Status glyphs: filled shapes so they read without colour.

@@ -56,11 +56,16 @@ const SCREENS = [
   ["phone-incident-dark", "incidents/INC-2041", "", PHONE, false],
   ["phone-run-detail-dark", "runs/run_8f3k2", "", PHONE, false],
   ["phone-service-health-light", "services/checkout-api", "theme=light", PHONE, false],
+  // The assistant (2.2): ?state=assistant opens it with the page's first suggestion answered.
+  ["assistant-overview-dark", "overview", "state=assistant", [1440, 900], false],
+  ["assistant-incident-dark", "incidents/INC-2041", "state=assistant", [1440, 900], false],
+  ["assistant-usage-light", "usage", "theme=light&state=assistant", [1440, 900], false],
+  ["phone-assistant-dark", "incidents/INC-2041", "state=assistant", PHONE, false],
 ];
 // Component cards for the README gallery (dark theme, compact).
 const COMPONENTS = ["Button", "ActionMenu", "StatusBadge", "Tag", "CopyButton", "TextInput", "Select", "Checkbox", "Switch",
   "Tabs", "TimeRangePicker", "AlertBanner", "Toaster", "StateBlock", "Modal", "Drawer", "Metric", "DataTable", "CodeBlock",
-  "Timeline", "TimeSeriesChart", "BarChart", "StatusGrid", "RunStrip", "Heatmap", "PageHeader", "Icon"];
+  "Timeline", "TimeSeriesChart", "BarChart", "StatusGrid", "RunStrip", "Heatmap", "PageHeader", "Icon", "AssistantAnswer", "AssistantMessage", "PromptComposer", "MetricStrip"];
 
 function loadPlaywright() {
   const req = createRequire(import.meta.url);

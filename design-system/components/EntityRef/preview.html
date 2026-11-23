@@ -1,0 +1,34 @@
+<!-- @dsCard group="Data display" height=150 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>EntityRef</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+var REFS={inc:{label:'INC-2041',icon:'siren',kindLabel:'Incident',onOpen:noop},svc:{label:'checkout-api',kind:'webapp',onOpen:noop},gw:{label:'llm-gateway',kind:'webapp',onOpen:noop},ws:{label:'training',icon:'coins',kindLabel:'Cost workspace'}};
+var ITEMS=[{id:'a',ref:REFS.inc,title:'p95 latency above SLO on checkout',meta:'Severity 2 · investigating for 27 min',status:'critical',statusLabel:'Investigating',action:{label:'Open',onSelect:noop}},
+  {id:'b',ref:{label:'INC-2040',icon:'siren',kindLabel:'Incident',onOpen:noop},title:'Token rate limit errors from model provider',meta:'Severity 3 · acknowledged for 3 h 56 min',status:'warning',statusLabel:'Acknowledged',action:{label:'Open',onSelect:noop}},
+  {id:'c',ref:REFS.svc,title:'p95 403 ms against a 300 ms objective',meta:'Commerce › Checkout',status:'warning',statusLabel:'Degraded',action:{label:'Open',onSelect:noop}},
+  {id:'d',ref:REFS.gw,title:'p95 1840 ms against a 2500 ms objective',status:'warning',statusLabel:'Degraded',action:{label:'Open',onSelect:noop}},
+  {id:'e',ref:{label:'search-api',kind:'webapp',onOpen:noop},title:'Error budget at 9 %',status:'warning',statusLabel:'At risk'},
+  {id:'f',ref:{label:'cart-api',kind:'webapp',onOpen:noop},title:'p95 121 ms against a 250 ms objective',status:'healthy',statusLabel:'Healthy'}];
+var METRICS=[{label:'p95 latency',value:'403 ms',delta:{value:34,unit:' %',window:'over objective',breach:true}},{label:'Objective',value:'300 ms'},{label:'Error rate',value:'0.42 %',delta:{value:0,unit:' %',polarity:'neutral',window:'unchanged'}},{label:'Requests',value:'1219',unit:'/s'}];
+function Demo(){
+  return h(F,null,
+    cell('In a sentence', h('p',{style:{margin:0,maxWidth:480}},'The slowdown on ',h(C.EntityRef,REFS.svc),' started after ',h(C.EntityRef,REFS.inc),' was opened; ',h(C.EntityRef,REFS.ws),' is near its budget.')),
+    row(cell('Link (opens it)', h('span',null,h(C.EntityRef,REFS.inc))), cell('Not a link', h('span',null,h(C.EntityRef,REFS.ws))), cell('Not mono', h('span',null,h(C.EntityRef,{label:'Data and analytics',kind:'function',mono:false})))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

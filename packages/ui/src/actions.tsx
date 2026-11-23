@@ -70,8 +70,12 @@ export function Tag({ children, mono, onRemove, removeLabel }: TagProps) {
   );
 }
 
-/* ---------- CodeBlock (code, diffs as text, logs) ---------- */
-export function CodeBlock({ code, title, lineNumbers, wrap: wrapInit = false, maxHeight = 320, highlight = [], copy = true }: CodeBlockProps) {
+/* ---------- CodeBlock (code, diffs, logs) ---------- */
+// `diff`: lines starting with + or − are marked added or removed by a sign column, a neutral tint and words for screen
+// readers. No red and green: red is kept for what needs action, and the sign carries the meaning.
+type DiffKind = "add" | "del" | "hunk" | null;
+const diffKind = (l: string): DiffKind => l.startsWith("+++") || l.startsWith("---") ? "hunk" : l.startsWith("+") ? "add" : l.startsWith("-") ? "del" : l.startsWith("@@") ? "hunk" : null;
+export function CodeBlock({ code, title, lineNumbers, wrap: wrapInit = false, maxHeight = 320, highlight = [], copy = true, diff }: CodeBlockProps) {
   const lines = code.replace(/\n$/, "").split("\n");
   const nums = lineNumbers ?? lines.length > 1;
   const [wrap, setWrap] = useState(wrapInit);
@@ -87,12 +91,18 @@ export function CodeBlock({ code, title, lineNumbers, wrap: wrapInit = false, ma
         </span>
       </figcaption>
       <pre className={cx("pw-code__pre", wrap && "is-wrap")} style={{ maxHeight }} tabIndex={0} aria-label={title || "Code"}>
-        <code>{lines.map((l, i) => (
-          <span key={i} className={cx("pw-code__line", hl.has(i + 1) && "is-hl")}>
-            {nums ? <span className="pw-code__n" style={{ width: numW }} aria-hidden="true">{i + 1}</span> : null}
-            <span className="pw-code__t">{l || " "}</span>
-          </span>
-        ))}</code>
+        <code>{lines.map((l, i) => {
+            const k = diff ? diffKind(l) : null;
+            const text = diff && (k === "add" || k === "del") ? l.slice(1) : l;
+            return (
+              <span key={i} className={cx("pw-code__line", hl.has(i + 1) && "is-hl", k && "is-" + k)}>
+                {nums ? <span className="pw-code__n" style={{ width: numW }} aria-hidden="true">{i + 1}</span> : null}
+                {diff ? <span className="pw-code__sign" aria-hidden="true">{k === "add" ? "+" : k === "del" ? "−" : " "}</span> : null}
+                {k === "add" ? <span className="pw-sr">Added: </span> : k === "del" ? <span className="pw-sr">Removed: </span> : null}
+                <span className="pw-code__t">{text || " "}</span>
+              </span>
+            );
+        })}</code>
       </pre>
     </figure>
   );

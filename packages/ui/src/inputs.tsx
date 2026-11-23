@@ -6,7 +6,7 @@ import * as RPopover from "@radix-ui/react-popover";
 import { Command } from "cmdk";
 import { DayPicker, type DateRange, type Matcher } from "react-day-picker";
 import type { RadioGroupProps, ComboboxProps, ComboboxOption, DatePickerProps, DateRangePickerProps, DateRangeValue, DateRangePreset, InlineEditProps, FileUploadProps, UploadItem } from "./types";
-import { cx, Button, useCmdkAria, useCmdkHighlight } from "./core";
+import { cx, Button, Tooltip, useCmdkAria, useCmdkHighlight } from "./core";
 import { Field, useField } from "./forms";
 import { Tag } from "./actions";
 import { ProgressBar } from "./display";
@@ -396,7 +396,7 @@ const accepts = (f: File, accept?: string) => {
   const name = f.name.toLowerCase(), type = (f.type || "").toLowerCase();
   return accept.split(",").map((a) => a.trim().toLowerCase()).filter(Boolean).some((a) => a.startsWith(".") ? name.endsWith(a) : a.endsWith("/*") ? type.startsWith(a.slice(0, -1)) : type === a);
 };
-export function FileUpload({ label, hint, error, required, accept, maxSize, multiple = true, maxFiles, files = [], onFiles, onRemove, onRetry, disabled, id: idProp }: FileUploadProps) {
+export function FileUpload({ label, hint, error, required, accept, maxSize, multiple = true, maxFiles, files = [], onFiles, onRemove, onRetry, disabled, id: idProp, variant = "dropzone" }: FileUploadProps) {
   const f = useField(idProp, hint, error);
   const inputRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -414,18 +414,25 @@ export function FileUpload({ label, hint, error, required, accept, maxSize, mult
     setSaid([ok.length ? `${ok.length} file${ok.length === 1 ? "" : "s"} added.` : "", ...bad.map((b) => `${b.name}: ${b.error}`)].filter(Boolean).join(" "));
   };
   const all = [...files, ...rejected];
+  const picker = <input ref={inputRef} id={f.id} type="file" className="pw-sr" tabIndex={-1} aria-hidden="true" accept={accept} multiple={multiple} disabled={disabled}
+    onChange={(e) => { if (e.target.files) take(e.target.files); e.target.value = ""; }} />;
+  const button = variant === "button";
   return (
-    <div className="pw-formfield">
-      <div id={f.id + "-label"} className="pw-formfield__label">{label}{required ? <Req /> : null}</div>
-      <div className={cx("pw-drop", over && "is-over", disabled && "is-disabled", f.invalid && "is-error")} role="group" aria-labelledby={f.id + "-label"} aria-describedby={f.describedBy} aria-disabled={disabled || undefined}
+    <div className={cx("pw-formfield", button && "pw-upload--button")}>
+      <div id={f.id + "-label"} className={button ? "pw-sr" : "pw-formfield__label"}>{label}{required ? <Req /> : null}</div>
+      {button ? (
+        <span className="pw-upload__btn">
+          <Tooltip content={label}><Button variant="ghost" size="sm" icon="attach" aria-label={label} aria-describedby={f.describedBy} disabled={disabled} onClick={() => inputRef.current?.click()} /></Tooltip>
+          {picker}
+        </span>
+      ) : <div className={cx("pw-drop", over && "is-over", disabled && "is-disabled", f.invalid && "is-error")} role="group" aria-labelledby={f.id + "-label"} aria-describedby={f.describedBy} aria-disabled={disabled || undefined}
         onDragOver={(e) => { if (disabled) return; e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); if (!disabled) take(e.dataTransfer.files); }}>
         <Icon name="upload" size={20} className="pw-drop__icon" />
         <span className="pw-drop__txt">Drag {multiple ? "files" : "a file"} here or</span>
         <Button size="sm" icon="file" disabled={disabled} onClick={() => inputRef.current?.click()}>Choose {multiple ? "files" : "a file"}</Button>
-        <input ref={inputRef} id={f.id} type="file" className="pw-sr" tabIndex={-1} aria-hidden="true" accept={accept} multiple={multiple} disabled={disabled}
-          onChange={(e) => { if (e.target.files) take(e.target.files); e.target.value = ""; }} />
-      </div>
+        {picker}
+      </div>}
       <Notes hint={hint} error={error} hintId={f.hintId} errId={f.errId} />
       {all.length ? (
         <ul className="pw-files" aria-label={label + ": files"}>

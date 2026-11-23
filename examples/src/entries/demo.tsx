@@ -5,7 +5,7 @@
 // A floating control switches theme, density and font (hidden with ?controls=0, which the screenshot script uses); the
 // account button opens the same preferences in a drawer.
 import { useEffect, useState } from "react";
-import { PageHeader, Panel, StateBlock, Switch, MenuSelect, tokens } from "@pairwise/ui";
+import { PageHeader, Panel, StateBlock, Switch, MenuSelect, useAssistant, tokens } from "@pairwise/ui";
 import { mount, Frame, NavProvider, useNav, showControls, usePrefs, setPrefs, isFont, hashPath, withScope } from "../frame";
 import { Explorer } from "../screens/explorer";
 import { Overview } from "../screens/overview";
@@ -62,6 +62,9 @@ function Page({ section, id }: { section: string; id: string | undefined }) {
 // Shares the preferences store with the account drawer, so both always agree.
 function Display() {
   const p = usePrefs();
+  const a = useAssistant();
+  // It floats at the bottom of the window: step aside while the assistant covers that area (expanded, or a drawer).
+  if (a.open && (a.expanded || window.innerWidth < 1280)) return null;
   return (
     <div className="ex-display" role="group" aria-label="Display">
       <Switch label="Dark" checked={p.theme === "dark"} onChange={(on) => setPrefs({ theme: on ? "dark" : "light" })} />

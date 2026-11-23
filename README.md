@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml?query=branch%3Amain)
 
-**One set of design tokens and 59 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
+**One set of design tokens and 74 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen, and AI features inside those apps (a contextual assistant with grounded answers) look and behave like the rest of the app.**
 
 **[Live demo](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/)** · **[Component catalogue](https://mithunmanohar.github.io/pairwise-saas-design-system/catalogue/)** · [Site](https://mithunmanohar.github.io/pairwise-saas-design-system/)
 
@@ -21,6 +21,8 @@ Without a shared foundation, every agent session starts from a blank page: a new
 Pairwise solves this at the platform level. Decisions are made once, encoded in tokens and components, and enforced by tooling. It targets **ML platform and infrastructure consoles, LLM and agentic AI tooling, AIOps and observability dashboards, and multi-tenant SaaS admin apps**, and it is built to be used by AI coding agents as well as by people.
 
 The result: asked for "a page showing why this CI run failed", an agent builds it from `PageHeader`, `StatusGrid`, `CodeBlock` and `Timeline` instead of inventing them. Every app gets the same status language, the same keyboard behaviour and the same dark mode.
+
+The same problem repeats one level up. When a team adds AI to its app, it usually gets a bolted-on chat window: its own look, no idea what page you're on, answers you can't check, and a sparkle on everything. Pairwise 2.2 treats the assistant as part of the system instead (**[the case study below](#the-assistant-ai-that-reads-as-part-of-the-app)**).
 
 ---
 
@@ -111,6 +113,78 @@ Spend and forecast against budget, monthly cost by category or team, budget bars
 ![Usage and cost page, light theme](docs/images/screens/usage-light.png)
 </details>
 
+### The assistant: AI that reads as part of the app
+A contextual assistant docked beside the page. Open it from the top bar, with Ctrl+I, from "Ask the assistant" in page and row menus, or from the command palette. It answers about what you're looking at, cites where each claim came from, and can't change anything. **[Try it](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/?state=assistant#/incidents/INC-2041)**. The demo's answers are scripted from its sample data, so there are no model calls or keys.
+
+![The assistant docked beside the overview page, answering what needs attention, dark theme](docs/images/screens/assistant-overview-dark.png)
+
+**The product problem.** A typical in-app AI feature makes the person do the work of trust.
+- They can't see what it knows.
+- They can't tell answers from facts.
+- They can't check sources.
+- They don't know whether it is about to change something.
+
+It also looks like a different product. Each decision below answers one of those problems, and each is a rule in [GUIDELINES](design-system/GUIDELINES.md) with its reasoning in [DECISIONS #29](design-system/DECISIONS.md).
+
+| Decision | Why |
+|---|---|
+| **It sees what you see, and shows it.** The page, the selected resource, the ownership scope, the runtime scope, the time range and your access are chips above the input. You can inspect each one with its path, remove it or add to it. | People trust an answer when they know what it was based on. Context they can't see is context they can't correct. |
+| **It says what it may do.** "Read only" is always sent and can't be removed. A proposed change is labelled as a proposal ("nothing has been changed"). | The worst AI failure in an ops tool is an action nobody expected. Approvals and execution are a separate, later step on the existing confirm dialog. |
+| **Grounded or it didn't happen.** Numbered citations in the text, the sources under the answer, the resources as cards with their status, and "How this was worked out" as short steps. It never shows raw reasoning. | An answer you can check in one click is worth more than a longer one. Steps explain without dumping a chain of thought. |
+| **Answers are blocks, not articles.** The conclusion first, with its status. Things to look at become rows, worst first, at most five. Numbers go in a strip. There is one next step, in a tinted box with buttons. Evidence is folded. Identifiers like `INC-2041` become chips, apart from the words that describe them. | Agents produce a lot. The shape of the answer should point at what to act on, and the limits are built in, so an agent can't bury the panel. |
+| **AI content is marked by an icon, a label and layout, never colour.** No gradient, glow, shimmer or sparkle in answers. The one exception is the way in: the launcher has its own tint and shows its shortcut. | Colour already means status here: the one red thing is the thing to act on. A coloured "AI" answer would compete with it and tell you nothing. A tinted button, though, makes the assistant easy to find. |
+| **One panel, in the shell, no floating button.** It docks beside the content at 1280 px and wider, is a drawer below that, and can expand. The provider sits above the routes, so it stays open between pages (and in the demo, so does the conversation). | You ask about the page while looking at it. A floating button would cover table rows and the toasts. |
+| **Accessible while it streams.** A finished answer is announced once, never word by word. Focus moves to the input on open and back on close. Escape closes one layer at a time. | A screen reader reading every token is unusable, and it is the easiest thing to get wrong in a streaming UI. |
+| **The app owns the model.** The components take messages and state as props. `AssistantProvider` hands the prompt and context to your code. | Teams use different models, gateways and policies. The design system owns the experience, not the vendor. |
+
+**Built from the system, not beside it.** The model returns typed blocks, and `AssistantAnswer` draws them with the system's parts:
+- `AnswerSummary`, `AttentionList`, `MetricStrip`, `NextStep` and `EntityRef`, which are new;
+- `Markdown`, `CodeBlock` (with a new `diff` mode) and `Disclosure`;
+- a `custom` block for any chart or `DataTable`. Asking, exploring, investigating and generating are the same parts in a different order, not four implementations. The additions to existing components are small and additive, and 2.1 apps build unchanged:
+- a launcher in `TopBar`;
+- a slot in `AppShell`;
+- a docked `Drawer`;
+- a paperclip `FileUpload`;
+- an icon `Avatar`.
+
+Adding it to an app:
+
+```tsx
+// Above your routes: your code gets each prompt with the context it was asked in.
+<AssistantProvider onAsk={(prompt, context) => yourModel.stream(prompt, context)}>…</AssistantProvider>
+
+// In the shell: a launcher (Ctrl+I) and the panel.
+const a = useAssistant();
+<AppShell nav={nav} top={<TopBar assistant={{ open: a.open, onToggle: a.toggle }} />}
+  assistant={
+    <AssistantPanel open={a.open} onClose={() => a.setOpen(false)} expanded={a.expanded} onExpandedChange={a.setExpanded}
+      composer={<PromptComposer onSubmit={(q) => a.ask(q)} context={<ContextBar items={a.context} />} />}>
+      {messages.map((m) => (
+        <AssistantMessage key={m.id} author={m.author} status={m.status} sources={m.sources}>
+          {/* blocks: [{ type: "summary", … }, { type: "items", … }, { type: "metrics", … }, { type: "next", … }] */}
+          <AssistantAnswer blocks={m.blocks} streaming={m.status === "streaming"} sources={m.sources} entities={knownIds} />
+        </AssistantMessage>
+      ))}
+    </AssistantPanel>
+  }>{page}</AppShell>
+
+// On each page: what the assistant can see here.
+useAssistantContext([{ id: "page", kind: "page", label: "Services", removable: false }, { id: "own", kind: "ownership", label: "AI transformation", entity: "initiative" }]);
+```
+
+**What's next, and what isn't built yet.**
+- **Priority 2:** agents that act. An execution timeline, tool-call cards, a plan with risk mapped to the existing status colours, approve / reject on the existing confirm dialog, and before / after.
+- **Priority 3:** long-running agent tasks, handoffs between agents, and notifications when input is needed.
+
+Both are recorded as candidates in [DECISIONS #29](design-system/DECISIONS.md), not built ahead of a project that needs them.
+
+<details><summary>Investigating an incident, the light theme, and a phone</summary>
+
+![The assistant investigating INC-2041 with sources and a config diff](docs/images/screens/assistant-incident-dark.png)
+![The assistant explaining spend on the usage page, light theme](docs/images/screens/assistant-usage-light.png)
+<img src="docs/images/screens/phone-assistant-dark.png" alt="The assistant on a phone" width="300">
+</details>
+
 ### Everyday SaaS: access, settings and administration
 Members with inline role changes and an invite form that validates; API tokens and an audit log. Repository settings have labelled inputs with hints, an inline error that says how to fix it, checkboxes for rules, switches for settings that apply immediately, removable tags, and a destructive action behind a type-to-confirm dialog.
 
@@ -147,7 +221,7 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 
 ## Every component, one visual language
 
-59 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
+74 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
 
 <table>
 <tr><td width="50%"><b>Buttons</b><br><img src="docs/images/components/Button.png" alt="Button variants and states"></td><td width="50%"><b>Status: icon + label + colour</b><br><img src="docs/images/components/StatusBadge.png" alt="Status badges and trends"></td></tr>
@@ -162,6 +236,8 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 <tr><td><b>Empty, error, no-access and loading states</b><br><img src="docs/images/components/StateBlock.png" alt="State blocks"></td><td><b>Timeline</b><br><img src="docs/images/components/Timeline.png" alt="Timeline"></td></tr>
 <tr><td><b>Page header</b><br><img src="docs/images/components/PageHeader.png" alt="Page header"></td><td><b>Heatmap</b><br><img src="docs/images/components/Heatmap.png" alt="Heatmap"></td></tr>
 <tr><td><b>Run history</b><br><img src="docs/images/components/RunStrip.png" alt="Run strip"></td><td><b>One icon set, drawn for the system</b><br><img src="docs/images/components/Icon.png" alt="Icons"></td></tr>
+<tr><td><b>Structured answers: conclusion, rows, figures, next step</b><br><img src="docs/images/components/AssistantAnswer.png" alt="An answer drawn from typed blocks: a summary with its status, rows worst first, a metric strip, a tinted next step"></td><td><b>Assistant messages: sources, feedback, states</b><br><img src="docs/images/components/AssistantMessage.png" alt="Assistant messages: an answer with citations and a resource card, streaming, stopped and failed"></td></tr>
+<tr><td><b>Prompt composer: suggestions, attachments, @ and /</b><br><img src="docs/images/components/PromptComposer.png" alt="Prompt composer states"></td><td><b>Figures as a strip, not sentences</b><br><img src="docs/images/components/MetricStrip.png" alt="Metric strip with four figures and trends"></td></tr>
 </table>
 
 ---
@@ -177,7 +253,7 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 | **One source of truth** | Every colour, space, radius and type style lives in [`tokens.json`](design-system/tokens.json): 31 colour tokens × 2 themes, 8 spacing steps, 8 type styles. | A small generator emits CSS variables and typed TypeScript names (`ColorToken`), so a typo in a colour name is a compile error. |
 | **Contrast with margin** | Text ≥ 4.8:1 and UI ≥ 3:1 on every surface, both themes. That's above the AA minimum, so rendering differences can't fail it. | Unit tests compute WCAG contrast for every token pair on every run. |
 | **Colour-blind-safe charts** | Five categorical colours whose worst adjacent pair stays ≥ 11 ΔE2000 under normal, protan, deutan and tritan vision (worst case: 14.9 light, 16.2 dark). | Unit tests simulate colour-vision deficiency and fail the build below 11. |
-| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 85 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions, the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 59 cards or 14 demo routes, in either theme. |
+| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 107 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions (an answer is announced once, never word by word), the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 74 cards, 14 demo routes or 4 demo pages with the assistant open, in either theme. |
 | **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. Every card is captured and axe-checked in both themes. |
 | **Calm, optional motion** | Menus and popovers fade 4 px from their trigger; dialogs fade in, drawers slide in. Nothing decorative. | Durations and layers are tokens; the lint rejects raw durations and z-index values. `prefers-reduced-motion` sets every duration to 0 ms, which a test checks. |
 | **Writing is design** | Sentence case, verb + object buttons ("Roll back to v2.14.0", never "OK"), errors that say how to fix it, no emoji. | [Guidelines](design-system/GUIDELINES.md) plus every component's README. AI agents read them via `COMPONENTS.md`. |
@@ -206,12 +282,14 @@ flowchart LR
   T["tokens.json<br/>(single source of truth)"] --> G["generators"]
   G --> CSS["tokens.css<br/>light/dark × compact/comfortable"]
   G --> TS["typed token names"]
-  CSS --> P["@pairwise/ui<br/>59 components · Radix, cmdk and React Aria behaviour"]
+  CSS --> P["@pairwise/ui<br/>74 components · Radix, cmdk and React Aria behaviour"]
   TS --> P
   P --> D["catalogue.html + COMPONENTS.md"]
   P --> A1["Ops dashboard"]
   P --> A2["Developer portal"]
   P --> A3["SaaS admin"]
+  P --> AS["Assistant parts<br/>panel · messages · composer · context"]
+  AS --> A1 & A2 & A3
   D -. read by .-> AI["AI coding agents"]
   AI --> A1 & A2 & A3
 ```
@@ -225,7 +303,13 @@ This repository was itself built with AI coding agents (Claude Code), under the 
 1. **Rules written down first.** [`CLAUDE.md`](CLAUDE.md) holds the visual rules, the non-negotiables (tokens only, accessibility floors, what needs approval) and the repo map. [`DECISIONS.md`](design-system/DECISIONS.md) records the why.
 2. **Small, reviewable steps.** Each step ends with a written summary: what changed, how it was verified, and the decisions it needs from a human.
 3. **Automated gates, not trust.** Contrast tests, type tests, lint, pixel diffs and in-browser behaviour checks, before anything merges.
-4. **Agents consume the system.** Every project gets this in its `CLAUDE.md`, so its agents read the docs instead of inventing UI:
+4. **A human decides at the gates.** Big changes start with an audit and a proposal, not code. The assistant (2.2) was built like this:
+   - **Phase 1** audited which of the existing components already covered the need (most did).
+   - It wrote the public prop contracts before any implementation.
+   - It measured the candidate Markdown libraries before asking to add one: `markdown-to-jsx` at 31.6 kB min + gzip with no dependencies, against `react-markdown` + `remark-gfm` at 50.4 kB and about 90 packages.
+   - It listed four decisions for a person to make, then stopped.
+   - Only after approval did it build. [DECISIONS #29](design-system/DECISIONS.md) keeps the audit, the contracts and where the build differed from the plan.
+5. **Agents consume the system.** Every project gets this in its `CLAUDE.md`, so its agents read the docs instead of inventing UI:
 
 ```md
 ## UI: Pairwise design system
@@ -233,6 +317,11 @@ This repository was itself built with AI coding agents (Claude Code), under the 
 - Don't create your own buttons, inputs, tables, menus, modals, toasts or badges, and don't add another UI library.
 - Your own CSS uses Pairwise variables only (`var(--space-4)`, `var(--surface-raised)`); never hard-code colours.
 - Status is always `StatusBadge`. Sentence case, no emoji.
+- AI features (an assistant, agents) use the assistant parts: `AssistantPanel`, `PromptComposer`, `ContextBar`,
+  `AssistantMessage`, `AssistantAnswer`. Never build your own chat UI. Mark AI content with the assistant icon and a
+  label, never a colour, gradient or sparkle.
+- Render answers as `AssistantAnswer` blocks: a summary first, `items` for things to look at, `metrics` for numbers,
+  one `next` step. Not paragraphs. Pages declare what the assistant can see with `useAssistantContext`.
 - Missing a component? Use the closest one and leave a `TODO(pairwise):` instead of building a new one.
 ```
 
@@ -243,7 +332,7 @@ The point isn't that AI wrote the code. It's that the output is **consistent, ac
 ## Use it
 
 ```bash
-pnpm add github:mithunmanohar/pairwise-saas-design-system#ui-v1.0.0
+pnpm add github:mithunmanohar/pairwise-saas-design-system#ui-v2.1.0
 ```
 
 ```tsx
@@ -263,7 +352,7 @@ export function App() {
 }
 ```
 
-Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (or `plex`, `system`) on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
+Use the latest `ui-v*` tag from [Releases](https://github.com/mithunmanohar/pairwise-saas-design-system/releases); the assistant arrives with `ui-v2.2.0`. Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (or `plex`, `system`) on `<html>` to switch. Full guide: [`packages/ui/README.md`](packages/ui/README.md).
 
 ## Repository map
 
@@ -278,4 +367,4 @@ Set `data-theme="dark"`, `data-density="comfortable"` and `data-font="inter"` (o
 
 ---
 
-<sub><b>Topics:</b> ML engineering · LLM engineering · agentic AI engineering · ML platform · ML infrastructure · AIOps · multi-tenant SaaS · design system · React design system · component library · UI kit · design tokens · TypeScript · SaaS · platform engineering · developer experience (DX) · developer portal · observability dashboard · admin dashboard · dark mode · accessibility · WCAG 2.2 · colour-blind-safe palette · Radix UI · AI-assisted development · agentic coding · Claude Code · vibe coding · consistency at scale</sub>
+<sub><b>Topics:</b> ML engineering · LLM engineering · agentic AI engineering · ML platform · ML infrastructure · AIOps · multi-tenant SaaS · design system · React design system · component library · UI kit · design tokens · TypeScript · SaaS · platform engineering · developer experience (DX) · developer portal · observability dashboard · admin dashboard · dark mode · accessibility · WCAG 2.2 · colour-blind-safe palette · Radix UI · AI assistant UX · grounded answers and citations · human in the loop · AI-assisted development · agentic coding · Claude Code · vibe coding · consistency at scale</sub>

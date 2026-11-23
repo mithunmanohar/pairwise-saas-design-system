@@ -1,6 +1,6 @@
 // Usage and cost: spend against budget, where it goes, and when model tokens are used. Over-budget rows stand out.
 import { useState } from "react";
-import { PageHeader, Panel, Metric, BarChart, Heatmap, DataTable, BulletBar, Trend, Tabs, Button, ActionMenu, DateRangePicker, toast, type Column, type DateRangeValue } from "@pairwise/ui";
+import { PageHeader, Panel, Metric, BarChart, Heatmap, DataTable, BulletBar, Trend, Tabs, Button, ActionMenu, DateRangePicker, useAssistant, toast, type Column, type DateRangeValue } from "@pairwise/ui";
 import { Frame, OwnershipNote, useOwnership, useSelection } from "../frame";
 import { workspaceOwner } from "../org";
 import { months, costCompute as baseCompute, costModels as baseModels, costStorage as baseStorage, costNetwork as baseNetwork, costOther as baseOther, days, hours, tokenHeat, workspaces, type Workspace } from "../data";
@@ -15,6 +15,7 @@ const BUDGETS = [{ n: "Compute", u: 22.6 * 0.66, l: 24 }, { n: "Model APIs", u: 
 
 export function Usage() {
   const [view, setView] = useState("category");
+  const assistant = useAssistant();
   const own = useOwnership();
   const sel = useSelection();
   const part = share(sel);
@@ -51,7 +52,7 @@ export function Usage() {
           <div className="ex-period"><DateRangePicker label="Report period" hideLabel value={period} maxDays={366} max="2026-12-31"
             onChange={(r) => { setPeriod(r); if (r?.to) toast({ title: `Showing ${r.from} to ${r.to}`, body: "This demo keeps the same sample data for every period." }); }} /></div>
           <Button icon="page" onClick={() => toast("Cost report exported as CSV")}>Export CSV</Button>
-          <ActionMenu label="More cost actions" items={[{ label: "Set budget alerts", icon: "bell", onSelect: () => toast("Budget alerts would open here") }, { label: "Copy report link", icon: "link", onSelect: () => toast("Link copied") }]} />
+          <ActionMenu label="More cost actions" items={[{ label: "Ask why spend changed", icon: "assistant", onSelect: () => assistant.ask("Why did spend rise this month?") }, { label: "Set budget alerts", icon: "bell", onSelect: () => toast("Budget alerts would open here") }, { label: "Copy report link", icon: "link", onSelect: () => toast("Link copied") }]} />
         </>} />
       <div className="pw-page">
         <div className="ex-metrics">

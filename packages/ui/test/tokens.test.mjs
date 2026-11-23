@@ -75,6 +75,13 @@ for (const th of themes) {
     }
   });
 
+  test(`the assistant launcher's tint keeps its text at 4.8:1 (${th})`, () => {
+    for (const s of ["assistant-surface", "assistant-surface-hover"]) {
+      const r = contrast(val("assistant", th), val(s, th));
+      assert.ok(r >= 4.8, `assistant on ${s} (${th}) = ${r.toFixed(2)}`);
+    }
+  });
+
   test(`non-text tokens reach 3:1 on every surface (${th})`, () => {
     for (const s of SURFACES) for (const n of ["border-strong", "focus-ring", ...categorical]) {
       const r = contrast(val(n, th), val(s, th));

@@ -1,0 +1,43 @@
+<!-- @dsCard group="Assistant" height=700 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AssistantMessage</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+var ORG=[{id:'co',kind:'company',label:'Example Company',children:[{id:'fn-data',kind:'function',label:'Data and analytics',children:[{id:'in-ai',kind:'initiative',label:'AI transformation'}]}]}];
+var CTX=[{id:'page',kind:'page',label:'Usage and cost',removable:false},
+  {id:'own',kind:'ownership',label:'AI transformation',entity:'initiative',path:[{id:'fn',label:'Data and analytics'},{id:'sq',label:'ML engineering'}]},
+  {id:'rt',kind:'runtime',label:'prod / region-a'},{id:'time',kind:'time',label:'Last 30 days'},
+  {id:'f',kind:'filter',label:'Service: checkout-api',detail:'1 filter'},
+  {id:'perm',kind:'permission',label:'Read only',detail:'It can read this page; it can\'t change anything.',removable:false}];
+var SOURCES=[{id:'s1',title:'checkout-api latency',entity:'webapp',path:[{id:'p1',label:'Commerce'},{id:'p2',label:'Checkout'}],updated:'2 min ago'},
+  {id:'s2',title:'Deploy run_8f3k2',kind:'Deployment',excerpt:'timeout raised from 2s to 5s',updated:'13:40'}];
+var MD='**checkout-api** is degraded: p95 is 840 ms against a 500 ms target since 13:40 [1]. It started after deploy `run_8f3k2` [2].';
+function Demo(){
+  var fb=useState(null);
+  return h('ol',{className:'pw-msgs',style:{maxWidth:440}},
+    h(C.AssistantMessage,{author:{name:'Dev A',kind:'person'},time:'13:52'},'Why is checkout slow?'),
+    h(C.AssistantMessage,{author:{name:'Assistant',kind:'assistant'},time:'13:52',sources:SOURCES,onSource:noop,feedback:fb[0],onFeedback:fb[1],onReport:noop,copyText:MD,onRegenerate:noop,
+        provenance:{generated:'13:52',model:'Example model',context:['Services','AI transformation','prod / region-a'],tools:['metrics.query','deploys.list']},
+        followUps:[{label:'Show the deploy diff'},{label:'Who owns checkout-api?'}],onFollowUp:noop},
+      h(C.Markdown,{sources:SOURCES,onSource:noop},MD),
+      h(C.ResourceCard,{kind:'webapp',name:'checkout-api',mono:true,status:'warning',statusLabel:'Degraded',facts:[{label:'p95',value:'840 ms'}],onOpen:noop})),
+    h(C.AssistantMessage,{author:{name:'Cost analyst',kind:'agent',description:'Agent'},status:'streaming',time:'13:53'}, h(C.Markdown,{streaming:true},'Spend in region-a rose 18 % after the batch')),
+    h(C.AssistantMessage,{author:{name:'Assistant',kind:'assistant'},status:'stopped',onRegenerate:noop}, h(C.Markdown,null,'The three slowest services this week are')),
+    h(C.AssistantMessage,{author:{name:'Assistant',kind:'assistant'},status:'error',statusText:'The metrics service didn\'t answer in time.',onRetry:noop}));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

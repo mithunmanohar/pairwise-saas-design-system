@@ -204,3 +204,56 @@ test("the demo has no axe violations on its main pages (dark and light)", async 
   }
   expect(found).toEqual([]);
 });
+
+test.describe("the demo's assistant (2.2)", () => {
+  const live = (route: string, extra = "") => `/examples/dist/demo.html?controls=0${extra}#/${route}`;
+  const panel = (page: import("@playwright/test").Page) => page.getByRole("dialog", { name: "Assistant" });
+
+  test("asks from a suggestion, streams, announces once, and keeps the conversation across pages", async ({ page }) => {
+    await page.goto(live("usage"));
+    await page.keyboard.press("Control+i");
+    await expect(page.getByRole("textbox", { name: "Ask the assistant" })).toBeFocused();
+    const ctx = page.getByRole("group", { name: "Context the assistant can see" });
+    await expect(ctx.getByText("Usage and cost")).toBeVisible();
+    await expect(ctx.getByText("Whole organisation")).toBeVisible();
+    await panel(page).getByRole("button", { name: "Why did spend rise this month?" }).click();
+    await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Assistant, working" })).toBeVisible();
+    const status = panel(page).locator('[role="status"][aria-live="polite"]').last();
+    await expect(status).toHaveText(/^Assistant replied: spend is \$46\.5k/);
+    await expect(panel(page).getByText("$46.5k").first()).toBeVisible();
+    await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Overview" }).click();
+    await expect(panel(page)).toBeVisible();
+    await expect(panel(page).getByText("Why did spend rise this month?").first()).toBeVisible();
+    await expect(ctx.getByText("Overview")).toBeVisible();
+  });
+
+  test("Investigate from an incident's menu, the command palette, and the scope in context", async ({ page }) => {
+    await page.goto(live("incidents/INC-2041", "&frozen=1"));
+    await page.getByRole("button", { name: "More actions for INC-2041" }).click();
+    await page.getByRole("menuitem", { name: "Investigate with the assistant" }).click();
+    await expect(panel(page).locator(".pw-answer .pw-lead")).toContainText("most likely comes from deploy v2.14.1");
+    await expect(panel(page).getByRole("link", { name: /^Source 1: Deploy dep_9a1/ })).toBeVisible();
+    await expect(panel(page).getByText("Removed:", { exact: false })).toHaveCount(1);
+    await panel(page).getByRole("button", { name: "Close" }).click();
+    await expect(panel(page)).toBeHidden();
+    await page.getByRole("combobox", { name: "Search" }).fill("ask");
+    await page.getByRole("option", { name: /Ask the assistant/ }).click();
+    await expect(panel(page)).toBeVisible();
+    await page.goto(live("services?scope=in-ai", "&frozen=1&state=assistant"));
+    await expect(page.getByRole("group", { name: "Context the assistant can see" }).getByText("AI transformation")).toBeVisible();
+  });
+});
+
+test("the demo has no axe violations with the assistant open (dark and light)", async ({ page }) => {
+  test.setTimeout(120_000);
+  const { axe } = await import("./helpers");
+  const found: string[] = [];
+  for (const theme of ["dark", "light"]) for (const route of ["overview", "usage", "incidents/INC-2041", "explorer?scope=in-ai"]) {
+    await page.goto(`/examples/dist/demo.html?frozen=1&state=assistant&theme=${theme}#/${route}`);
+    await expect(page.getByRole("dialog", { name: "Assistant" }).locator(".pw-msg--ai")).toHaveCount(1);
+    await page.waitForTimeout(300);
+    for (const v of await axe(page)) found.push(`${theme} ${route}: ${v.id} → ${v.nodes.slice(0, 2).map((n) => n.target.join(" ")).join(", ")}`);
+  }
+  expect(found).toEqual([]);
+});
