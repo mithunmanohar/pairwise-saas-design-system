@@ -4,9 +4,46 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 2.1.0, committed but not yet tagged or released (the ownership hierarchy: TreeView,
-ScopePicker, SplitView, ScopeNote, DataTable List / Tree views). What it contains:
-[`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
+Status: `@pairwise/ui` 2.1.0 is released (tag `ui-v2.1.0`; the ownership hierarchy: TreeView, ScopePicker,
+SplitView, ScopeNote, DataTable List / Tree views). What it contains:
+[`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md). Next: the assistant (2.2.0), at the Phase 1 gate.
+
+## Next: 2.2.0, the assistant (Phase 1 done; waiting for approval)
+- **Why:** apps built on Pairwise (developer portals, platform and cloud tools, admin and analytics) need a
+  contextual assistant that reads as Pairwise, not a separate chat product.
+- **Proposal:** [DECISIONS #29](design-system/DECISIONS.md#29--the-assistant-phase-1-audit-and-proposal-proposed-awaiting-approval).
+  It holds the audit, the gap analysis, the Priority 1 contracts, the dependencies and the deferred list.
+- **Phase 1 (done):** audit of the existing components, gap analysis, Priority 1 proposal.
+- **Gate (open):**
+  - the Markdown dependency (`markdown-to-jsx`, MIT, 31.6 kB min + gzip);
+  - the Ctrl+I / ⌘I shortcut;
+  - regenerating the README screenshots for the new top-bar launcher;
+  - `AssistantProvider` in the package.
+- **Priority 1, after approval, in order:**
+  1. **Foundations:** the new icons and the `assistant-width` token. Then the additive props: TopBar `assistant`,
+     AppShell `assistant`, Drawer `docked`, FileUpload `variant`, CodeBlock `diff`, Avatar `icon`.
+  2. **Content parts:**
+     - `Markdown`;
+     - `Citation` and `SourceList`;
+     - `ResourceCard`;
+     - `Disclosure`.
+  3. **The assistant itself:**
+     - `ContextBar`;
+     - `PromptComposer` (with `@` and `/` on cmdk, templates and attachments);
+     - `AssistantMessage` (feedback, copy, regenerate, report, provenance);
+     - `AssistantPanel` (history, states, live region);
+     - `AssistantProvider`.
+  4. **Demo:** scripted, seeded answers in the style of `vary.ts`, with no model calls.
+     - Ask on Overview and on Usage and cost.
+     - Explore on the Resource Explorer.
+     - Investigate on an incident.
+     - Ask in row menus and the command palette.
+  5. **Done means, for each part:**
+     - a card + README (with a group);
+     - a fixture with keyboard tests;
+     - axe clean in both themes;
+     - GUIDELINES gets an "Assistant and AI content" section;
+     - CHANGELOG 2.2.0, `pnpm run ci` and `pnpm check:generated`, and a draft PR with its preview link.
 
 ## Done in 2.1.0
 - **Why:** an ML platform organises everything by ownership (company → business function → squad → initiative →
@@ -47,7 +84,12 @@ ScopePicker, SplitView, ScopeNote, DataTable List / Tree views). What it contain
 - A dependency graph between resources (repository → pipeline → service → infrastructure); "Related" lists cover it.
 - A phone drill-down list for the explorer (today the tree opens in a drawer).
 - DataTable virtualisation, column resizing and pinning beyond the first column.
-- Agentic-coding components (DiffView, LogStream, …).
+- Agentic-coding components (DiffView, LogStream, …). `CodeBlock diff` (2.2, proposed) covers diff previews.
+- The assistant's Priority 2 and 3 (DECISIONS #29.5; candidates, not commitments):
+  - Priority 2: agent status and timeline, tool-call cards, plan with risk, approval card, before and after, result
+    summary.
+  - Priority 3: agent tasks, pause / resume / cancel / retry, input-needed notifications, multi-agent handoff,
+    generated forms, share and save.
 - A charting or table library (DECISIONS #10, #11).
 - Localised month names in the calendar menus.
 
