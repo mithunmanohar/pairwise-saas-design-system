@@ -1,0 +1,40 @@
+<!-- @dsCard group="Assistant" height=720 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>AssistantPanel</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+var ORG=[{id:'co',kind:'company',label:'Example Company',children:[{id:'fn-data',kind:'function',label:'Data and analytics',children:[{id:'in-ai',kind:'initiative',label:'AI transformation'}]}]}];
+var CTX=[{id:'page',kind:'page',label:'Usage and cost',removable:false},
+  {id:'own',kind:'ownership',label:'AI transformation',entity:'initiative',path:[{id:'fn',label:'Data and analytics'},{id:'sq',label:'ML engineering'}]},
+  {id:'rt',kind:'runtime',label:'prod / region-a'},{id:'time',kind:'time',label:'Last 30 days'},
+  {id:'f',kind:'filter',label:'Service: checkout-api',detail:'1 filter'},
+  {id:'perm',kind:'permission',label:'Read only',detail:'It can read this page; it can\'t change anything.',removable:false}];
+var SOURCES=[{id:'s1',title:'checkout-api latency',entity:'webapp',path:[{id:'p1',label:'Commerce'},{id:'p2',label:'Checkout'}],updated:'2 min ago'},
+  {id:'s2',title:'Deploy run_8f3k2',kind:'Deployment',excerpt:'timeout raised from 2s to 5s',updated:'13:40'}];
+function Demo(){
+  var it=useState(CTX.slice(0,4)), fb=useState(null);
+  var md='Spend in **region-a** rose 18 % this month, mostly compute for the nightly training run [1].';
+  return h('div',{className:'pv-frame',style:{height:690,display:'flex',justifyContent:'flex-end'}},
+    h(C.AssistantPanel,{open:true,contained:true,onClose:noop,onNewConversation:noop,conversations:[{id:'c1',title:'Why did spend rise?',updated:'13:52'},{id:'c2',title:'Slowest services',updated:'Yesterday'}],activeId:'c1',onSelectConversation:noop,
+      composer:h(C.PromptComposer,{onSubmit:noop,maxLength:400,context:h(C.ContextBar,{items:it[0],onRemove:function(id){it[1](it[0].filter(function(c){return c.id!==id;}));}})})},
+      h(C.AssistantMessage,{author:{name:'Dev A',kind:'person'},time:'13:52'},'Why did spend rise this month?'),
+      h(C.AssistantMessage,{author:{name:'Assistant',kind:'assistant'},time:'13:52',sources:SOURCES.slice(0,1),feedback:fb[0],onFeedback:fb[1],copyText:md,onRegenerate:noop,followUps:[{label:'Break it down by squad'}],onFollowUp:noop},
+        h(C.Markdown,{sources:SOURCES},md),
+        h(C.Metric,{label:'Compute spend',value:'$48.2k',delta:{value:18,unit:'%',polarity:'up-bad',window:'last month'},compact:true}))));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,34 @@
+<!-- @dsCard group="Data display" height=130 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Citation</title>
+<style>
+.pv{padding:16px;display:grid;gap:14px;align-content:start;color:var(--ink)}
+.pv-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.pv-cell{display:grid;gap:6px;justify-items:stretch;min-width:0}
+.pv-lab{font:11px/16px var(--font-mono);color:var(--ink-muted)}
+.pv-box{background:var(--surface-raised);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px}
+.pv-frame{position:relative;border:1px solid var(--border);background:var(--surface);overflow:hidden}
+</style></head>
+<body><div id="root" class="pv"></div>
+<script>
+var C = window.Pairwise, h = React.createElement, F = React.Fragment, useState = React.useState;
+function cell(label, el, w){ return h('div',{className:'pv-cell',style:w?{width:w}:undefined}, h('span',{className:'pv-lab'}, label), el); }
+function row(){ return h('div',{className:'pv-row'}, Array.prototype.slice.call(arguments)); }
+var noop = function(){};
+var ORG=[{id:'co',kind:'company',label:'Example Company',children:[{id:'fn-data',kind:'function',label:'Data and analytics',children:[{id:'in-ai',kind:'initiative',label:'AI transformation'}]}]}];
+var CTX=[{id:'page',kind:'page',label:'Usage and cost',removable:false},
+  {id:'own',kind:'ownership',label:'AI transformation',entity:'initiative',path:[{id:'fn',label:'Data and analytics'},{id:'sq',label:'ML engineering'}]},
+  {id:'rt',kind:'runtime',label:'prod / region-a'},{id:'time',kind:'time',label:'Last 30 days'},
+  {id:'f',kind:'filter',label:'Service: checkout-api',detail:'1 filter'},
+  {id:'perm',kind:'permission',label:'Read only',detail:'It can read this page; it can\'t change anything.',removable:false}];
+var SOURCES=[{id:'s1',title:'checkout-api latency',entity:'webapp',path:[{id:'p1',label:'Commerce'},{id:'p2',label:'Checkout'}],updated:'2 min ago'},
+  {id:'s2',title:'Deploy run_8f3k2',kind:'Deployment',excerpt:'timeout raised from 2s to 5s',updated:'13:40'}];
+function Demo(){
+  return h(F,null,
+    cell('Inline, linked to its source', h('p',{style:{margin:0,maxWidth:460}},'p95 latency is 840 ms against a 500 ms target ', h(C.Citation,{n:1,title:'checkout-api latency',onOpen:noop}), ', since deploy run_8f3k2 ', h(C.Citation,{n:2,title:'Deploy run_8f3k2',onOpen:noop}), '.')),
+    cell('From Markdown: "[1]" becomes a citation when sources are given', h(C.Markdown,{sources:SOURCES,onSource:noop}, 'Latency rose after the deploy [2].')));
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

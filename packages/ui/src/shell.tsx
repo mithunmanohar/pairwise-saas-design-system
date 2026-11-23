@@ -1,4 +1,4 @@
-import type { SideNavProps, TopBarProps, AppShellProps, PageHeaderProps, PageHeaderField, NavGroup, ShellMode } from "./types";
+import type { SideNavProps, TopBarProps, TopBarAssistant, AppShellProps, PageHeaderProps, PageHeaderField, NavGroup, ShellMode } from "./types";
 import { Icon } from "./icons";
 import { cx, Button, Tooltip, TooltipProvider, ScopeSwitcher, GlobalSearch, TimeRangePicker } from "./core";
 import { ActionMenu } from "./actions";
@@ -51,7 +51,42 @@ export function SideNav({ active, onNavigate, collapsed, badges = {}, nav = NAV,
   );
 }
 
-export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange }: TopBarProps) {
+/* ---------- The assistant's launcher ---------- */
+// Ctrl+I (⌘I on Apple devices) toggles the most recently mounted launcher; only one listener is ever attached.
+const isApple = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const launchers: Array<React.MutableRefObject<(() => void) | undefined>> = [];
+let launcherBound = false;
+function bindAssistantShortcut() {
+  if (launcherBound || typeof document === "undefined") return;
+  launcherBound = true;
+  document.addEventListener("keydown", (e) => {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey || e.key.toLowerCase() !== "i") return;
+    const top = launchers[launchers.length - 1]?.current;
+    if (top) { e.preventDefault(); top(); }
+  });
+}
+const ACTIVITY: Record<NonNullable<TopBarAssistant["activity"]>, string> = { idle: "", working: "working", "needs-input": "needs your input", unread: "new reply" };
+function AssistantLauncher({ open, onToggle, activity = "idle", label = "Assistant", shortcut = true, showLabel }: TopBarAssistant & { showLabel: boolean }) {
+  const toggle = useRef(onToggle); toggle.current = onToggle;
+  useEffect(() => {
+    if (!shortcut) return;
+    bindAssistantShortcut(); launchers.push(toggle);
+    return () => { const i = launchers.indexOf(toggle); if (i >= 0) launchers.splice(i, 1); };
+  }, [shortcut]);
+  const keys = isApple() ? "⌘I" : "Ctrl I";
+  const state = ACTIVITY[activity];
+  const btn = (
+    <button type="button" className={cx("pw-iconbtn", "pw-topbar__ask", showLabel && "has-label", open && "is-on")} aria-expanded={open} aria-keyshortcuts={shortcut ? "Control+I Meta+I" : undefined}
+      aria-label={label + (state ? ", " + state : "")} onClick={onToggle}>
+      <Icon name="assistant" />
+      {showLabel ? <span aria-hidden="true">{activity === "working" ? "Working…" : label}</span> : null}
+      {activity !== "idle" ? <span className={cx("pw-iconbtn__dot", "is-" + activity)} aria-hidden="true" /> : null}
+    </button>
+  );
+  return <Tooltip content={shortcut ? `${label} (${keys})` : label}>{btn}</Tooltip>;
+}
+
+export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time, onTime, refresh, onRefresh, searchItems, searchRecent, onSearch, alerts = 0, user = "M", accountLabel, account, onMenu, mode = "full", onAlerts, onCopyRange, assistant }: TopBarProps) {
   return (
     <header className={cx("pw-topbar", "is-" + mode)}>
       {onMenu ? <Button variant="ghost" icon="menu" aria-label="Open navigation" onClick={onMenu} /> : null}
@@ -60,6 +95,7 @@ export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time,
       <div className="pw-topbar__search"><GlobalSearch items={searchItems} recent={searchRecent} onSelect={onSearch} placeholder={mode === "tablet" ? "Search" : undefined} /></div>
       <div className="pw-topbar__end">
         <TimeRangePicker value={time} onChange={onTime} refresh={refresh} onRefreshChange={onRefresh} onCopy={onCopyRange} />
+        {assistant ? <AssistantLauncher {...assistant} showLabel={mode === "full"} /> : null}
         <button type="button" className="pw-iconbtn" aria-label={`Alerts, ${alerts} open critical`} onClick={onAlerts}>
           <Icon name="bell" />{alerts ? <span className="pw-iconbtn__n">{alerts}</span> : null}
         </button>
@@ -82,8 +118,11 @@ export function TopBar({ ownership, runtime, scope, scopeOptions, onScope, time,
   );
 }
 
+/** Where AppShell places the assistant, for an AssistantPanel anywhere inside its `assistant` slot (wrappers allowed). */
+export const AssistantSlot = React.createContext<{ placement: "docked" | "overlay"; setCovering: (covering: boolean) => void } | null>(null);
+
 // Width-aware shell: >=1360 expanded rail · 1024-1359 collapsed rail · <1024 rail hidden behind a menu button.
-export function AppShell({ nav, top, children, density = "compact", forceWidth }: AppShellProps) {
+export function AppShell({ nav, top, children, density = "compact", forceWidth, assistant }: AppShellProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(forceWidth || 1440);
   const [navOpen, setNavOpen] = useState(false);
@@ -93,6 +132,9 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
     const ro = new ResizeObserver((e) => { const r = e[0]; if (r) setW(r.contentRect.width); }); ro.observe(el); return () => ro.disconnect();
   }, [forceWidth]);
   const mode: ShellMode = w >= 1360 ? "full" : w >= 1024 ? "collapsed" : "tablet";
+  const docked = w >= 1280;
+  const [covering, setCovering] = useState(false);
+  const slot = React.useMemo(() => ({ placement: docked ? "docked" as const : "overlay" as const, setCovering }), [docked]);
   return (
     <TooltipProvider>
     <div ref={ref} className={cx("pw-shell", "is-" + mode, "is-" + density)} data-density={density}>
@@ -100,7 +142,14 @@ export function AppShell({ nav, top, children, density = "compact", forceWidth }
       {mode === "tablet" && navOpen ? <div className="pw-layer is-contained"><div className="pw-scrim" onClick={() => setNavOpen(false)} />{React.cloneElement(nav, { collapsed: false, overlay: true, onClose: () => setNavOpen(false), onNavigate: (k: string) => { setNavOpen(false); nav.props.onNavigate && nav.props.onNavigate(k); } })}</div> : null}
       <div className="pw-shell__main">
         {React.cloneElement(top, { mode, onMenu: mode === "tablet" ? () => setNavOpen(true) : undefined })}
-        <main className="pw-shell__content" id="main">{children}</main>
+        {assistant ? (
+          // The assistant docks beside the content at 1280 px and wider (expanded, it covers the content, which stays
+          // mounted and inert so its scroll survives); narrower, it is a modal drawer.
+          <div className="pw-shell__body">
+            <main className="pw-shell__content" id="main" {...(docked && covering ? { inert: "" } : {})}>{children}</main>
+            <AssistantSlot.Provider value={slot}>{assistant}</AssistantSlot.Provider>
+          </div>
+        ) : <main className="pw-shell__content" id="main">{children}</main>}
       </div>
     </div>
     </TooltipProvider>

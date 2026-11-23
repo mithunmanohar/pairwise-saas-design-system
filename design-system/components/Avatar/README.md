@@ -5,3 +5,5 @@ A person or team: their image, or their initials on a neutral fill. `AvatarGroup
 - No colour per person: Signal keeps colour for status. Tell people apart by name and image.
 - An avatar is an image named after the person ("Dev F, critical"). A group is named "Reviewers: Dev A, Dev B, Dev C and 3 others".
 - Avatars aren't buttons. Wrap one in a button or link only when it opens the person, and name that.
+
+**With an icon (2.2).** `icon` shows an icon instead of initials, on the same neutral fill. The assistant uses `icon="assistant"`. Agents use their initials. Never give an agent a colour of its own.

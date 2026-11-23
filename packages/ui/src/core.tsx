@@ -620,22 +620,41 @@ function Scrim({ contained, light }: { contained?: boolean; light?: boolean }) {
   const cls = cx("pw-scrim", light && "pw-scrim--light");
   return contained ? <div className={cls} /> : <Dialog.Overlay className={cls} />;
 }
-export function Drawer({ open, title, subtitle, onClose, children, footer, width, contained }: DrawerProps) {
+// Focus moves to an element marked data-autofocus (e.g. the assistant's composer) instead of the first control.
+function focusMarked(e: Event) {
+  const el = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("[data-autofocus]");
+  if (el) { e.preventDefault(); el.focus(); }
+}
+// `docked`: a panel beside the page (the assistant), not a floating layer. It is still a Radix dialog (non-modal), so
+// focus moves in on open and returns on close, but it renders in place with a border and no shadow or scrim, clicking
+// the page doesn't close it, and Escape closes it only while focus is inside it.
+export function Drawer({ open, title, subtitle, onClose, children, footer, width, contained, docked, actions, className }: DrawerProps) {
   const onCloseAutoFocus = useReturnFocus(open);
+  const ref = useRef<HTMLElement>(null);
+  const panel = (
+    <Dialog.Content asChild aria-describedby={undefined} onCloseAutoFocus={onCloseAutoFocus} onOpenAutoFocus={focusMarked}
+      {...(docked ? {
+        onInteractOutside: (e: Event) => e.preventDefault(),
+        onEscapeKeyDown: (e: KeyboardEvent) => { if (!ref.current?.contains(document.activeElement)) e.preventDefault(); },
+      } : {})}>
+      <aside ref={ref} className={cx("pw-drawer", docked && "pw-drawer--docked", className)} style={width ? { width } : undefined}>
+        <header className="pw-drawer__h">
+          <div className="pw-drawer__t"><Dialog.Title asChild><div className="pw-heading">{title}</div></Dialog.Title>{subtitle ? <div className="pw-caption pw-muted">{subtitle}</div> : null}</div>
+          <div className="pw-drawer__acts">{actions}<Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></div>
+        </header>
+        <div className="pw-drawer__b">{children}</div>
+        {footer ? <footer className="pw-drawer__f">{footer}</footer> : null}
+      </aside>
+    </Dialog.Content>
+  );
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={!contained}>
-      {open ? (
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) onClose(); }} modal={!contained && !docked}>
+      {open ? (docked ? panel : (
         <div className={cx("pw-layer", contained && "is-contained")}>
           <Scrim contained={contained} light />
-          <Dialog.Content asChild aria-describedby={undefined} onCloseAutoFocus={onCloseAutoFocus}>
-            <aside className="pw-drawer" style={width ? { width } : undefined}>
-              <header className="pw-drawer__h"><div><Dialog.Title asChild><div className="pw-heading">{title}</div></Dialog.Title>{subtitle ? <div className="pw-caption pw-muted">{subtitle}</div> : null}</div><Button variant="ghost" icon="x" aria-label="Close" onClick={onClose} /></header>
-              <div className="pw-drawer__b">{children}</div>
-              {footer ? <footer className="pw-drawer__f">{footer}</footer> : null}
-            </aside>
-          </Dialog.Content>
+          {panel}
         </div>
-      ) : null}
+      )) : null}
     </Dialog.Root>
   );
 }

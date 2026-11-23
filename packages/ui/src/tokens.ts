@@ -156,7 +156,8 @@ export const size = {
   "rail-expanded": "232px",
   "rail-collapsed": "56px",
   "drawer-width": "520px",
-  "explorer-width": "320px"
+  "explorer-width": "320px",
+  "assistant-width": "400px"
 } as const;
 export type SizeToken = keyof typeof size;
 /** Durations and easings. prefers-reduced-motion sets every duration to 0 ms in tokens.css. */

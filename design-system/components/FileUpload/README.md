@@ -6,3 +6,5 @@ Add files by dropping them or choosing them, see each upload's progress, and ret
 - Files are checked for type, size and count before `onFiles`. Rejected files are listed with the reason ("Larger than 5 MB.") until dismissed.
 - Each file shows its name (mono), size, a `ProgressBar` while uploading, and Retry after an error. Remove and Dismiss are named after the file.
 - A polite status message announces what happened ("2 files added. photo.png: not an accepted type").
+
+**As a button (2.2).** `variant="button"` replaces the drop zone with a paperclip button named by `label`, for tight places like the assistant's composer. The checks, the file rows and the status message are the same. Its parts join the parent's layout (`display: contents`), so a composer can place the button in its toolbar and the files above the input.

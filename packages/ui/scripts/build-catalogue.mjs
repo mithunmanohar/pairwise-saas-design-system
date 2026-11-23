@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const PKG = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DS = join(PKG, "..", "..", "design-system");
 const KIT = join(DS, "components");
-const GROUPS = ["Foundations", "Actions", "Status", "Forms", "Inputs & navigation", "Feedback", "Overlays", "Data display", "Charts", "Shell"];
+const GROUPS = ["Foundations", "Actions", "Status", "Forms", "Inputs & navigation", "Feedback", "Overlays", "Data display", "Charts", "Shell", "Assistant"];
 
 const cards = readdirSync(KIT, { withFileTypes: true })
   .filter((d) => d.isDirectory() && existsSync(join(KIT, d.name, "preview.html")))

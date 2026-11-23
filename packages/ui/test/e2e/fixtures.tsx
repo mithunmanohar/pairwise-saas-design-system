@@ -8,6 +8,8 @@ import {
   ProgressBar, Breadcrumbs, PageHeader, ScopeSwitcher, entityIcon, TreeView, ScopePicker, SplitView, ScopeNote, StatusBadge, type TreeNode, type PathSegment, type Column, type DataTableSort, type UploadItem, type DateRangeValue,
 } from "../../src/index";
 
+import { assistantFixtures } from "./assistant-fixtures";
+
 const { useState } = React;
 
 function ModalFixture() {
@@ -441,4 +443,5 @@ export const fixtures: Record<string, () => React.ReactElement> = {
   "menu-select": MenuSelectFixture, search: SearchFixture, "data-table": DataTableFixture, toast: ToastFixture,
   foundations: FoundationsFixture, tooltip: TooltipFixture, time: TimeFixture, commands: CommandsFixture, "critical-modal": CriticalModalFixture,
   "hierarchy-basics": HierarchyBasicsFixture, explorer: ExplorerFixture, "tree-table": TreeTableFixture, "new-form": NewFormFixture, integration: IntegrationFixture, details: DetailsFixture, upload: UploadFixture, "table-plus": TablePlusFixture, pagination: PaginationFixture, grid: GridFixture, "tab-panels": TabPanelsFixture,
+  ...assistantFixtures,
 };
