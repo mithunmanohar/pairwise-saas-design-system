@@ -836,11 +836,11 @@ a.pw-btn { text-decoration: none; }
 .pw-disc[open] > .pw-disc__s .pw-disc__chev { transform: rotate(90deg); }
 .pw-disc__b { padding: var(--space-2) 0 0 var(--space-5); display: grid; gap: var(--space-2); }
 /* Citations and sources */
-.pw-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 3px; margin: 0 1px; vertical-align: 2px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--ink); background: var(--surface-raised); font: 600 11px/14px var(--font-sans); font-variant-numeric: tabular-nums; text-decoration: none; }
-a.pw-cite:hover { background: var(--surface-hover); }
+.pw-cite { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 3px; margin: 0 1px; vertical-align: 1px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink-muted); background: transparent; font: 600 11px/14px var(--font-sans); font-variant-numeric: tabular-nums; text-decoration: none; }
+a.pw-cite:hover { color: var(--ink); border-color: var(--border-strong); background: var(--surface-hover); }
 .pw-sources__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
 .pw-sources__item { display: flex; gap: var(--space-2); min-width: 0; }
-.pw-sources__n { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font: 600 11px/16px var(--font-sans); font-variant-numeric: tabular-nums; }
+.pw-sources__n { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; color: var(--ink-muted); border: 1px solid var(--border); border-radius: var(--radius-sm); font: 600 11px/16px var(--font-sans); font-variant-numeric: tabular-nums; }
 .pw-sources__main { display: grid; gap: 2px; min-width: 0; }
 .pw-sources__row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); }
 .pw-sources__quote { margin: 2px 0 0; padding-left: var(--space-2); border-left: 2px solid var(--border); color: var(--ink-muted); }
@@ -850,14 +850,19 @@ a.pw-cite:hover { background: var(--surface-hover); }
 .pw-rcard__top .pw-kind { margin-right: auto; }
 .pw-rcard__menu { margin: -4px -6px -4px 0; }
 .pw-rcard__name { min-width: 0; overflow-wrap: anywhere; }
+.pw-rcard__name .pw-mono { font-weight: 500; }
 .pw-rcard__facts { margin-top: var(--space-1); }
 /* Markdown */
 .pw-md { display: grid; gap: var(--space-3); min-width: 0; overflow-wrap: anywhere; }
 .pw-md > * { margin: 0; }
 .pw-md ul, .pw-md ol { padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.pw-md ul { list-style: disc; }
+.pw-md ol { list-style: decimal; }
+.pw-md li::marker { color: var(--ink-muted); }
 .pw-md blockquote { padding-left: var(--space-3); border-left: 2px solid var(--border); color: var(--ink-muted); }
 .pw-md hr { border: 0; border-top: 1px solid var(--border); width: 100%; }
-.pw-md__code { padding: 1px 4px; border-radius: var(--radius-sm); background: var(--surface-sunken); border: 1px solid var(--border); font-size: 12px; }
+/* Identifiers in text read as mono, as they do in tables and headers: a quiet tint, no box (a box would look like a Tag). */
+.pw-md__code { padding: 0 3px; border-radius: var(--radius-sm); background: var(--surface-sunken); font-size: 12.5px; }
 .pw-md__table { overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
 .pw-md__table table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .pw-md__table th, .pw-md__table td { padding: var(--space-1) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
@@ -868,6 +873,7 @@ a.pw-cite:hover { background: var(--surface-hover); }
 .pw-ctx__chips { display: contents; list-style: none; }
 .pw-ctx__chips > li { display: inline-flex; min-width: 0; max-width: 100%; }
 .pw-ctx__chip { max-width: 200px; }
+.pw-ctx > .pw-btn--ghost { font-weight: 500; }
 .pw-ctx__chip > .pw-icon { flex: none; color: var(--ink-muted); }
 .pw-ctxi { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
 .pw-ctxi__item { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
@@ -902,7 +908,13 @@ a.pw-cite:hover { background: var(--surface-hover); }
 .pw-msg__error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .pw-msg__errtxt { display: inline-flex; align-items: center; gap: var(--space-1); }
 .pw-msg__acts { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-left: calc(-1 * var(--space-2)); }
+/* Answer actions are secondary to the answer: muted until hovered or pressed. */
+.pw-msg__acts .pw-btn--ghost { color: var(--ink-muted); font-weight: 500; }
+.pw-msg__acts .pw-btn--ghost:hover, .pw-msg__acts .pw-btn[aria-pressed="true"] { color: var(--ink); }
 .pw-msg__acts .pw-btn[aria-pressed="true"] { background: var(--surface-selected); }
+/* Suggestions and follow-ups are prompts, not commands: lighter than the page's own buttons. */
+.pw-btn.pw-prompt { font-weight: 500; border-color: var(--border); }
+.pw-btn.pw-prompt:hover { border-color: var(--border-strong); }
 .pw-msg__follow { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .pw-msg__about { display: grid; gap: var(--space-3); }
 /* AssistantPanel */

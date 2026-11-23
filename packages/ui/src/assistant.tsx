@@ -176,7 +176,7 @@ export function PromptComposer({
       value={hl.value} onValueChange={hl.onValueChange} onKeyDown={hl.onKeyDown} onPointerMoveCapture={hl.onPointerMoveCapture}>
       {suggestions && suggestions.length && !value ? (
         <div className="pw-composer__sugg" role="group" aria-label="Suggestions">
-          {suggestions.map((s) => <Button key={s.label} size="sm" icon={s.icon} disabled={disabled || busy} onClick={() => pick(s)}>{s.label}</Button>)}
+          {suggestions.map((s) => <Button key={s.label} size="sm" icon={s.icon} className="pw-prompt" disabled={disabled || busy} onClick={() => pick(s)}>{s.label}</Button>)}
         </div>
       ) : null}
       {context}
@@ -294,7 +294,9 @@ export function AssistantMessage({
             <Button size="sm" variant="ghost" icon="thumb-down" aria-pressed={feedback === "not-helpful"} onClick={() => onFeedback(feedback === "not-helpful" ? null : "not-helpful")}>Not helpful</Button>
           </> : null}
           {copyText ? <CopyButton value={copyText} label="Copy answer" /> : null}
-          {onRegenerate ? <Button size="sm" variant="ghost" icon="refresh" onClick={onRegenerate}>Regenerate</Button> : null}
+          {onRegenerate ? (status === "done"
+            ? <Tooltip content="Regenerate"><Button size="sm" variant="ghost" icon="refresh" aria-label="Regenerate" onClick={onRegenerate} /></Tooltip>
+            : <Button size="sm" variant="ghost" icon="refresh" onClick={onRegenerate}>Regenerate</Button>) : null}
           {provenance ? (
             <Popover label="About this answer" width={300} trigger={<Button size="sm" variant="ghost">About</Button>}>
               <div className="pw-msg__about">
@@ -308,7 +310,7 @@ export function AssistantMessage({
       ) : null}
       {!person && status === "done" && followUps && followUps.length ? (
         <div className="pw-msg__follow" role="group" aria-label="Suggested follow-ups">
-          {followUps.map((s) => <Button key={s.label} size="sm" icon={s.icon} onClick={() => onFollowUp && onFollowUp(s)}>{s.label}</Button>)}
+          {followUps.map((s) => <Button key={s.label} size="sm" icon={s.icon} className="pw-prompt" onClick={() => onFollowUp && onFollowUp(s)}>{s.label}</Button>)}
         </div>
       ) : null}
       {onReport ? <ReportDialog open={reporting} onClose={() => setReporting(false)} onReport={onReport} /> : null}
