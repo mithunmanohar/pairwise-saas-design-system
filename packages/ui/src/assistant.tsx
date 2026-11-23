@@ -202,9 +202,10 @@ export function PromptComposer({
               ) : null}
               <span className="pw-composer__end">
                 {maxLength ? <span className={cx("pw-caption pw-num", over ? "pw-tone--critical" : "pw-muted")}>{value.length} / {maxLength}</span> : null}
+                {/* Separate elements (keys): reusing one button would fade its fill from ink to light behind dark text. */}
                 {busy
-                  ? <Button size="sm" icon="stop" onClick={onStop}>Stop</Button>
-                  : <Button size="sm" variant="primary" icon="send" aria-label="Send" disabled={disabled || over} onClick={send} />}
+                  ? <Button key="stop" size="sm" icon="stop" onClick={onStop}>Stop</Button>
+                  : <Button key="send" size="sm" variant="primary" icon="send" aria-label="Send" disabled={disabled || over} onClick={send} />}
               </span>
             </div>
           </div>

@@ -45,7 +45,11 @@ test.describe("assistant panel", () => {
     const status = panel(page).locator('[role="status"][aria-live="polite"]').last();
     await expect(page.getByText("Ask about what you're looking at")).toBeVisible();
     await composer(page).fill("Why is checkout slow?");
+    // Stop must be a new element, not Send restyled: a reused button fades its fill behind dark text (axe caught it on CI).
+    await page.getByRole("button", { name: "Send" }).evaluate((el) => { (window as unknown as { sendBtn: Element }).sendBtn = el; });
     await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "Stop" })).toBeVisible();
+    expect(await page.getByRole("button", { name: "Stop" }).evaluate((el) => el === (window as unknown as { sendBtn: Element }).sendBtn)).toBe(false);
     await expect(composer(page)).toHaveValue("");
     const convo = panel(page).getByRole("list", { name: "Conversation" });
     await expect(convo.getByText("Why is checkout slow?")).toBeVisible();
