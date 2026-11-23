@@ -1,6 +1,6 @@
 // One incident: what is happening, who is on it, what changed, and the next action.
 import { useState } from "react";
-import { PageHeader, Breadcrumbs, StatusBadge, SeverityMark, Button, ActionMenu, AlertBanner, Panel, Timeline, TimeSeriesChart, Textarea, StateBlock, CopyButton, Tag, toast, type TimelineEvent, Avatar } from "@pairwise/ui";
+import { PageHeader, Breadcrumbs, StatusBadge, SeverityMark, Button, ActionMenu, AlertBanner, Panel, Timeline, TimeSeriesChart, Textarea, StateBlock, CopyButton, Tag, useAssistant, toast, type TimelineEvent, Avatar } from "@pairwise/ui";
 import { Frame, useNav, useCrumbNav } from "../frame";
 import { incidentById, isOpen, latencyWindow, DEPLOY_AT, members, type Incident } from "../data";
 import { stateBadge } from "./incidents";
@@ -21,6 +21,7 @@ export function IncidentDetail({ id }: { id: string }) {
 
 function IncidentPage({ inc }: { inc: Incident }) {
   const go = useNav();
+  const assistant = useAssistant();
   const crumbs = useCrumbNav();
   const [state, setState] = useState(inc.state);
   const [note, setNote] = useState("");
@@ -50,6 +51,7 @@ function IncidentPage({ inc }: { inc: Incident }) {
           <Button icon="server" onClick={() => go("services/" + inc.service)}>Open service</Button>
           <Button variant="primary" icon="check" onClick={resolve}>Mark resolved</Button>
           <ActionMenu label={`More actions for ${inc.id}`} items={[
+            { label: "Investigate with the assistant", icon: "assistant", onSelect: () => assistant.ask(`Investigate ${inc.id}`) },
             { label: "Page another team", icon: "bell", onSelect: () => toast("Platform on-call paged") },
             { label: "Open incident channel", icon: "comment", onSelect: () => toast("The chat channel would open here") },
             "separator",

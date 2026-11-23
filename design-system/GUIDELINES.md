@@ -150,6 +150,61 @@ operate by capability.**
 12. **Narrow screens:** below 1024 px the tree opens in a drawer that closes once a node is picked; the workspace's
     child list and its breadcrumb drill down from there.
 
+## The assistant and AI content
+
+For apps that add a contextual assistant (DECISIONS #29). The aim: AI is part of the app, not a separate chat
+product with its own look.
+
+1. **One assistant, in the shell.** Put an `AssistantPanel` in `AppShell`'s `assistant` slot.
+   - At 1280 px and wider it docks beside the content (`assistant-width` 400 px).
+   - Below 1280 px it is a modal drawer.
+   - Expanded, it covers the content area.
+
+   It is never a floating action button: that would cover table rows and the toasts.
+2. **Ways in.** All of them open the same panel.
+   - The top-bar launcher (`TopBar assistant`), and Ctrl+I / ⌘I.
+   - "Ask the assistant" in existing page and row menus (`ActionMenu`, `rowActions`), with the row passed as extra
+     context.
+   - A command in the palette.
+3. **AI content is marked by an icon, a label and its layout, never by colour.**
+   - The assistant: `Avatar icon="assistant"` + "Assistant".
+   - Agents: initials on the neutral fill + the agent's name.
+   - No accent hue, gradient, glow, shimmer or sparkle anywhere.
+   - The person's own messages sit on the right in a bordered box.
+4. **Show what it can see.** A `ContextBar` above the composer lists the page, the selected entity, filters, the
+   ownership scope, the runtime scope, the time range and the person's access.
+   - Items are icon + word, never a colour.
+   - The person can remove items, add ones from the page, and inspect each with its path.
+   - Ownership and runtime stay separate items.
+   - The full tree never appears in the panel: the ownership scope changes through the existing `ScopePicker`.
+   - Pages declare their items with `useAssistantContext`.
+5. **Say what it may do.** The access item is always sent and can't be removed ("Read only").
+   - Read-only steps, proposed changes and real changes are told apart in words.
+   - A real change uses the existing danger confirm `Modal`. Approvals and execution are Priority 2.
+6. **Grounded answers.**
+   - Cite claims with `Citation` ("[1]" in `Markdown` with `sources`) and list the sources under the answer.
+   - Show referenced resources as `ResourceCard`.
+   - Put the working ("How this was worked out") in a `Disclosure`, as concise steps, never raw reasoning.
+   - Code is mono with copy, and diffs use `CodeBlock diff`. There is no multi-hue syntax theme.
+7. **Answers compose the system.** An `AssistantMessage` holds `Markdown`, `DataTable` (List view), `KeyValueList`,
+   `Metric`, the charts and `CodeBlock`. Ask, explore, investigate, generate and recommend are the same parts in a
+   different order, not separate implementations.
+8. **States.**
+   - Streaming: indeterminate `ProgressBar` + "Responding…", with no pulsing dots or shimmer.
+   - Stopped: an unknown badge + Regenerate.
+   - Failed: critical text + Retry.
+   - The panel has loading, empty (what it can help with here), error (the rest of the page still works) and no-access
+     states.
+   - Disabled composers say why.
+9. **Screen readers.**
+   - One polite live region per panel announces a finished, stopped or failed answer once.
+   - Streamed words are never announced. A streaming message is `aria-busy`.
+   - Focus moves to the composer on open and back to the launcher on close.
+10. **Feedback is icon + label:** "Helpful", "Not helpful", Copy, Regenerate, Report (a dialog with a reason), and
+    "About" (when, which model, which context and tools).
+11. **The app owns the model.** The components take messages and state as props and never call a model.
+    `AssistantProvider`'s `onAsk` hands the prompt and context to your code.
+
 ## Principles
 
 1. **Exceptions first; healthy is quiet.** Problems get filled colour and sort to the top.

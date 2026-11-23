@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mithunmanohar/pairwise-saas-design-system/actions/workflows/ci.yml?query=branch%3Amain)
 
-**One set of design tokens and 59 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
+**One set of design tokens and 68 accessible React components. Every app built on it looks and behaves the same, whether a person or an AI agent wrote the screen.**
 
 **[Live demo](https://mithunmanohar.github.io/pairwise-saas-design-system/demo/)** · **[Component catalogue](https://mithunmanohar.github.io/pairwise-saas-design-system/catalogue/)** · [Site](https://mithunmanohar.github.io/pairwise-saas-design-system/)
 
@@ -111,6 +111,18 @@ Spend and forecast against budget, monthly cost by category or team, budget bars
 ![Usage and cost page, light theme](docs/images/screens/usage-light.png)
 </details>
 
+### The assistant: AI that reads as part of the app
+A contextual assistant docked beside the page (Ctrl+I, the top bar, "Ask the assistant" in page and row menus, or the command palette). It sees the page, the selected resource, the ownership scope, the runtime scope, the time range and your access, shown as icon + word chips you can inspect, remove and add to. Answers are grounded, with numbered citations, sources, resource cards, metrics and diffs, and feedback, copy, regenerate and report on each one. AI content is marked by an icon, a label and its layout, never by colour, glow or a sparkle. The demo's answers are scripted from its sample data: there are no model calls.
+
+![The assistant docked beside the overview page, answering what needs attention, dark theme](docs/images/screens/assistant-overview-dark.png)
+
+<details><summary>Investigating an incident, the light theme, and a phone</summary>
+
+![The assistant investigating INC-2041 with sources and a config diff](docs/images/screens/assistant-incident-dark.png)
+![The assistant explaining spend on the usage page, light theme](docs/images/screens/assistant-usage-light.png)
+<img src="docs/images/screens/phone-assistant-dark.png" alt="The assistant on a phone" width="300">
+</details>
+
 ### Everyday SaaS: access, settings and administration
 Members with inline role changes and an invite form that validates; API tokens and an audit log. Repository settings have labelled inputs with hints, an inline error that says how to fix it, checkboxes for rules, switches for settings that apply immediately, removable tags, and a destructive action behind a type-to-confirm dialog.
 
@@ -147,7 +159,7 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 
 ## Every component, one visual language
 
-59 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
+68 components, each with a live card, usage rules and typed props. Browse them all: clone the repo and open [`design-system/catalogue.html`](design-system/catalogue.html), which works straight from disk, with a light/dark and density switcher.
 
 <table>
 <tr><td width="50%"><b>Buttons</b><br><img src="docs/images/components/Button.png" alt="Button variants and states"></td><td width="50%"><b>Status: icon + label + colour</b><br><img src="docs/images/components/StatusBadge.png" alt="Status badges and trends"></td></tr>
@@ -162,6 +174,7 @@ The side nav collapses to icons below 1360 px and moves behind a menu below 1024
 <tr><td><b>Empty, error, no-access and loading states</b><br><img src="docs/images/components/StateBlock.png" alt="State blocks"></td><td><b>Timeline</b><br><img src="docs/images/components/Timeline.png" alt="Timeline"></td></tr>
 <tr><td><b>Page header</b><br><img src="docs/images/components/PageHeader.png" alt="Page header"></td><td><b>Heatmap</b><br><img src="docs/images/components/Heatmap.png" alt="Heatmap"></td></tr>
 <tr><td><b>Run history</b><br><img src="docs/images/components/RunStrip.png" alt="Run strip"></td><td><b>One icon set, drawn for the system</b><br><img src="docs/images/components/Icon.png" alt="Icons"></td></tr>
+<tr><td><b>Assistant messages: sources, feedback, states</b><br><img src="docs/images/components/AssistantMessage.png" alt="Assistant messages: an answer with citations and a resource card, streaming, stopped and failed"></td><td><b>Prompt composer: suggestions, attachments, @ and /</b><br><img src="docs/images/components/PromptComposer.png" alt="Prompt composer states"></td></tr>
 </table>
 
 ---
@@ -177,7 +190,7 @@ A principle that isn't enforced is a suggestion. Each one below is backed by cod
 | **One source of truth** | Every colour, space, radius and type style lives in [`tokens.json`](design-system/tokens.json): 31 colour tokens × 2 themes, 8 spacing steps, 8 type styles. | A small generator emits CSS variables and typed TypeScript names (`ColorToken`), so a typo in a colour name is a compile error. |
 | **Contrast with margin** | Text ≥ 4.8:1 and UI ≥ 3:1 on every surface, both themes. That's above the AA minimum, so rendering differences can't fail it. | Unit tests compute WCAG contrast for every token pair on every run. |
 | **Colour-blind-safe charts** | Five categorical colours whose worst adjacent pair stays ≥ 11 ΔE2000 under normal, protan, deutan and tritan vision (worst case: 14.9 light, 16.2 dark). | Unit tests simulate colour-vision deficiency and fail the build below 11. |
-| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 85 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions, the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 59 cards or 14 demo routes, in either theme. |
+| **Behaviour from proven primitives** | Focus traps, Escape, arrow keys, typeahead and screen-reader roles come from Radix (dialog, popover, menu, select, tabs, tooltip, toast, radio, checkbox, switch), cmdk (search, commands and combobox), react-day-picker (calendars) and React Aria (trees), styled with our own classes. | 105 Playwright tests in Chromium on every PR: keyboard paths, focus return, Escape order in nested overlays, live regions (an answer is announced once, never word by word), the ownership scope across pages. axe-core finds no WCAG 2.2 A/AA violations on any of the 68 cards, 14 demo routes or 4 demo pages with the assistant open, in either theme. |
 | **Theme and density parity** | Light and dark are equals. Compact (32 px rows) for working views, comfortable (40 px) for overviews, from the same components. | One `data-theme` and one `data-density` attribute on `<html>`; nothing else changes. Every card is captured and axe-checked in both themes. |
 | **Calm, optional motion** | Menus and popovers fade 4 px from their trigger; dialogs fade in, drawers slide in. Nothing decorative. | Durations and layers are tokens; the lint rejects raw durations and z-index values. `prefers-reduced-motion` sets every duration to 0 ms, which a test checks. |
 | **Writing is design** | Sentence case, verb + object buttons ("Roll back to v2.14.0", never "OK"), errors that say how to fix it, no emoji. | [Guidelines](design-system/GUIDELINES.md) plus every component's README. AI agents read them via `COMPONENTS.md`. |
@@ -206,7 +219,7 @@ flowchart LR
   T["tokens.json<br/>(single source of truth)"] --> G["generators"]
   G --> CSS["tokens.css<br/>light/dark × compact/comfortable"]
   G --> TS["typed token names"]
-  CSS --> P["@pairwise/ui<br/>59 components · Radix, cmdk and React Aria behaviour"]
+  CSS --> P["@pairwise/ui<br/>68 components · Radix, cmdk and React Aria behaviour"]
   TS --> P
   P --> D["catalogue.html + COMPONENTS.md"]
   P --> A1["Ops dashboard"]

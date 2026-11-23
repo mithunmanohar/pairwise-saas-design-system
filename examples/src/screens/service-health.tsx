@@ -3,7 +3,7 @@
 // Live: the window rolls forward every few seconds (unless ?frozen=1). Roll back asks for confirmation; endpoint rows
 // open a drawer.
 import { useEffect, useState } from "react";
-import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, KeyValueList, toast, type Column } from "@pairwise/ui";
+import { PageHeader, Breadcrumbs, Tabs, StatusBadge, Button, ActionMenu, AlertBanner, Metric, Panel, TimeSeriesChart, BarChart, DataTable, Timeline, Modal, Drawer, Sparkline, StateBlock, KeyValueList, useAssistant, toast, type Column } from "@pairwise/ui";
 import { Frame, frozen, useNav, useCrumbNav, useSelection } from "../frame";
 import { varyCounts, varyRound, varySeries, varyService, windowFor } from "../vary";
 import { latencyWindow, steadyWindow, DEPLOY_AT, spark, errorBuckets, errors5xx, errors4xx, errorsTimeout, endpointsFor, deploys, incidents, isOpen, serviceByName, type Endpoint, type Service } from "../data";
@@ -34,6 +34,7 @@ export function ServiceHealth({ name = "checkout-api" }: { name?: string }) {
 
 function ServicePage({ svc: base }: { svc: Service }) {
   const sel = useSelection();
+  const assistant = useAssistant();
   const svc = varyService(sel, base);
   const go = useNav();
   const crumbs = useCrumbNav();
@@ -78,6 +79,7 @@ function ServicePage({ svc: base }: { svc: Service }) {
           <Button icon="book" onClick={() => toast("The runbook would open here")}>Runbook</Button>
           {story ? <Button variant="primary" icon="refresh" onClick={() => setRollback(true)}>Roll back to v2.14.0</Button> : null}
           <ActionMenu label={`More actions for ${svc.name}`} items={[
+            { label: "Ask the assistant", icon: "assistant", onSelect: () => assistant.ask(`How is ${svc.name} doing?`) },
             { label: "Copy link", icon: "link", onSelect: () => toast("Link copied") },
             { label: "Open on GitHub", icon: "external", onSelect: () => toast("GitHub would open here") },
             "separator",

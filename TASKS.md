@@ -4,46 +4,33 @@ Goal: a **workable, minimal** design system that apps share, so every app looks 
 and nobody builds their own components. Build only what a project needs. A component goes into the package once a
 second project needs it; until then it can live in the project.
 
-Status: `@pairwise/ui` 2.1.0 is released (tag `ui-v2.1.0`; the ownership hierarchy: TreeView, ScopePicker,
-SplitView, ScopeNote, DataTable List / Tree views). What it contains:
-[`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md). Next: the assistant (2.2.0), at the Phase 1 gate.
+Status: `@pairwise/ui` 2.2.0 (the assistant), committed; 2.1.0 is released (tag `ui-v2.1.0`). What each version
+contains: [`packages/ui/CHANGELOG.md`](packages/ui/CHANGELOG.md).
 
-## Next: 2.2.0, the assistant (Phase 1 done; waiting for approval)
+## Done in 2.2.0
 - **Why:** apps built on Pairwise (developer portals, platform and cloud tools, admin and analytics) need a
   contextual assistant that reads as Pairwise, not a separate chat product.
-- **Proposal:** [DECISIONS #29](design-system/DECISIONS.md#29--the-assistant-phase-1-audit-and-proposal-proposed-awaiting-approval).
-  It holds the audit, the gap analysis, the Priority 1 contracts, the dependencies and the deferred list.
-- **Phase 1 (done):** audit of the existing components, gap analysis, Priority 1 proposal.
-- **Gate (open):**
-  - the Markdown dependency (`markdown-to-jsx`, MIT, 31.6 kB min + gzip);
-  - the Ctrl+I / ⌘I shortcut;
-  - regenerating the README screenshots for the new top-bar launcher;
-  - `AssistantProvider` in the package.
-- **Priority 1, after approval, in order:**
-  1. **Foundations:** the new icons and the `assistant-width` token. Then the additive props: TopBar `assistant`,
-     AppShell `assistant`, Drawer `docked`, FileUpload `variant`, CodeBlock `diff`, Avatar `icon`.
-  2. **Content parts:**
-     - `Markdown`;
-     - `Citation` and `SourceList`;
-     - `ResourceCard`;
-     - `Disclosure`.
-  3. **The assistant itself:**
-     - `ContextBar`;
-     - `PromptComposer` (with `@` and `/` on cmdk, templates and attachments);
-     - `AssistantMessage` (feedback, copy, regenerate, report, provenance);
-     - `AssistantPanel` (history, states, live region);
-     - `AssistantProvider`.
-  4. **Demo:** scripted, seeded answers in the style of `vary.ts`, with no model calls.
-     - Ask on Overview and on Usage and cost.
-     - Explore on the Resource Explorer.
-     - Investigate on an incident.
-     - Ask in row menus and the command palette.
-  5. **Done means, for each part:**
-     - a card + README (with a group);
-     - a fixture with keyboard tests;
-     - axe clean in both themes;
-     - GUIDELINES gets an "Assistant and AI content" section;
-     - CHANGELOG 2.2.0, `pnpm run ci` and `pnpm check:generated`, and a draft PR with its preview link.
+- **Decision:** [DECISIONS #29](design-system/DECISIONS.md#29--the-assistant-audit-proposal-and-what-was-built-22). It
+  holds the audit, the gap analysis, the contracts, the dependency, the deferred list and how the build differs. The
+  rules are in GUIDELINES "The assistant and AI content".
+- **Foundations:**
+  - assistant icons (no sparkle) and the `assistant-width` token;
+  - `markdown-to-jsx` (MIT);
+  - TopBar `assistant` (Ctrl+I / ⌘I) and AppShell `assistant`;
+  - Drawer `docked`, FileUpload `variant="button"`, CodeBlock `diff` and Avatar `icon`.
+- **New components:**
+  - Markdown, Citation, SourceList, ResourceCard, Disclosure;
+  - ContextBar, PromptComposer, AssistantMessage, AssistantPanel;
+  - AssistantProvider, with `useAssistant` and `useAssistantContext`.
+- **The demo:**
+  - the assistant on every page, with scripted answers seeded from the sample data and the selection;
+  - "Ask the assistant" in page and row menus and in the command palette;
+  - `?state=assistant` opens it with the page's first question answered.
+- **Tests:**
+  - keyboard and focus (shortcut, focus return, Escape order, mentions and commands);
+  - live regions (no per-word announcements);
+  - context add, remove and inspect; report; expand; the modal drawer below 1280 px;
+  - axe with the panel open in both themes, on the fixtures and on 4 demo pages.
 
 ## Done in 2.1.0
 - **Why:** an ML platform organises everything by ownership (company → business function → squad → initiative →

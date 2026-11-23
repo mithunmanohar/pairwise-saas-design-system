@@ -896,6 +896,7 @@ a.pw-btn { text-decoration: none; }
 .pw-iconbtn__dot.is-needs-input { background: var(--status-info); }
 .pw-iconbtn__dot.is-working { background: var(--surface-raised); border-color: var(--ink-muted); width: 6px; height: 6px; }
 .pw-topbar__ask.has-label .pw-iconbtn__dot { top: 5px; right: 3px; }
+@media (max-width: 640px) { .pw-topbar .pw-topbar__ask ~ .pw-iconbtn { margin-left: 0; } }
 /* Avatar with an icon */
 .pw-av__fb .pw-icon { display: block; }
 /* CodeBlock diff */

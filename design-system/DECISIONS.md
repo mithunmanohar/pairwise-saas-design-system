@@ -32,9 +32,9 @@ The decisions behind Pairwise, in the order they were made. Each entry keeps the
 | 26 | **Trees on React Aria Components** (Apache-2.0; 2.1) | Radix has no tree. A tree needs arrow-key focus, expand and collapse, typeahead, lazy children, disabled nodes and treegrid semantics; hand-rolling them breaks the "don't hand-roll focus or keyboard" rule. React Aria's `Tree` provides all of them and ships no styles, so Signal is unchanged. It is the first Adobe dependency, limited to trees. Selection uses toggle behaviour, so arrows move focus and only Enter, Space or a click changes the scope. |
 | 27 | **The hierarchy is shown in full in two places only** (2.1) | Repeating "Company › Function › Squad › Initiative" on every page spends the top of every screen on context the person already chose. The Resource Explorer and the scope picker show the whole tree. Everywhere else shows the current node once, with its path on hover, as a folded breadcrumb on entity pages, and as a muted line *below the scope* in tables. |
 | 28 | **Direct versus rolled-up numbers are always labelled** (2.1) | Rollups are only trustworthy when you can tell what they include. Pages include descendants by default (that's what a lead asks about), with Direct only one click away. Counts say both ("0 direct · 7 with everything below"), Tree-view group rows total only columns that add up ("–" otherwise), and figures that stay organisation-wide on a scoped page say so. |
-| 29 | **An assistant built from Pairwise parts** (2.2, *proposed, awaiting approval*) | AI must feel native: the same chrome, status grammar and ownership model as the rest of the app, not a separate chat product. Extend existing components first (TopBar, AppShell, Drawer, CodeBlock, FileUpload, Avatar), add only the assistant-specific parts, mark AI content with an icon and a label, never a colour. Audit, contracts and the deferred list are below. |
+| 29 | **An assistant built from Pairwise parts** (2.2) | AI must feel native: the same chrome, status grammar and ownership model as the rest of the app, not a separate chat product. Extend existing components first (TopBar, AppShell, Drawer, CodeBlock, FileUpload, Avatar), add only the assistant-specific parts, and mark AI content with an icon and a label, never a colour. Markdown comes from markdown-to-jsx (MIT). Audit, contracts and the deferred list are below. |
 
-## 29 · The assistant: Phase 1 audit and proposal (proposed, awaiting approval)
+## 29 · The assistant: audit, proposal and what was built (2.2)
 
 **Goal.** Product teams can add a contextual assistant to any Pairwise app (developer portal, cost dashboard, admin
 tool) without designing chat layouts, response layouts, context handling or AI states. The assistant reads as
@@ -44,8 +44,8 @@ Pairwise:
 - risk and permission reuse the status grammar;
 - the full ownership tree never appears inside it.
 
-This entry is the Phase 1 gate. No component code is written until it's approved. Priority 2 and 3 are candidates,
-not commitments.
+Phase 1 (this audit and proposal) was approved with every recommendation in 29.6, and Priority 1 shipped in 2.2.0
+(29.7 lists where the build differs from the proposal). Priority 2 and 3 are candidates, not commitments.
 
 ### 29.1 Audit: what already exists
 
@@ -307,7 +307,7 @@ Its element overrides map straight onto Pairwise components. The bundle cost fal
   - Generated structured forms from a schema (`Field` controls).
   - Sharing and saving a conversation: `CopyButton` link + `Modal`.
 
-### 29.6 Decisions needed at the gate
+### 29.6 Decisions at the gate (all approved as recommended)
 
 1. **The Markdown dependency:** `markdown-to-jsx` (recommended), `react-markdown` + `remark-gfm`, or none.
 2. **The shortcut:** Ctrl+I / ⌘I (recommended; Ctrl+K stays search).
@@ -320,6 +320,20 @@ Its element overrides map straight onto Pairwise components. The bundle cost fal
 4. **`AssistantProvider` in the package** (recommended: it is what saves app teams the context plumbing), or keep it
    in the demo.
 
+### 29.7 How the build differs from the proposal
+
+- **AppShell takes any node in `assistant`.** It tells the panel its placement through React context, so an app can
+  wrap AssistantPanel in its own component. The panel reports when it covers the content, so the shell can make the
+  page inert. `placement` remains as an override.
+- **Markdown takes `sources`.** "[1]" in model text becomes a `Citation`, because models write citations as text.
+- **Headings in Markdown never rank above `headingLevel`** (default 3). Panels have their own heading.
+- **The palette entry is a command, not a new GlobalSearch prop.** TopBar doesn't expose the search query, so "Ask
+  the assistant" is a palette command (with Ctrl I shown) that opens the panel.
+- **A new catalogue group, "Assistant",** holds ContextBar, PromptComposer, AssistantMessage and AssistantPanel.
+  The generic parts (Markdown, Citation, SourceList, ResourceCard, Disclosure) are under "Data display".
+- **The top-bar launcher changed every demo screenshot in the top-bar strip only.** This was checked by pixel diff;
+  nothing else on any screen moved. The data under the default selection is unchanged.
+
 ## Known limits
 
 - Charts are lightweight SVG with a table view. Swap to a charting library only if a project needs dense or interactive series.
@@ -330,4 +344,7 @@ Its element overrides map straight onto Pairwise components. The bundle cost fal
   that fast).
 - TreeView doesn't virtualise. Keep a level to a few hundred children and load resource groups lazily (`loadChildren`);
   DataTable's Tree view groups the rows it is given, so page or filter on the server for large estates.
+- The assistant panel has a fixed width (`assistant-width`) and doesn't resize; it expands to the content area
+  instead. A resizable panel waits for a project that asks, and then uses a library.
+- Markdown renders CommonMark + GFM tables through markdown-to-jsx; footnotes and HTML are not rendered as such.
 - Density is inherited from `<html data-density>`; a nested `data-density="compact"` (which AppShell sets by default) does not switch a comfortable page back to compact. Kept on purpose: set density once, on `<html>`.

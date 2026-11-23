@@ -68,10 +68,15 @@ export function App() {
 - **Ownership hierarchy:** TreeView, ScopePicker, SplitView (explorer layout), ScopeNote, `entityIcon` / `entityLabel` for entity kinds; TopBar `ownership`; DataTable `getPath` for List and Tree views with column rollups
 - **Feedback and overlays:** AlertBanner, `toast()` + Toaster, Toast, StateBlock, Skeleton, ProgressBar, Tooltip (+ TooltipProvider), Popover, Modal, Drawer
 - **Data:** DataTable (sorting, paging, selection, bulk and row actions, column visibility, server mode), Pagination, ColumnsMenu, KeyValueList, Metric, Timeline, RunStrip, StatusGrid, BulletBar, CodeBlock (code and logs)
+- **The assistant (2.2):** AssistantPanel (docked in AppShell's `assistant` slot), AssistantMessage, PromptComposer
+  (@mentions, slash commands, templates, attachments), ContextBar, AssistantProvider with `useAssistant` /
+  `useAssistantContext`, and the TopBar launcher (Ctrl+I / ⌘I). Answers compose Markdown, Citation, SourceList,
+  ResourceCard, Disclosure, CodeBlock `diff` and any of the data components. You bring the model; nothing here calls one.
 - **Charts:** TimeSeriesChart, BarChart, Sparkline, Heatmap, Legend (every chart has a table view)
 - **Helpers:** `cx`, `toISODate` / `parseISODate`, `useFormat` / `createFormatter` (from `@pairwise/ui/format`), typed token names and values, including `motion` and `layer` (`@pairwise/ui/tokens`)
 
-Behaviour comes from Radix, cmdk, react-day-picker and React Aria (trees), styled only with Pairwise tokens. Every component is checked
+Behaviour comes from Radix, cmdk, react-day-picker and React Aria (trees), and Markdown from markdown-to-jsx (its own
+module: apps that don't render Markdown don't load it), styled only with Pairwise tokens. Every component is checked
 with keyboard tests and axe in light and dark (`packages/ui/test/e2e`).
 
 Browse them all, live: open `design-system/catalogue.html` from the repo in a browser. Every component's usage notes and
